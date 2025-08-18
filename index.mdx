@@ -1,97 +1,131 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Termix AI SDK Documentation"
+description: "A configurable AI chat interface component library for React applications with advanced function calling and smart contract integration"
 ---
 
-## Setting up
+# Termix AI SDK
 
-Get your documentation site up and running in minutes.
+Welcome to the comprehensive documentation for Termix AI SDK - a powerful, configurable AI chat interface component library designed for React applications.
+
+## Quick Start
+
+Get your AI chat interface up and running in minutes.
 
 <Card
-  title="Start here"
+  title="Installation & Setup"
   icon="rocket"
-  href="/quickstart"
+  href="/react-tools/installation"
   horizontal
 >
-  Follow our three step quickstart guide.
+  Install the library and create your first chat interface with our step-by-step guide.
 </Card>
 
-## Make it yours
+## Core Features
 
-Design a docs site that looks great and empowers your users.
+Everything you need to build sophisticated AI-powered chat experiences.
 
-<Columns cols={2}>
+<CardGroup cols={2}>
   <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
+    title="🤖 AI Chat Interface"
+    icon="robot"
+    href="/react-tools/overview"
   >
-    Edit your docs locally and preview them in real time.
+    Ready-to-use chat component with streaming responses and real-time interactions
   </Card>
   <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
+    title="🛠️ Function Calling"
+    icon="wrench"
+    href="/react-tools/advanced-usage"
   >
-    Customize the design and colors of your site to match your brand.
-  </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+    Automatic AI function calling with REST API and smart contract execution
   </Card>
   <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
+    title="🔧 Configuration"
+    icon="gear"
+    href="/react-tools/configuration"
   >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
-
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
-
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
+    Extensive props for customization, theming, and behavior control
   </Card>
   <Card
-    title="Code samples"
+    title="🚀 TypeScript"
     icon="code"
-    href="/essentials/code"
+    href="/react-tools/typescript"
   >
-    Add sample code to demonstrate how to use your product.
+    Full TypeScript support with comprehensive type definitions
+  </Card>
+</CardGroup>
+
+## What's Possible
+
+Build powerful applications with advanced AI capabilities.
+
+<AccordionGroup>
+  <Accordion title="🌟 Smart Contract Integration">
+    Enable users to interact with blockchain smart contracts through natural language. Supports MetaMask integration, multi-chain networks, and automatic transaction handling.
+  </Accordion>
+  
+  <Accordion title="📚 Knowledge Base Integration">
+    Create AI assistants that can search through your documentation, knowledge bases, and provide contextual information with source references.
+  </Accordion>
+  
+  <Accordion title="🔄 Function Calling">
+    Allow your AI to make REST API calls, execute custom functions, and integrate with external services automatically based on conversation context.
+  </Accordion>
+  
+  <Accordion title="⚡ ReAct Pattern">
+    Enable sophisticated reasoning and acting patterns where the AI can think through problems step-by-step and take appropriate actions.
+  </Accordion>
+</AccordionGroup>
+
+## Example Implementation
+
+Here's what a basic implementation looks like:
+
+```tsx
+import { ChatInterface } from '@termix-it/react-tool';
+import '@termix-it/react-tool/dist/styles.css';
+
+function App() {
+  return (
+    <div className="h-screen">
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="your-ai-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-jwt-token"
+        enableFunctionCalls={true}
+        enableKnowledgeBase={true}
+        onFunctionExecuted={(call, result) => {
+          console.log('Function executed:', call.name, result);
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card
+    title="Get Started"
+    icon="play"
+    href="/react-tools/installation"
+  >
+    Install the library and set up your first chat interface
   </Card>
   <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
+    title="Learn the Basics"
+    icon="book"
+    href="/react-tools/overview"
   >
-    Display images and other media.
+    Understand the core concepts and capabilities
   </Card>
   <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
+    title="Advanced Features"
+    icon="rocket"
+    href="/react-tools/advanced-usage"
   >
-    Write once and reuse across your docs.
+    Explore smart contracts, function calling, and custom implementations
   </Card>
-</Columns>
-
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+</CardGroup>

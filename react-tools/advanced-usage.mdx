@@ -1,0 +1,542 @@
+---
+title: "Advanced Usage"
+description: "Learn advanced features including function calling, smart contract integration, knowledge base setup, and custom implementations"
+---
+
+# Advanced Usage
+
+Unlock the full potential of @termix-it/react-tool with advanced features like function calling, smart contract integration, and custom implementations.
+
+## Function Calling
+
+The ChatInterface automatically handles different types of function calls based on your AI configuration.
+
+### REST API Function Calls
+
+Configure your AI to make REST API calls that are automatically executed:
+
+```tsx
+import { useState } from 'react';
+import { ChatInterface, FunctionCall, ExecutionResult } from '@termix-it/react-tool';
+
+function APIIntegratedChat() {
+  const [apiHeaders, setApiHeaders] = useState(
+    JSON.stringify({
+      'X-API-Key': 'your-api-key',
+      'Content-Type': 'application/json'
+    })
+  );
+
+  const handleFunctionExecution = (call: FunctionCall, result: ExecutionResult) => {
+    if (call.metadata?.type === 'api') {
+      console.log(`API call to ${call.metadata.path}:`, result.data);
+      
+      if (result.success) {
+        // Handle successful API response
+        if (call.name === 'getUserData') {
+          // Update user state or show notification
+        }
+      } else {
+        // Handle API errors
+        console.error('API call failed:', result.error);
+      }
+    }
+  };
+
+  return (
+    <ChatInterface
+      projectId="your-project-id"
+      aiConfigId="your-ai-config-id"
+      apiBaseUrl="/api/proxy"
+      authorization="Bearer your-token"
+      restExecuteHeader={apiHeaders}
+      enableFunctionCalls={true}
+      onFunctionExecuted={handleFunctionExecution}
+      welcomeMessage="I can help you access user data, update settings, and more!"
+    />
+  );
+}
+```
+
+### Dynamic Header Management
+
+Update API headers dynamically based on user state:
+
+```tsx
+function DynamicHeadersChat() {
+  const [userToken, setUserToken] = useState('');
+  const [customHeaders, setCustomHeaders] = useState('{}');
+
+  useEffect(() => {
+    // Update headers when user token changes
+    if (userToken) {
+      setCustomHeaders(JSON.stringify({
+        'Authorization': `Bearer ${userToken}`,
+        'X-User-ID': 'current-user-id',
+        'X-Timestamp': Date.now().toString()
+      }));
+    }
+  }, [userToken]);
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Enter your API token"
+        value={userToken}
+        onChange={(e) => setUserToken(e.target.value)}
+        className="mb-4 p-2 border rounded"
+      />
+      
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="your-ai-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization={`Bearer ${userToken}`}
+        restExecuteHeader={customHeaders}
+        enableFunctionCalls={true}
+        placeholder="Ask me to fetch your data or update settings..."
+      />
+    </div>
+  );
+}
+```
+
+## Smart Contract Integration
+
+Enable blockchain interactions with automatic smart contract execution:
+
+### Basic Smart Contract Setup
+
+```tsx
+import { ChatInterface, FunctionCall, ExecutionResult } from '@termix-it/react-tool';
+import { useWeb3 } from './hooks/useWeb3'; // Your web3 hook
+
+function DeFiChat() {
+  const { account, connect, isConnected } = useWeb3();
+
+  const handleContractExecution = (call: FunctionCall, result: ExecutionResult) => {
+    if (call.metadata?.type === 'contract') {
+      const { contractName, contractAddress, chainName } = call.metadata;
+      
+      console.log(`Contract call on ${chainName}:`, {
+        contract: contractName,
+        address: contractAddress,
+        function: call.name,
+        parameters: call.parameters
+      });
+
+      if (result.success && result.data?.transactionHash) {
+        // Show transaction confirmation
+        showTransactionNotification(result.data.transactionHash);
+        
+        // Update UI state based on contract interaction
+        if (call.name === 'approve') {
+          // Handle approval transaction
+        } else if (call.name === 'transfer') {
+          // Handle transfer transaction
+        }
+      }
+    }
+  };
+
+  const showTransactionNotification = (txHash: string) => {
+    // Show success notification with etherscan link
+    console.log(`Transaction submitted: https://etherscan.io/tx/${txHash}`);
+  };
+
+  return (
+    <div>
+      {!isConnected && (
+        <button 
+          onClick={connect}
+          className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Connect Wallet
+        </button>
+      )}
+      
+      {isConnected && (
+        <div className="mb-4 p-3 bg-green-100 border border-green-400 rounded">
+          Connected: {account}
+        </div>
+      )}
+      
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="defi-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-token"
+        enableFunctionCalls={true}
+        onFunctionExecuted={handleContractExecution}
+        welcomeMessage={
+          isConnected 
+            ? "I can help you interact with smart contracts, check balances, and execute transactions!"
+            : "Please connect your wallet to enable smart contract interactions."
+        }
+      />
+    </div>
+  );
+}
+```
+
+### Multi-Chain Contract Support
+
+Handle contracts across different blockchain networks:
+
+```tsx
+function MultiChainDeFiChat() {
+  const [supportedChains] = useState([
+    { name: 'ethereum', rpc: 'https://mainnet.infura.io/v3/...' },
+    { name: 'polygon', rpc: 'https://polygon-rpc.com' },
+    { name: 'arbitrum', rpc: 'https://arb1.arbitrum.io/rpc' }
+  ]);
+
+  const handleContractExecution = (call: FunctionCall, result: ExecutionResult) => {
+    if (call.metadata?.type === 'contract') {
+      const chainName = call.metadata.chainName;
+      const chain = supportedChains.find(c => c.name === chainName);
+      
+      if (result.success) {
+        console.log(`Transaction on ${chainName}:`, result.data?.transactionHash);
+        
+        // Chain-specific handling
+        switch (chainName) {
+          case 'ethereum':
+            // Handle Ethereum transactions
+            break;
+          case 'polygon':
+            // Handle Polygon transactions
+            break;
+          case 'arbitrum':
+            // Handle Arbitrum transactions
+            break;
+        }
+      }
+    }
+  };
+
+  return (
+    <ChatInterface
+      projectId="your-project-id"
+      aiConfigId="multi-chain-config-id"
+      apiBaseUrl="/api/proxy"
+      authorization="Bearer your-token"
+      enableFunctionCalls={true}
+      onFunctionExecuted={handleContractExecution}
+      welcomeMessage="I can help you interact with contracts on Ethereum, Polygon, and Arbitrum!"
+    />
+  );
+}
+```
+
+## Knowledge Base Integration
+
+Set up sophisticated knowledge base search and reference systems:
+
+### Custom Knowledge Base Handling
+
+```tsx
+function DocumentationAssistant() {
+  const [knowledgeStats, setKnowledgeStats] = useState({
+    searchCount: 0,
+    documentsFound: 0
+  });
+
+  const handleResponse = (message: Message) => {
+    if (message.knowledgeContext && message.knowledgeContext.length > 0) {
+      setKnowledgeStats(prev => ({
+        searchCount: prev.searchCount + 1,
+        documentsFound: prev.documentsFound + message.knowledgeContext!.length
+      }));
+    }
+  };
+
+  return (
+    <div>
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+        <p className="text-sm">
+          Knowledge Base Stats: {knowledgeStats.searchCount} searches, 
+          {knowledgeStats.documentsFound} documents referenced
+        </p>
+      </div>
+      
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="docs-assistant-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-token"
+        enableKnowledgeBase={true}
+        showKnowledgeReferences={true}
+        maxKnowledgeResults={5}
+        onResponseReceived={handleResponse}
+        welcomeMessage="I can search through your documentation and help you find relevant information!"
+        placeholder="Ask me about your docs, APIs, or code examples..."
+      />
+    </div>
+  );
+}
+```
+
+## Custom Theming
+
+Implement advanced theming with CSS custom properties:
+
+### Dark Mode Theme
+
+```css custom-theme.css
+/* Dark theme */
+[data-theme="dark"] {
+  --primary: 210 100% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 25% 15%;
+  --secondary-foreground: 210 40% 90%;
+  --accent: 215 25% 20%;
+  --accent-foreground: 210 40% 90%;
+  --destructive: 0 75% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 215 25% 25%;
+  --input: 215 25% 20%;
+  --ring: 210 100% 60%;
+  --background: 215 30% 8%;
+  --foreground: 210 40% 98%;
+}
+
+/* Custom chat styling */
+.custom-chat {
+  --chat-bg: var(--background);
+  --message-user-bg: var(--primary);
+  --message-ai-bg: var(--secondary);
+  --input-bg: var(--input);
+}
+```
+
+```tsx
+function ThemedChat() {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  return (
+    <div>
+      <button 
+        onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+        className="mb-4 px-4 py-2 border rounded"
+      >
+        Switch to {theme === 'light' ? 'dark' : 'light'} mode
+      </button>
+      
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="your-ai-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-token"
+        className="custom-chat"
+      />
+    </div>
+  );
+}
+```
+
+## ReAct Pattern Implementation
+
+Enable sophisticated reasoning and acting patterns:
+
+```tsx
+function ReActEnabledChat() {
+  const [reasoningSteps, setReasoningSteps] = useState<string[]>([]);
+
+  const handleResponse = (message: Message) => {
+    // Extract reasoning steps from ReAct pattern responses
+    const reasoning = extractReasoningSteps(message.content);
+    if (reasoning.length > 0) {
+      setReasoningSteps(prev => [...prev, ...reasoning]);
+    }
+  };
+
+  const extractReasoningSteps = (content: string): string[] => {
+    const reasoningMatch = content.match(/Thought: (.+?)(?=\nAction:|$)/g);
+    return reasoningMatch ? reasoningMatch.map(step => step.replace('Thought: ', '')) : [];
+  };
+
+  return (
+    <div>
+      {reasoningSteps.length > 0 && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+          <h3 className="font-semibold mb-2">AI Reasoning Steps:</h3>
+          <ul className="text-sm space-y-1">
+            {reasoningSteps.slice(-3).map((step, index) => (
+              <li key={index} className="flex items-start">
+                <span className="mr-2">🤔</span>
+                {step}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="react-pattern-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-token"
+        enableReActPattern={true}
+        enableFunctionCalls={true}
+        onResponseReceived={handleResponse}
+        welcomeMessage="I'll show you my reasoning process as I work through complex problems!"
+      />
+    </div>
+  );
+}
+```
+
+## Error Handling and Recovery
+
+Implement robust error handling:
+
+```tsx
+function RobustChat() {
+  const [errors, setErrors] = useState<string[]>([]);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleError = (error: any) => {
+    const errorMessage = error.message || 'An unknown error occurred';
+    setErrors(prev => [...prev.slice(-2), errorMessage]); // Keep last 3 errors
+    
+    // Implement retry logic for specific errors
+    if (error.code === 'NETWORK_ERROR' && !isRetrying) {
+      setIsRetrying(true);
+      setTimeout(() => {
+        setIsRetrying(false);
+        // Trigger retry mechanism
+      }, 2000);
+    }
+  };
+
+  const clearErrors = () => setErrors([]);
+
+  return (
+    <div>
+      {errors.length > 0 && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-semibold text-red-800">Recent Errors:</h3>
+              <ul className="text-sm text-red-700 mt-1">
+                {errors.map((error, index) => (
+                  <li key={index}>• {error}</li>
+                ))}
+              </ul>
+            </div>
+            <button 
+              onClick={clearErrors}
+              className="text-red-600 hover:text-red-800 text-sm"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {isRetrying && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+          <p className="text-blue-700">Retrying connection...</p>
+        </div>
+      )}
+      
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="your-ai-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-token"
+        onError={handleError}
+        enableFunctionCalls={true}
+      />
+    </div>
+  );
+}
+```
+
+## Performance Optimization
+
+Optimize performance for production use:
+
+```tsx
+import { memo, useMemo, useCallback } from 'react';
+
+const OptimizedChat = memo(function OptimizedChat({ 
+  projectId, 
+  aiConfigId, 
+  userToken 
+}: {
+  projectId: string;
+  aiConfigId: string;
+  userToken: string;
+}) {
+  // Memoize expensive calculations
+  const apiHeaders = useMemo(() => ({
+    'X-Client-Version': '1.0.0',
+    'X-Session-ID': `session-${Date.now()}`
+  }), []);
+
+  // Memoize callback functions
+  const handleFunctionExecution = useCallback((call: FunctionCall, result: ExecutionResult) => {
+    console.log('Function executed:', call.name, result.success);
+  }, []);
+
+  const handleError = useCallback((error: any) => {
+    console.error('Chat error:', error);
+  }, []);
+
+  return (
+    <ChatInterface
+      projectId={projectId}
+      aiConfigId={aiConfigId}
+      apiBaseUrl="/api/proxy"
+      authorization={`Bearer ${userToken}`}
+      apiHeaders={apiHeaders}
+      onFunctionExecuted={handleFunctionExecution}
+      onError={handleError}
+      // Disable expensive features in production if not needed
+      showUsageInfo={false}
+      maxKnowledgeResults={3}
+    />
+  );
+});
+
+export default OptimizedChat;
+```
+
+## Best Practices Summary
+
+<AccordionGroup>
+  <Accordion title="Security">
+    - Never expose API keys in frontend code
+    - Use server-side proxies for sensitive operations
+    - Validate user inputs and sanitize outputs
+    - Implement proper authentication and authorization
+  </Accordion>
+  
+  <Accordion title="Performance">
+    - Memoize expensive calculations and callbacks
+    - Disable unused features to reduce overhead
+    - Implement proper error boundaries
+    - Use lazy loading for large components
+  </Accordion>
+  
+  <Accordion title="User Experience">
+    - Provide clear feedback for loading states
+    - Handle errors gracefully with user-friendly messages
+    - Implement retry mechanisms for network failures
+    - Show progress indicators for long-running operations
+  </Accordion>
+  
+  <Accordion title="Development">
+    - Use TypeScript for better development experience
+    - Implement comprehensive error logging
+    - Test all function calling scenarios
+    - Document custom configurations and integrations
+  </Accordion>
+</AccordionGroup>

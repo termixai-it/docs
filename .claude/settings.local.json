@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(npx mintlify dev:*)",
+      "Bash(npx mintlify build)",
+      "Bash(npx mintlify:*)",
+      "Bash(rmdir:*)",
+      "Bash(rm:*)",
+      "WebFetch(domain:mintlify.com)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

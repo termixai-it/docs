@@ -1,0 +1,195 @@
+---
+title: "Installation & Quick Start"
+description: "Get started with @termix-it/react-tool by installing the library and setting up your first AI chat interface"
+---
+
+# Installation & Quick Start
+
+Get up and running with @termix-it/react-tool in just a few minutes.
+
+## Prerequisites
+
+Before installing the library, make sure you have:
+
+- **React 16.9.0 or later**
+- **Node.js 14 or later**
+- **A Termix project** with AI configuration set up
+
+## Installation
+
+Install the library using your preferred package manager:
+
+<CodeGroup>
+```bash npm
+npm install @termix-it/react-tool
+```
+
+```bash yarn
+yarn add @termix-it/react-tool
+```
+
+```bash pnpm
+pnpm add @termix-it/react-tool
+```
+</CodeGroup>
+
+## Dependencies
+
+This library requires the following peer dependencies:
+
+```json
+{
+  "react": ">=16.9.0",
+  "react-dom": ">=16.9.0"
+}
+```
+
+These should be automatically installed with most React applications, but you can install them manually if needed:
+
+```bash
+npm install react react-dom
+```
+
+## Import Styles
+
+The library uses Tailwind CSS for styling. You must import the required styles in your application:
+
+```tsx
+import '@termix-it/react-tool/dist/styles.css';
+```
+
+<Tip>
+If you're already using Tailwind CSS in your project, the styles will integrate seamlessly. If not, don't worry - the library includes all necessary styles.
+</Tip>
+
+## Basic Setup
+
+Here's the minimal setup to get a chat interface running:
+
+```tsx App.tsx
+import { ChatInterface } from '@termix-it/react-tool';
+import '@termix-it/react-tool/dist/styles.css';
+
+function App() {
+  return (
+    <div className="h-screen">
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="your-ai-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-jwt-token"
+        welcomeMessage="Hello! How can I help you today?"
+        placeholder="Type your message..."
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+## Configuration Parameters
+
+You'll need these essential parameters to get started:
+
+<ParamField path="projectId" type="string" required>
+  Your Termix project identifier. You can find this in your Termix dashboard.
+</ParamField>
+
+<ParamField path="aiConfigId" type="string" required>
+  AI configuration identifier that defines the model and behavior settings.
+</ParamField>
+
+<ParamField path="apiBaseUrl" type="string" required>
+  Base URL for your API proxy. This handles requests to the Termix backend.
+</ParamField>
+
+<ParamField path="authorization" type="string" required>
+  Authorization header value, typically a Bearer token for authentication.
+</ParamField>
+
+## API Proxy Setup
+
+You'll need to set up an API proxy to handle requests to the Termix backend. Here's a simple Next.js API route example:
+
+```typescript pages/api/proxy/[...path].ts
+import { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { path } = req.query;
+  const apiPath = Array.isArray(path) ? path.join('/') : path;
+  
+  const response = await fetch(`https://api.termix.com/${apiPath}`, {
+    method: req.method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': req.headers.authorization || '',
+      ...req.headers,
+    },
+    body: req.method !== 'GET' ? JSON.stringify(req.body) : undefined,
+  });
+  
+  const data = await response.json();
+  res.status(response.status).json(data);
+}
+```
+
+<Warning>
+Never expose your API keys directly in the frontend. Always use a server-side proxy to handle authentication with the Termix API.
+</Warning>
+
+## Testing Your Setup
+
+Once you have the basic setup complete, you should see:
+
+1. **Chat interface** rendered on your page
+2. **Welcome message** displayed in the chat
+3. **Input field** ready for user messages
+4. **Send button** to submit messages
+
+Try sending a test message to verify the connection is working properly.
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="Styles not loading correctly">
+    Make sure you've imported the CSS file: `import '@termix-it/react-tool/dist/styles.css'`
+  </Accordion>
+  
+  <Accordion title="API connection errors">
+    Verify your `apiBaseUrl` is correct and your proxy is properly configured to forward requests to the Termix API.
+  </Accordion>
+  
+  <Accordion title="Authentication failures">
+    Check that your `authorization` token is valid and properly formatted (usually `Bearer your-token`).
+  </Accordion>
+  
+  <Accordion title="TypeScript errors">
+    If using TypeScript, make sure you have the latest version of the library installed, which includes comprehensive type definitions.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you have the basic setup working, you can:
+
+<CardGroup cols={2}>
+  <Card title="Explore Configuration" icon="gear" href="/react-tools/configuration">
+    Learn about all available props and customization options
+  </Card>
+  <Card title="Advanced Features" icon="rocket" href="/react-tools/advanced-usage">
+    Set up function calling, smart contracts, and knowledge base integration
+  </Card>
+  <Card title="TypeScript Guide" icon="code" href="/react-tools/typescript">
+    Learn about type definitions and TypeScript-specific features
+  </Card>
+</CardGroup>
+
+## Example Projects
+
+Check out these example implementations:
+
+- **Basic Chat** - Simple chat interface with minimal configuration
+- **Function Calling** - Chat with REST API integration
+- **Smart Contracts** - DeFi chat interface with MetaMask integration
+- **Knowledge Base** - Documentation assistant with search capabilities

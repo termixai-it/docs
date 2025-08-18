@@ -1,0 +1,307 @@
+---
+title: "Configuration Reference"
+description: "Complete reference for all ChatInterface props and configuration options"
+---
+
+# Configuration Reference
+
+The `ChatInterface` component offers extensive configuration options to customize behavior, appearance, and functionality.
+
+## Required Props
+
+These props are required for the component to function:
+
+<ParamField path="projectId" type="string" required>
+  Your Termix project identifier. You can find this in your Termix dashboard under project settings.
+</ParamField>
+
+<ParamField path="aiConfigId" type="string" required>
+  AI configuration identifier that defines the model, prompts, and behavior settings for your AI assistant.
+</ParamField>
+
+## Authentication & API
+
+Configure how the component connects to your backend services:
+
+<ParamField path="apiBaseUrl" type="string" default="">
+  Base URL for API requests. This should point to your proxy endpoint that forwards requests to the Termix API.
+  
+  **Example:** `/api/proxy` or `https://yourapi.com/proxy`
+</ParamField>
+
+<ParamField path="authorization" type="string" default="undefined">
+  Authorization header value for API requests. Typically a Bearer token.
+  
+  **Example:** `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+</ParamField>
+
+<ParamField path="apiHeaders" type="Record<string, string>" default="{}">
+  Additional headers to include with all API requests.
+  
+  ```tsx
+  apiHeaders={{
+    'X-API-Key': 'your-api-key',
+    'X-Client-Version': '1.0.0'
+  }}
+  ```
+</ParamField>
+
+<ParamField path="restExecuteHeader" type="string" default="undefined">
+  JSON string containing custom headers for REST function execution.
+  
+  ```tsx
+  restExecuteHeader='{"X-API-Key": "secret", "Content-Type": "application/json"}'
+  ```
+</ParamField>
+
+## UI Customization
+
+Control the appearance and text of the chat interface:
+
+<ParamField path="welcomeMessage" type="string" default="Hello! I'm your AI assistant...">
+  Initial greeting message displayed when the chat loads.
+</ParamField>
+
+<ParamField path="placeholder" type="string" default="Type your message...">
+  Placeholder text shown in the message input field.
+</ParamField>
+
+<ParamField path="sendButtonText" type="string" default="Send">
+  Text displayed on the send button.
+</ParamField>
+
+<ParamField path="modelName" type="string" default="undefined">
+  Display name for the AI model, shown in the chat header.
+</ParamField>
+
+<ParamField path="personalityName" type="string" default="undefined">
+  Display name for the AI personality, shown in the chat header.
+</ParamField>
+
+## Feature Toggles
+
+Enable or disable specific functionality:
+
+<ParamField path="enableKnowledgeBase" type="boolean" default="true">
+  Enable knowledge base search integration. When enabled, the AI can search for and reference relevant information.
+</ParamField>
+
+<ParamField path="enableFunctionCalls" type="boolean" default="true">
+  Enable AI function calling and execution. This allows the AI to make API calls and execute smart contracts.
+</ParamField>
+
+<ParamField path="enableReActPattern" type="boolean" default="true">
+  Enable ReAct (Reasoning and Acting) pattern for AI responses. This provides more structured thinking and action sequences.
+</ParamField>
+
+<ParamField path="showUsageInfo" type="boolean" default="true">
+  Display token usage and cost information for each message.
+</ParamField>
+
+<ParamField path="showTimestamp" type="boolean" default="true">
+  Show timestamps on messages.
+</ParamField>
+
+<ParamField path="showKnowledgeReferences" type="boolean" default="true">
+  Display references to knowledge base sources used in responses.
+</ParamField>
+
+<ParamField path="maxKnowledgeResults" type="number" default="3">
+  Maximum number of knowledge base results to display for each query.
+</ParamField>
+
+## Styling Props
+
+Customize the visual appearance using CSS classes:
+
+<ParamField path="className" type="string">
+  Additional CSS classes for the main chat container.
+  
+  ```tsx
+  className="border-2 border-gray-300 rounded-lg shadow-lg"
+  ```
+</ParamField>
+
+<ParamField path="messagesClassName" type="string">
+  CSS classes for the messages area container.
+  
+  ```tsx
+  messagesClassName="bg-gray-50 p-4"
+  ```
+</ParamField>
+
+<ParamField path="inputClassName" type="string">
+  CSS classes for the message input field.
+  
+  ```tsx
+  inputClassName="border-blue-500 focus:ring-blue-500"
+  ```
+</ParamField>
+
+## Event Callbacks
+
+Handle events and customize behavior with callback functions:
+
+<ParamField path="onMessageSent" type="(message: Message) => void">
+  Called when a user sends a message.
+  
+  ```tsx
+  onMessageSent={(message) => {
+    console.log('User sent:', message.content);
+    // Track user interactions
+  }}
+  ```
+</ParamField>
+
+<ParamField path="onResponseReceived" type="(message: Message) => void">
+  Called when the AI responds with a message.
+  
+  ```tsx
+  onResponseReceived={(message) => {
+    console.log('AI responded:', message.content);
+    // Handle AI responses
+  }}
+  ```
+</ParamField>
+
+<ParamField path="onFunctionExecuted" type="(functionCall: FunctionCall, result: ExecutionResult) => void">
+  Called when a function call is executed (API call, smart contract, etc.).
+  
+  ```tsx
+  onFunctionExecuted={(call, result) => {
+    if (result.type === 'contract' && result.success) {
+      console.log('Transaction hash:', result.data?.transactionHash);
+    }
+  }}
+  ```
+</ParamField>
+
+<ParamField path="onError" type="(error: any) => void">
+  Called when an error occurs during operation.
+  
+  ```tsx
+  onError={(error) => {
+    console.error('Chat error:', error);
+    // Show user-friendly error message
+  }}
+  ```
+</ParamField>
+
+## Complete Configuration Example
+
+Here's an example with all major configuration options:
+
+```tsx
+import { ChatInterface } from '@termix-it/react-tool';
+import '@termix-it/react-tool/dist/styles.css';
+
+function AdvancedChat() {
+  const [authorization, setAuthorization] = useState('Bearer your-token');
+  const [customHeaders, setCustomHeaders] = useState('{"X-API-Key": "secret"}');
+
+  return (
+    <ChatInterface
+      // Required props
+      projectId="689b0b0a67504c373d86bed6"
+      aiConfigId="689b0ce8ed28bfae5038fe82"
+      
+      // API configuration
+      apiBaseUrl="/api/proxy"
+      authorization={authorization}
+      apiHeaders={{
+        'X-Client-Version': '1.0.0',
+        'X-Session-ID': 'unique-session-id'
+      }}
+      restExecuteHeader={customHeaders}
+      
+      // UI customization
+      welcomeMessage="Welcome! I can help with API calls, smart contracts, and more."
+      placeholder="Ask me anything..."
+      sendButtonText="Send Message"
+      modelName="GPT-4"
+      personalityName="Advanced Assistant"
+      
+      // Feature toggles
+      enableKnowledgeBase={true}
+      enableFunctionCalls={true}
+      enableReActPattern={true}
+      showUsageInfo={true}
+      showTimestamp={true}
+      showKnowledgeReferences={true}
+      maxKnowledgeResults={5}
+      
+      // Styling
+      className="h-full border border-gray-200 rounded-lg"
+      messagesClassName="bg-white"
+      inputClassName="border-gray-300 focus:border-blue-500"
+      
+      // Event callbacks
+      onMessageSent={(message) => console.log('Sent:', message)}
+      onResponseReceived={(message) => console.log('Received:', message)}
+      onFunctionExecuted={(call, result) => {
+        console.log('Function executed:', call.name);
+        
+        if (result.type === 'contract' && result.success) {
+          console.log('Transaction:', result.data?.transactionHash);
+        }
+        
+        if (result.type === 'api') {
+          console.log('API result:', result.data);
+        }
+      }}
+      onError={(error) => {
+        console.error('Error:', error);
+        // Show user notification
+      }}
+    />
+  );
+}
+```
+
+## Environment-Specific Configurations
+
+<Tabs>
+  <Tab title="Development">
+    ```tsx
+    <ChatInterface
+      projectId="dev-project-id"
+      aiConfigId="dev-config-id"
+      apiBaseUrl="http://localhost:3000/api/proxy"
+      authorization={`Bearer ${process.env.DEV_TOKEN}`}
+      showUsageInfo={true}
+      enableFunctionCalls={true}
+    />
+    ```
+  </Tab>
+  
+  <Tab title="Production">
+    ```tsx
+    <ChatInterface
+      projectId={process.env.REACT_APP_PROJECT_ID}
+      aiConfigId={process.env.REACT_APP_AI_CONFIG_ID}
+      apiBaseUrl="/api/proxy"
+      authorization={`Bearer ${userToken}`}
+      showUsageInfo={false}
+      enableFunctionCalls={true}
+    />
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Tip>
+**Security**: Never hardcode sensitive information like API keys or tokens in your frontend code. Use environment variables and server-side proxies.
+</Tip>
+
+<Tip>
+**Performance**: Disable features you don't need (like `showUsageInfo` in production) to reduce overhead.
+</Tip>
+
+<Tip>
+**User Experience**: Provide clear welcome messages and placeholders that guide users on what they can do.
+</Tip>
+
+<Warning>
+Make sure to handle errors gracefully using the `onError` callback to provide good user experience when things go wrong.
+</Warning>

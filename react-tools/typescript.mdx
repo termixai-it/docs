@@ -1,0 +1,655 @@
+---
+title: "TypeScript Support"
+description: "Complete TypeScript reference with type definitions, interfaces, and best practices for @termix-it/react-tool"
+---
+
+# TypeScript Support
+
+@termix-it/react-tool provides comprehensive TypeScript support with full type definitions for all components, props, and data structures.
+
+## Type Imports
+
+Import types directly from the library:
+
+```typescript
+import type { 
+  Message, 
+  ToolCall,
+  KnowledgeContext,
+  FunctionCall,
+  ExecutionResult,
+  ChatInterfaceProps,
+  APIConfig
+} from '@termix-it/react-tool';
+```
+
+## Core Interfaces
+
+### Message Interface
+
+The `Message` interface represents all messages in the chat:
+
+```typescript
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  usage?: UsageInfo;
+  knowledgeContext?: KnowledgeContext[];
+  toolCalls?: ToolCall[];
+}
+
+interface UsageInfo {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  cost: number;
+}
+```
+
+### Function Call Types
+
+Define function calls and their execution results:
+
+```typescript
+interface FunctionCall {
+  name: string;
+  parameters: Record<string, any>;
+  metadata?: FunctionCallMetadata;
+}
+
+interface FunctionCallMetadata {
+  type?: 'api' | 'contract' | 'unknown';
+  description?: string;
+  method?: string;
+  path?: string;
+  contractName?: string;
+  contractAddress?: string;
+  chainName?: string;
+}
+
+interface ExecutionResult {
+  success: boolean;
+  type: 'api' | 'contract' | 'error';
+  data?: any;
+  error?: string;
+  metadata?: Record<string, any>;
+}
+```
+
+### Knowledge Base Types
+
+Handle knowledge base search and context:
+
+```typescript
+interface KnowledgeContext {
+  id: string;
+  title: string;
+  content: string;
+  source: string;
+  relevanceScore: number;
+  metadata?: Record<string, any>;
+}
+
+interface ToolCall {
+  id: string;
+  name: string;
+  parameters: Record<string, any>;
+  result?: any;
+}
+```
+
+### Component Props
+
+Full type definition for the main component:
+
+```typescript
+interface ChatInterfaceProps {
+  // Required props
+  projectId: string;
+  aiConfigId: string;
+
+  // API Configuration
+  apiBaseUrl?: string;
+  authorization?: string;
+  apiHeaders?: Record<string, string>;
+  restExecuteHeader?: string;
+
+  // UI Customization
+  welcomeMessage?: string;
+  placeholder?: string;
+  sendButtonText?: string;
+  modelName?: string;
+  personalityName?: string;
+
+  // Feature Toggles
+  enableKnowledgeBase?: boolean;
+  enableFunctionCalls?: boolean;
+  enableReActPattern?: boolean;
+  showUsageInfo?: boolean;
+  showTimestamp?: boolean;
+  showKnowledgeReferences?: boolean;
+  maxKnowledgeResults?: number;
+
+  // Styling
+  className?: string;
+  messagesClassName?: string;
+  inputClassName?: string;
+
+  // Event Callbacks
+  onMessageSent?: (message: Message) => void;
+  onResponseReceived?: (message: Message) => void;
+  onFunctionExecuted?: (functionCall: FunctionCall, result: ExecutionResult) => void;
+  onError?: (error: any) => void;
+}
+```
+
+## Typed Component Usage
+
+### Basic Typed Implementation
+
+```typescript
+import React, { useState, useCallback } from 'react';
+import { 
+  ChatInterface, 
+  Message, 
+  FunctionCall, 
+  ExecutionResult 
+} from '@termix-it/react-tool';
+
+interface ChatProps {
+  projectId: string;
+  aiConfigId: string;
+  userToken: string;
+}
+
+const TypedChat: React.FC<ChatProps> = ({ 
+  projectId, 
+  aiConfigId, 
+  userToken 
+}) => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
+
+  const handleMessageSent = useCallback((message: Message): void => {
+    setMessages(prev => [...prev, message]);
+    setIsProcessing(true);
+  }, []);
+
+  const handleResponseReceived = useCallback((message: Message): void => {
+    setMessages(prev => [...prev, message]);
+    setIsProcessing(false);
+  }, []);
+
+  const handleFunctionExecuted = useCallback((
+    functionCall: FunctionCall, 
+    result: ExecutionResult
+  ): void => {
+    console.log('Function executed:', {
+      name: functionCall.name,
+      success: result.success,
+      type: result.type
+    });
+
+    // Type-safe handling based on result type
+    if (result.type === 'contract' && result.success) {
+      const txHash = result.data?.transactionHash as string | undefined;
+      if (txHash) {
+        console.log('Transaction hash:', txHash);
+      }
+    }
+
+    if (result.type === 'api' && result.success) {
+      const apiResponse = result.data;
+      // Handle API response with proper typing
+    }
+  }, []);
+
+  const handleError = useCallback((error: unknown): void => {
+    console.error('Chat error:', error);
+    setIsProcessing(false);
+    
+    // Type-safe error handling
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+    }
+  }, []);
+
+  return (
+    <ChatInterface
+      projectId={projectId}
+      aiConfigId={aiConfigId}
+      authorization={`Bearer ${userToken}`}
+      apiBaseUrl="/api/proxy"
+      enableFunctionCalls={true}
+      enableKnowledgeBase={true}
+      onMessageSent={handleMessageSent}
+      onResponseReceived={handleResponseReceived}
+      onFunctionExecuted={handleFunctionExecuted}
+      onError={handleError}
+    />
+  );
+};
+
+export default TypedChat;
+```
+
+### Advanced Typed Implementation
+
+```typescript
+import React, { useState, useCallback, useMemo } from 'react';
+import { 
+  ChatInterface, 
+  Message, 
+  FunctionCall, 
+  ExecutionResult,
+  KnowledgeContext,
+  ChatInterfaceProps 
+} from '@termix-it/react-tool';
+
+// Custom hook for function call handling
+interface UseFunctionCallsResult {
+  executionHistory: Array<{
+    call: FunctionCall;
+    result: ExecutionResult;
+    timestamp: Date;
+  }>;
+  handleExecution: (call: FunctionCall, result: ExecutionResult) => void;
+  clearHistory: () => void;
+}
+
+const useFunctionCalls = (): UseFunctionCallsResult => {
+  const [executionHistory, setExecutionHistory] = useState<
+    Array<{
+      call: FunctionCall;
+      result: ExecutionResult;
+      timestamp: Date;
+    }>
+  >([]);
+
+  const handleExecution = useCallback((
+    call: FunctionCall, 
+    result: ExecutionResult
+  ): void => {
+    setExecutionHistory(prev => [
+      ...prev,
+      { call, result, timestamp: new Date() }
+    ]);
+  }, []);
+
+  const clearHistory = useCallback((): void => {
+    setExecutionHistory([]);
+  }, []);
+
+  return { executionHistory, handleExecution, clearHistory };
+};
+
+// Enhanced component with full TypeScript support
+interface AdvancedChatProps extends Partial<ChatInterfaceProps> {
+  projectId: string;
+  aiConfigId: string;
+  userToken: string;
+  onKnowledgeSearch?: (context: KnowledgeContext[]) => void;
+}
+
+const AdvancedTypedChat: React.FC<AdvancedChatProps> = ({
+  projectId,
+  aiConfigId,
+  userToken,
+  onKnowledgeSearch,
+  ...additionalProps
+}) => {
+  const [chatHistory, setChatHistory] = useState<Message[]>([]);
+  const [knowledgeStats, setKnowledgeStats] = useState<{
+    totalSearches: number;
+    documentsFound: number;
+  }>({ totalSearches: 0, documentsFound: 0 });
+
+  const { executionHistory, handleExecution, clearHistory } = useFunctionCalls();
+
+  // Type-safe API headers configuration
+  const apiHeaders = useMemo<Record<string, string>>(() => ({
+    'X-Client-Version': '1.0.0',
+    'X-User-Agent': 'TypedChatInterface',
+    'Content-Type': 'application/json'
+  }), []);
+
+  const handleResponseReceived = useCallback((message: Message): void => {
+    setChatHistory(prev => [...prev, message]);
+
+    // Handle knowledge base context
+    if (message.knowledgeContext && message.knowledgeContext.length > 0) {
+      setKnowledgeStats(prev => ({
+        totalSearches: prev.totalSearches + 1,
+        documentsFound: prev.documentsFound + message.knowledgeContext!.length
+      }));
+
+      onKnowledgeSearch?.(message.knowledgeContext);
+    }
+  }, [onKnowledgeSearch]);
+
+  const handleTypedError = useCallback((error: unknown): void => {
+    // Comprehensive error type checking
+    if (error instanceof Error) {
+      console.error('Standard Error:', error.message);
+    } else if (typeof error === 'string') {
+      console.error('String Error:', error);
+    } else if (error && typeof error === 'object') {
+      const errorObj = error as Record<string, unknown>;
+      console.error('Object Error:', {
+        message: errorObj.message,
+        code: errorObj.code,
+        details: errorObj.details
+      });
+    } else {
+      console.error('Unknown Error:', error);
+    }
+  }, []);
+
+  // Merge props with type safety
+  const chatProps: ChatInterfaceProps = {
+    projectId,
+    aiConfigId,
+    authorization: `Bearer ${userToken}`,
+    apiBaseUrl: '/api/proxy',
+    apiHeaders,
+    enableFunctionCalls: true,
+    enableKnowledgeBase: true,
+    enableReActPattern: true,
+    onResponseReceived: handleResponseReceived,
+    onFunctionExecuted: handleExecution,
+    onError: handleTypedError,
+    ...additionalProps
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Knowledge Stats Display */}
+      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <h3 className="text-sm font-semibold text-blue-800">Knowledge Stats</h3>
+        <p className="text-xs text-blue-600">
+          Searches: {knowledgeStats.totalSearches}, 
+          Documents: {knowledgeStats.documentsFound}
+        </p>
+      </div>
+
+      {/* Function Execution History */}
+      {executionHistory.length > 0 && (
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-sm font-semibold text-green-800">
+              Function Calls ({executionHistory.length})
+            </h3>
+            <button 
+              onClick={clearHistory}
+              className="text-xs text-green-600 hover:text-green-800"
+            >
+              Clear
+            </button>
+          </div>
+          <div className="space-y-1">
+            {executionHistory.slice(-3).map((entry, index) => (
+              <div key={index} className="text-xs text-green-700">
+                <span className="font-mono">{entry.call.name}</span>
+                <span className={`ml-2 ${entry.result.success ? 'text-green-600' : 'text-red-600'}`}>
+                  {entry.result.success ? '✓' : '✗'}
+                </span>
+                <span className="ml-2 text-gray-500">
+                  {entry.timestamp.toLocaleTimeString()}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <ChatInterface {...chatProps} />
+    </div>
+  );
+};
+
+export default AdvancedTypedChat;
+```
+
+## Custom Type Extensions
+
+### Extending Base Types
+
+Create custom types for your specific use case:
+
+```typescript
+// Extend the base Message interface
+interface CustomMessage extends Message {
+  customData?: {
+    userAgent?: string;
+    sessionId?: string;
+    metadata?: Record<string, any>;
+  };
+}
+
+// Create specific function call types
+interface APIFunctionCall extends FunctionCall {
+  metadata: Required<Pick<FunctionCallMetadata, 'type' | 'method' | 'path'>> & {
+    type: 'api';
+  };
+}
+
+interface ContractFunctionCall extends FunctionCall {
+  metadata: Required<Pick<FunctionCallMetadata, 'type' | 'contractName' | 'contractAddress'>> & {
+    type: 'contract';
+  };
+}
+
+// Union type for specific function calls
+type SpecificFunctionCall = APIFunctionCall | ContractFunctionCall;
+
+// Custom execution result with specific data types
+interface APIExecutionResult extends ExecutionResult {
+  type: 'api';
+  data?: {
+    status: number;
+    headers: Record<string, string>;
+    body: any;
+  };
+}
+
+interface ContractExecutionResult extends ExecutionResult {
+  type: 'contract';
+  data?: {
+    transactionHash: string;
+    blockNumber?: number;
+    gasUsed?: string;
+  };
+}
+```
+
+### Type Guards
+
+Implement type guards for safe type checking:
+
+```typescript
+// Type guard for API function calls
+function isAPIFunctionCall(call: FunctionCall): call is APIFunctionCall {
+  return call.metadata?.type === 'api';
+}
+
+// Type guard for contract function calls
+function isContractFunctionCall(call: FunctionCall): call is ContractFunctionCall {
+  return call.metadata?.type === 'contract';
+}
+
+// Type guard for API execution results
+function isAPIExecutionResult(result: ExecutionResult): result is APIExecutionResult {
+  return result.type === 'api';
+}
+
+// Type guard for contract execution results
+function isContractExecutionResult(result: ExecutionResult): result is ContractExecutionResult {
+  return result.type === 'contract';
+}
+
+// Usage with type guards
+const handleTypedFunctionExecution = (
+  call: FunctionCall, 
+  result: ExecutionResult
+): void => {
+  if (isAPIFunctionCall(call) && isAPIExecutionResult(result)) {
+    // TypeScript now knows these are API-specific types
+    console.log('API call:', call.metadata.method, call.metadata.path);
+    console.log('Response status:', result.data?.status);
+  }
+  
+  if (isContractFunctionCall(call) && isContractExecutionResult(result)) {
+    // TypeScript now knows these are contract-specific types
+    console.log('Contract:', call.metadata.contractName);
+    console.log('Transaction:', result.data?.transactionHash);
+  }
+};
+```
+
+## Generic Type Utilities
+
+### Utility Types
+
+Create utility types for common patterns:
+
+```typescript
+// Extract function names from function calls
+type FunctionNames<T extends FunctionCall> = T['name'];
+
+// Create a mapped type for function parameters
+type FunctionParameters<T extends string> = Record<T, any>;
+
+// Utility type for configuration objects
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+// Configuration with optional nested properties
+type ChatConfig = DeepPartial<ChatInterfaceProps>;
+
+// Example usage
+const config: ChatConfig = {
+  enableFunctionCalls: true,
+  // All other properties are optional
+};
+```
+
+### Hook Types
+
+Type your custom hooks properly:
+
+```typescript
+interface UseChatStateResult {
+  messages: Message[];
+  isLoading: boolean;
+  error: Error | null;
+  sendMessage: (content: string) => Promise<void>;
+  clearMessages: () => void;
+}
+
+const useChatState = (
+  projectId: string,
+  aiConfigId: string,
+  authorization: string
+): UseChatStateResult => {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const sendMessage = useCallback(async (content: string): Promise<void> => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Implementation here
+      const newMessage: Message = {
+        id: `msg-${Date.now()}`,
+        role: 'user',
+        content,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, newMessage]);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, aiConfigId, authorization]);
+
+  const clearMessages = useCallback((): void => {
+    setMessages([]);
+    setError(null);
+  }, []);
+
+  return {
+    messages,
+    isLoading,
+    error,
+    sendMessage,
+    clearMessages
+  };
+};
+```
+
+## Best Practices
+
+<Tip>
+**Strict Type Checking**: Enable strict TypeScript settings in your `tsconfig.json` for better type safety:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true
+  }
+}
+```
+</Tip>
+
+<Tip>
+**Type Imports**: Use `import type` for type-only imports to avoid runtime overhead and ensure better tree shaking.
+</Tip>
+
+<Warning>
+Always use type guards when working with union types to ensure type safety at runtime.
+</Warning>
+
+## Common TypeScript Patterns
+
+### Conditional Rendering with Types
+
+```typescript
+interface ConditionalChatProps {
+  mode: 'simple' | 'advanced';
+  projectId: string;
+  aiConfigId: string;
+}
+
+const ConditionalChat: React.FC<ConditionalChatProps> = ({ mode, ...props }) => {
+  if (mode === 'simple') {
+    return (
+      <ChatInterface
+        {...props}
+        enableFunctionCalls={false}
+        showUsageInfo={false}
+      />
+    );
+  }
+
+  return (
+    <ChatInterface
+      {...props}
+      enableFunctionCalls={true}
+      enableKnowledgeBase={true}
+      showUsageInfo={true}
+    />
+  );
+};
+```
+
+With full TypeScript support, you can build robust, type-safe applications using @termix-it/react-tool while catching potential errors at compile time.
