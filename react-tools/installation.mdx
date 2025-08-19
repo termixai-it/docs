@@ -80,12 +80,80 @@ function App() {
         authorization="Bearer your-jwt-token"
         welcomeMessage="Hello! How can I help you today?"
         placeholder="Type your message..."
+        enableStreamingMode={true} // Enable real-time streaming
       />
     </div>
   );
 }
 
 export default App;
+```
+
+## Alternative Setups
+
+### ChatWidget for Floating Interface
+
+For a non-intrusive floating chat widget, use the `ChatWidget` component:
+
+```tsx FloatingChat.tsx
+import { ChatWidget, ChatInterface } from '@termix-it/react-tool';
+import '@termix-it/react-tool/dist/styles.css';
+
+function App() {
+  return (
+    <div className="relative h-screen">
+      {/* Your main application content */}
+      <div>Your application content here</div>
+      
+      {/* Floating chat widget - positioned bottom right */}
+      <div className="fixed bottom-6 right-6">
+        <ChatWidget
+          title="AI Assistant"
+          subtitle="How can we help you today?"
+        >
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            apiBaseUrl="/api/proxy"
+            authorization="Bearer your-jwt-token"
+            enableStreamingMode={true}
+            welcomeMessage="Hello! How can I help you?"
+            className="h-full"
+          />
+        </ChatWidget>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+```
+
+### Streaming Mode Setup
+
+Enable real-time streaming responses for a more dynamic experience:
+
+```tsx StreamingChat.tsx
+import { ChatInterface } from '@termix-it/react-tool';
+import '@termix-it/react-tool/dist/styles.css';
+
+function StreamingApp() {
+  return (
+    <div className="h-screen">
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="your-ai-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-jwt-token"
+        enableStreamingMode={true} // Real-time character-by-character display
+        welcomeMessage="I'll respond in real-time as I think..."
+        placeholder="Ask me anything..."
+      />
+    </div>
+  );
+}
+
+export default StreamingApp;
 ```
 
 ## Configuration Parameters
@@ -138,6 +206,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 Never expose your API keys directly in the frontend. Always use a server-side proxy to handle authentication with the Termix API.
 </Warning>
 
+<Info>
+**Streaming Mode Requirements**: If you enable `enableStreamingMode={true}`, your proxy endpoint must support Server-Sent Events (SSE). See the [Streaming Mode guide](/react-tools/streaming) for detailed implementation instructions.
+</Info>
+
 ## Testing Your Setup
 
 Once you have the basic setup complete, you should see:
@@ -148,6 +220,13 @@ Once you have the basic setup complete, you should see:
 4. **Send button** to submit messages
 
 Try sending a test message to verify the connection is working properly.
+
+### Testing Streaming Mode
+
+If you enabled streaming mode, you should see:
+- Characters appearing one by one as the AI responds
+- No loading spinner during responses
+- Real-time typing effect
 
 ## Common Issues
 
@@ -176,6 +255,12 @@ Now that you have the basic setup working, you can:
 <CardGroup cols={2}>
   <Card title="Explore Configuration" icon="gear" href="/react-tools/configuration">
     Learn about all available props and customization options
+  </Card>
+  <Card title="ChatWidget Component" icon="comment" href="/react-tools/widget">
+    Create floating chat widgets for customer support and help functionality
+  </Card>
+  <Card title="Streaming Mode" icon="bolt" href="/react-tools/streaming">
+    Enable real-time streaming responses with Server-Sent Events
   </Card>
   <Card title="Advanced Features" icon="rocket" href="/react-tools/advanced-usage">
     Set up function calling, smart contracts, and knowledge base integration

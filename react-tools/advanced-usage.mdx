@@ -5,7 +5,7 @@ description: "Learn advanced features including function calling, smart contract
 
 # Advanced Usage
 
-Unlock the full potential of @termix-it/react-tool with advanced features like function calling, smart contract integration, and custom implementations.
+Unlock the full potential of @termix-it/react-tool with advanced features like function calling, smart contract integration, streaming mode, floating chat widgets, and custom implementations.
 
 ## Function Calling
 
@@ -96,6 +96,363 @@ function DynamicHeadersChat() {
         restExecuteHeader={customHeaders}
         enableFunctionCalls={true}
         placeholder="Ask me to fetch your data or update settings..."
+      />
+    </div>
+  );
+}
+```
+
+## ChatWidget Advanced Usage
+
+The ChatWidget component provides sophisticated floating chat capabilities with extensive customization options.
+
+### Dynamic Widget State Management
+
+Control widget behavior based on application state and user interactions:
+
+```tsx
+import { useState, useEffect, useCallback } from 'react';
+import { ChatWidget, ChatInterface, Message, FunctionCall, ExecutionResult } from '@termix-it/react-tool';
+
+function DynamicWidget() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState('/dashboard');
+  const { user, isAuthenticated } = useAuth();
+
+  // Auto-open widget for new users
+  useEffect(() => {
+    if (isAuthenticated && user.isFirstTimeUser) {
+      setIsOpen(true);
+    }
+  }, [isAuthenticated, user]);
+
+  // Page-specific context
+  const getContextualWelcome = useCallback(() => {
+    const contexts = {
+      '/dashboard': 'Need help with your dashboard? I can explain any metrics or features.',
+      '/settings': 'Having trouble with settings? I can guide you through configuration.',
+      '/billing': 'Questions about billing or subscription? I\'m here to help.',
+      default: 'Hi! How can I assist you today?'
+    };
+    return contexts[currentPage] || contexts.default;
+  }, [currentPage]);
+
+  const handleNewResponse = useCallback((message: Message) => {
+    if (!isOpen) {
+      setUnreadCount(prev => prev + 1);
+    }
+  }, [isOpen]);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      setUnreadCount(0); // Clear notifications when opened
+    }
+  }, []);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed bottom-6 right-6">
+        <ChatWidget
+          title="Guest Support"
+          subtitle="Sign in for personalized help"
+          buttonClassName="opacity-75"
+        >
+          <div className="p-4 text-center">
+            <p className="mb-4">Please sign in to access AI assistance</p>
+            <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+              Sign In
+            </button>
+          </div>
+        </ChatWidget>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed bottom-6 right-6">
+      {unreadCount > 0 && (
+        <div className="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs z-10">
+          {unreadCount}
+        </div>
+      )}
+      
+      <ChatWidget
+        title={`Hi ${user.name}!`}
+        subtitle={currentPage === '/dashboard' ? 'Dashboard Help' : 'Support'}
+        defaultOpen={isOpen}
+        onOpenChange={handleOpenChange}
+        buttonClassName={unreadCount > 0 ? 'animate-pulse ring-2 ring-red-400' : ''}
+      >
+        <ChatInterface
+          projectId="your-project-id"
+          aiConfigId="your-ai-config-id"
+          apiBaseUrl="/api/proxy"
+          authorization={`Bearer ${user.token}`}
+          enableStreamingMode={true}
+          enableFunctionCalls={true}
+          welcomeMessage={getContextualWelcome()}
+          onResponseReceived={handleNewResponse}
+          apiHeaders={{
+            'X-User-ID': user.id,
+            'X-Current-Page': currentPage,
+            'X-User-Role': user.role
+          }}
+          className="h-full"
+        />
+      </ChatWidget>
+    </div>
+  );
+}
+```
+
+### Multi-Widget Implementation
+
+Deploy multiple specialized widgets for different use cases:
+
+```tsx
+function MultiWidgetApp() {
+  const [activeWidgets, setActiveWidgets] = useState({
+    support: false,
+    sales: false,
+    technical: false
+  });
+
+  return (
+    <div className="relative min-h-screen">
+      {/* Main content */}
+      <div>Your application content</div>
+
+      {/* Support Widget - Bottom Right */}
+      <div className="fixed bottom-6 right-6">
+        <ChatWidget
+          title="Customer Support"
+          subtitle="General help & questions"
+          buttonIcon="/icons/support.svg"
+          defaultOpen={activeWidgets.support}
+          onOpenChange={(open) => setActiveWidgets(prev => ({...prev, support: open}))}
+        >
+          <ChatInterface
+            projectId="support-project-id"
+            aiConfigId="support-ai-config"
+            apiBaseUrl="/api/proxy"
+            authorization="Bearer support-token"
+            enableStreamingMode={true}
+            welcomeMessage="Hi! I'm your support assistant. How can I help?"
+          />
+        </ChatWidget>
+      </div>
+
+      {/* Sales Widget - Bottom Left */}
+      <div className="fixed bottom-6 left-6">
+        <ChatWidget
+          title="Sales Assistant"
+          subtitle="Product info & pricing"
+          buttonIcon="/icons/sales.svg"
+          buttonClassName="bg-green-500 hover:bg-green-600"
+          defaultOpen={activeWidgets.sales}
+          onOpenChange={(open) => setActiveWidgets(prev => ({...prev, sales: open}))}
+        >
+          <ChatInterface
+            projectId="sales-project-id"
+            aiConfigId="sales-ai-config"
+            apiBaseUrl="/api/proxy"
+            authorization="Bearer sales-token"
+            enableStreamingMode={true}
+            welcomeMessage="Interested in our products? I can help with pricing and features!"
+          />
+        </ChatWidget>
+      </div>
+
+      {/* Technical Widget - Top Right */}
+      <div className="fixed top-6 right-6">
+        <ChatWidget
+          title="Technical Support"
+          subtitle="API & integration help"
+          buttonIcon="/icons/technical.svg"
+          buttonClassName="bg-purple-500 hover:bg-purple-600"
+          defaultOpen={activeWidgets.technical}
+          onOpenChange={(open) => setActiveWidgets(prev => ({...prev, technical: open}))}
+        >
+          <ChatInterface
+            projectId="technical-project-id"
+            aiConfigId="technical-ai-config"
+            apiBaseUrl="/api/proxy"
+            authorization="Bearer technical-token"
+            enableStreamingMode={true}
+            enableFunctionCalls={true}
+            welcomeMessage="Need technical help? I can assist with APIs, integrations, and troubleshooting."
+          />
+        </ChatWidget>
+      </div>
+    </div>
+  );
+}
+```
+
+## Real-time Streaming Implementation
+
+Advanced streaming configurations for optimal user experience:
+
+### Streaming with Connection Monitoring
+
+```tsx
+import { useState, useCallback, useRef, useEffect } from 'react';
+
+function MonitoredStreamingChat() {
+  const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+  const [streamingStats, setStreamingStats] = useState({
+    charactersReceived: 0,
+    chunksReceived: 0,
+    averageLatency: 0
+  });
+  const streamStartTimeRef = useRef<number>(0);
+
+  const handleMessageSent = useCallback(() => {
+    setConnectionStatus('connecting');
+    streamStartTimeRef.current = Date.now();
+    setStreamingStats(prev => ({ ...prev, charactersReceived: 0, chunksReceived: 0 }));
+  }, []);
+
+  const handleResponseReceived = useCallback((message: Message) => {
+    setConnectionStatus('connected');
+    const streamEndTime = Date.now();
+    const latency = streamEndTime - streamStartTimeRef.current;
+    
+    setStreamingStats(prev => ({
+      ...prev,
+      charactersReceived: message.content.length,
+      averageLatency: latency
+    }));
+  }, []);
+
+  const handleError = useCallback((error: any) => {
+    setConnectionStatus('error');
+    console.error('Streaming error:', error);
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      {/* Connection Status Dashboard */}
+      <div className="p-4 border rounded-lg bg-gray-50">
+        <h3 className="text-sm font-semibold mb-2">Streaming Status</h3>
+        <div className="grid grid-cols-2 gap-4 text-xs">
+          <div>
+            <span className="text-gray-600">Status:</span>
+            <span className={`ml-2 font-semibold ${
+              connectionStatus === 'connected' ? 'text-green-600' :
+              connectionStatus === 'connecting' ? 'text-yellow-600' :
+              connectionStatus === 'error' ? 'text-red-600' :
+              'text-gray-500'
+            }`}>
+              {connectionStatus}
+            </span>
+          </div>
+          <div>
+            <span className="text-gray-600">Characters:</span>
+            <span className="ml-2 font-mono">{streamingStats.charactersReceived}</span>
+          </div>
+          <div>
+            <span className="text-gray-600">Chunks:</span>
+            <span className="ml-2 font-mono">{streamingStats.chunksReceived}</span>
+          </div>
+          <div>
+            <span className="text-gray-600">Latency:</span>
+            <span className="ml-2 font-mono">{streamingStats.averageLatency}ms</span>
+          </div>
+        </div>
+      </div>
+
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="your-ai-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-token"
+        enableStreamingMode={true}
+        onMessageSent={handleMessageSent}
+        onResponseReceived={handleResponseReceived}
+        onError={handleError}
+        welcomeMessage="Streaming mode active! Watch the real-time stats above."
+      />
+    </div>
+  );
+}
+```
+
+### Streaming with Progressive Enhancement
+
+```tsx
+function AdaptiveStreamingChat() {
+  const [streamingSupported, setStreamingSupported] = useState(true);
+  const [streamingEnabled, setStreamingEnabled] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+
+  const handleError = useCallback((error: any) => {
+    console.error('Streaming error:', error);
+    
+    // Check if it's a streaming-specific error
+    if (error.message?.includes('EventSource') || error.message?.includes('text/event-stream')) {
+      setRetryCount(prev => prev + 1);
+      
+      if (retryCount >= maxRetries) {
+        console.warn('Streaming failed after retries, falling back to regular mode');
+        setStreamingEnabled(false);
+        setStreamingSupported(false);
+      }
+    }
+  }, [retryCount]);
+
+  const toggleStreaming = useCallback(() => {
+    setStreamingEnabled(prev => !prev);
+    setRetryCount(0); // Reset retry count when manually toggling
+  }, []);
+
+  return (
+    <div className="space-y-4">
+      {/* Streaming Controls */}
+      <div className="flex items-center justify-between p-3 border rounded bg-blue-50">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium">Streaming Mode:</span>
+          <button
+            onClick={toggleStreaming}
+            disabled={!streamingSupported}
+            className={`px-3 py-1 text-xs rounded font-medium ${
+              streamingEnabled && streamingSupported
+                ? 'bg-green-100 text-green-800 border border-green-300'
+                : 'bg-gray-100 text-gray-600 border border-gray-300'
+            } ${!streamingSupported ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            {streamingEnabled && streamingSupported ? 'ON' : 'OFF'}
+          </button>
+        </div>
+        
+        {!streamingSupported && (
+          <span className="text-xs text-orange-600">
+            Fallback to regular mode
+          </span>
+        )}
+        
+        {retryCount > 0 && streamingSupported && (
+          <span className="text-xs text-yellow-600">
+            Retry {retryCount}/{maxRetries}
+          </span>
+        )}
+      </div>
+
+      <ChatInterface
+        projectId="your-project-id"
+        aiConfigId="your-ai-config-id"
+        apiBaseUrl="/api/proxy"
+        authorization="Bearer your-token"
+        enableStreamingMode={streamingEnabled && streamingSupported}
+        onError={handleError}
+        welcomeMessage={
+          streamingEnabled && streamingSupported
+            ? "Streaming mode enabled - responses will appear in real-time!"
+            : "Regular mode active - responses will appear all at once."
+        }
       />
     </div>
   );

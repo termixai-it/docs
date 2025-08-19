@@ -43,7 +43,14 @@
             "group": "Advanced Features",
             "pages": [
               "react-tools/advanced-usage",
+              "react-tools/streaming",
               "react-tools/typescript"
+            ]
+          },
+          {
+            "group": "Components",
+            "pages": [
+              "react-tools/widget"
             ]
           }
         ]

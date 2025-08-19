@@ -19,6 +19,7 @@ import type {
   FunctionCall,
   ExecutionResult,
   ChatInterfaceProps,
+  ChatWidgetProps,
   APIConfig
 } from '@termix-it/react-tool';
 ```
@@ -127,6 +128,8 @@ interface ChatInterfaceProps {
   enableKnowledgeBase?: boolean;
   enableFunctionCalls?: boolean;
   enableReActPattern?: boolean;
+  enableStreamingMode?: boolean;
+  showHeader?: boolean;
   showUsageInfo?: boolean;
   showTimestamp?: boolean;
   showKnowledgeReferences?: boolean;
@@ -145,6 +148,31 @@ interface ChatInterfaceProps {
 }
 ```
 
+### ChatWidget Props
+
+Interface for the ChatWidget component:
+
+```typescript
+interface ChatWidgetProps {
+  // Display Configuration
+  title?: string;
+  subtitle?: string;
+  buttonIcon?: string;
+
+  // Styling
+  className?: string;
+  buttonClassName?: string;
+  dialogClassName?: string;
+
+  // State Management
+  defaultOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+
+  // Content
+  children: React.ReactNode;
+}
+```
+
 ## Typed Component Usage
 
 ### Basic Typed Implementation
@@ -152,7 +180,8 @@ interface ChatInterfaceProps {
 ```typescript
 import React, { useState, useCallback } from 'react';
 import { 
-  ChatInterface, 
+  ChatInterface,
+  ChatWidget, 
   Message, 
   FunctionCall, 
   ExecutionResult 
@@ -233,6 +262,215 @@ const TypedChat: React.FC<ChatProps> = ({
 };
 
 export default TypedChat;
+```
+
+### ChatWidget with TypeScript
+
+Type-safe ChatWidget implementation with advanced state management:
+
+```typescript
+import React, { useState, useCallback, useEffect } from 'react';
+import { 
+  ChatWidget,
+  ChatInterface,
+  Message,
+  FunctionCall,
+  ExecutionResult,
+  ChatWidgetProps,
+  ChatInterfaceProps
+} from '@termix-it/react-tool';
+
+interface WidgetState {
+  isOpen: boolean;
+  unreadCount: number;
+  lastActivity: Date | null;
+}
+
+interface TypedWidgetProps {
+  projectId: string;
+  aiConfigId: string;
+  userToken: string;
+  onWidgetStateChange?: (state: WidgetState) => void;
+}
+
+const TypedChatWidget: React.FC<TypedWidgetProps> = ({
+  projectId,
+  aiConfigId,
+  userToken,
+  onWidgetStateChange
+}) => {
+  const [widgetState, setWidgetState] = useState<WidgetState>({
+    isOpen: false,
+    unreadCount: 0,
+    lastActivity: null
+  });
+
+  const updateWidgetState = useCallback((updates: Partial<WidgetState>) => {
+    setWidgetState(prev => {
+      const newState = { ...prev, ...updates };
+      onWidgetStateChange?.(newState);
+      return newState;
+    });
+  }, [onWidgetStateChange]);
+
+  const handleOpenChange = useCallback((open: boolean): void => {
+    updateWidgetState({
+      isOpen: open,
+      unreadCount: open ? 0 : widgetState.unreadCount,
+      lastActivity: new Date()
+    });
+  }, [updateWidgetState, widgetState.unreadCount]);
+
+  const handleResponseReceived = useCallback((message: Message): void => {
+    if (!widgetState.isOpen) {
+      updateWidgetState({
+        unreadCount: widgetState.unreadCount + 1,
+        lastActivity: message.timestamp
+      });
+    }
+  }, [widgetState.isOpen, widgetState.unreadCount, updateWidgetState]);
+
+  const handleFunctionExecuted = useCallback((
+    call: FunctionCall,
+    result: ExecutionResult
+  ): void => {
+    console.log('Function executed in widget:', {
+      name: call.name,
+      success: result.success,
+      type: result.type
+    });
+
+    // Type-safe result handling
+    if (result.success) {
+      switch (result.type) {
+        case 'api':
+          console.log('API call succeeded:', result.data);
+          break;
+        case 'contract':
+          console.log('Contract call succeeded:', result.data);
+          break;
+      }
+    }
+  }, []);
+
+  // Widget props with proper typing
+  const widgetProps: ChatWidgetProps = {
+    title: "AI Assistant",
+    subtitle: `${widgetState.unreadCount > 0 ? `${widgetState.unreadCount} new messages` : 'How can we help?'}`,
+    defaultOpen: widgetState.isOpen,
+    onOpenChange: handleOpenChange,
+    buttonClassName: widgetState.unreadCount > 0 ? 'animate-pulse ring-2 ring-blue-400' : ''
+  };
+
+  // ChatInterface props with proper typing
+  const chatProps: ChatInterfaceProps = {
+    projectId,
+    aiConfigId,
+    authorization: `Bearer ${userToken}`,
+    apiBaseUrl: '/api/proxy',
+    enableStreamingMode: true,
+    enableFunctionCalls: true,
+    onResponseReceived: handleResponseReceived,
+    onFunctionExecuted: handleFunctionExecuted,
+    className: 'h-full'
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6">
+      <ChatWidget {...widgetProps}>
+        <ChatInterface {...chatProps} />
+      </ChatWidget>
+    </div>
+  );
+};
+
+export default TypedChatWidget;
+```
+
+### Streaming Mode Types
+
+Additional types for streaming functionality:
+
+```typescript
+// Streaming connection states
+type StreamingStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+
+// Streaming statistics
+interface StreamingStats {
+  charactersReceived: number;
+  chunksReceived: number;
+  averageLatency: number;
+  connectionUptime: number;
+}
+
+// Streaming event types
+interface StreamingEvent {
+  type: 'content' | 'done' | 'error';
+  data?: string;
+  sessionId?: string;
+  error?: string;
+}
+
+// Enhanced ChatInterface props for streaming
+interface StreamingChatInterfaceProps extends ChatInterfaceProps {
+  enableStreamingMode: true;
+  onStreamingStatusChange?: (status: StreamingStatus) => void;
+  onStreamingStatsUpdate?: (stats: StreamingStats) => void;
+}
+
+// Streaming implementation example
+const StreamingTypedChat: React.FC<{
+  projectId: string;
+  aiConfigId: string;
+  userToken: string;
+}> = ({ projectId, aiConfigId, userToken }) => {
+  const [streamingStatus, setStreamingStatus] = useState<StreamingStatus>('disconnected');
+  const [streamingStats, setStreamingStats] = useState<StreamingStats>({
+    charactersReceived: 0,
+    chunksReceived: 0,
+    averageLatency: 0,
+    connectionUptime: 0
+  });
+
+  const handleStreamingStatusChange = useCallback((status: StreamingStatus): void => {
+    setStreamingStatus(status);
+  }, []);
+
+  const handleStreamingStatsUpdate = useCallback((stats: StreamingStats): void => {
+    setStreamingStats(stats);
+  }, []);
+
+  const chatProps: StreamingChatInterfaceProps = {
+    projectId,
+    aiConfigId,
+    authorization: `Bearer ${userToken}`,
+    apiBaseUrl: '/api/proxy',
+    enableStreamingMode: true,
+    onStreamingStatusChange: handleStreamingStatusChange,
+    onStreamingStatsUpdate: handleStreamingStatsUpdate
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Streaming status indicator */}
+      <div className="p-3 border rounded bg-blue-50">
+        <div className="flex items-center justify-between text-sm">
+          <span>Streaming Status:</span>
+          <span className={`font-semibold ${
+            streamingStatus === 'connected' ? 'text-green-600' :
+            streamingStatus === 'connecting' ? 'text-yellow-600' :
+            streamingStatus === 'error' ? 'text-red-600' :
+            'text-gray-500'
+          }`}>
+            {streamingStatus}
+          </span>
+        </div>
+      </div>
+
+      <ChatInterface {...chatProps} />
+    </div>
+  );
+};
 ```
 
 ### Advanced Typed Implementation
@@ -444,6 +682,38 @@ interface ContractFunctionCall extends FunctionCall {
 // Union type for specific function calls
 type SpecificFunctionCall = APIFunctionCall | ContractFunctionCall;
 
+// ChatWidget-specific extensions
+interface WidgetConfiguration {
+  appearance: {
+    theme: 'light' | 'dark' | 'auto';
+    position: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+    size: 'small' | 'medium' | 'large';
+  };
+  behavior: {
+    autoOpen: boolean;
+    closeOnOutsideClick: boolean;
+    showNotifications: boolean;
+  };
+}
+
+interface EnhancedChatWidgetProps extends ChatWidgetProps {
+  configuration?: WidgetConfiguration;
+  analytics?: {
+    trackOpenClose: boolean;
+    trackMessageCount: boolean;
+    trackSessionDuration: boolean;
+  };
+}
+
+// Streaming-specific type extensions
+interface StreamingMessage extends Message {
+  streamingMetadata?: {
+    chunkCount: number;
+    streamingDuration: number;
+    averageChunkSize: number;
+  };
+}
+
 // Custom execution result with specific data types
 interface APIExecutionResult extends ExecutionResult {
   type: 'api';
@@ -487,6 +757,16 @@ function isAPIExecutionResult(result: ExecutionResult): result is APIExecutionRe
 // Type guard for contract execution results
 function isContractExecutionResult(result: ExecutionResult): result is ContractExecutionResult {
   return result.type === 'contract';
+}
+
+// Type guard for streaming messages
+function isStreamingMessage(message: Message): message is StreamingMessage {
+  return 'streamingMetadata' in message && message.streamingMetadata !== undefined;
+}
+
+// Type guard for enhanced widget props
+function isEnhancedChatWidgetProps(props: ChatWidgetProps): props is EnhancedChatWidgetProps {
+  return 'configuration' in props || 'analytics' in props;
 }
 
 // Usage with type guards
@@ -549,6 +829,23 @@ interface UseChatStateResult {
   clearMessages: () => void;
 }
 
+interface UseChatWidgetResult {
+  isOpen: boolean;
+  unreadCount: number;
+  toggleWidget: () => void;
+  closeWidget: () => void;
+  markAsRead: () => void;
+  widgetState: WidgetState;
+}
+
+interface UseStreamingResult {
+  streamingStatus: StreamingStatus;
+  streamingStats: StreamingStats;
+  isStreaming: boolean;
+  reconnect: () => void;
+  disconnect: () => void;
+}
+
 const useChatState = (
   projectId: string,
   aiConfigId: string,
@@ -590,6 +887,76 @@ const useChatState = (
     error,
     sendMessage,
     clearMessages
+  };
+};
+
+// ChatWidget custom hook
+const useChatWidget = (initialOpen = false): UseChatWidgetResult => {
+  const [widgetState, setWidgetState] = useState<WidgetState>({
+    isOpen: initialOpen,
+    unreadCount: 0,
+    lastActivity: null
+  });
+
+  const toggleWidget = useCallback((): void => {
+    setWidgetState(prev => ({
+      ...prev,
+      isOpen: !prev.isOpen,
+      unreadCount: prev.isOpen ? prev.unreadCount : 0
+    }));
+  }, []);
+
+  const closeWidget = useCallback((): void => {
+    setWidgetState(prev => ({ ...prev, isOpen: false, unreadCount: 0 }));
+  }, []);
+
+  const markAsRead = useCallback((): void => {
+    setWidgetState(prev => ({ ...prev, unreadCount: 0 }));
+  }, []);
+
+  return {
+    isOpen: widgetState.isOpen,
+    unreadCount: widgetState.unreadCount,
+    toggleWidget,
+    closeWidget,
+    markAsRead,
+    widgetState
+  };
+};
+
+// Streaming custom hook
+const useStreaming = (enabled: boolean): UseStreamingResult => {
+  const [streamingStatus, setStreamingStatus] = useState<StreamingStatus>('disconnected');
+  const [streamingStats, setStreamingStats] = useState<StreamingStats>({
+    charactersReceived: 0,
+    chunksReceived: 0,
+    averageLatency: 0,
+    connectionUptime: 0
+  });
+
+  const reconnect = useCallback((): void => {
+    if (enabled) {
+      setStreamingStatus('connecting');
+      // Reconnection logic would go here
+    }
+  }, [enabled]);
+
+  const disconnect = useCallback((): void => {
+    setStreamingStatus('disconnected');
+    setStreamingStats({
+      charactersReceived: 0,
+      chunksReceived: 0,
+      averageLatency: 0,
+      connectionUptime: 0
+    });
+  }, []);
+
+  return {
+    streamingStatus,
+    streamingStats,
+    isStreaming: streamingStatus === 'connected',
+    reconnect,
+    disconnect
   };
 };
 ```

@@ -1,0 +1,429 @@
+---
+title: "ChatWidget Component"
+description: "Add a floating chat widget to your application with the ChatWidget component for seamless customer support and help functionality"
+---
+
+# ChatWidget Component
+
+The `ChatWidget` component provides a floating chat button with a popup dialog interface, perfect for customer service, help functionality, or any application where you want to offer AI assistance without dedicating screen space to a full chat interface.
+
+## Features
+
+<CardGroup cols={2}>
+  <Card title="🎈 Floating Interface" icon="comment">
+    Non-intrusive floating button that expands into a full chat dialog
+  </Card>
+  <Card title="🎨 Customizable Button" icon="palette">
+    Custom button icons, positioning, and styling options
+  </Card>
+  <Card title="📱 Responsive Design" icon="mobile">
+    Optimized for both desktop and mobile interactions
+  </Card>
+  <Card title="🔧 Easy Integration" icon="plug">
+    Works seamlessly with existing ChatInterface configurations
+  </Card>
+</CardGroup>
+
+## Basic Usage
+
+The ChatWidget wraps a ChatInterface component and provides its own header, so you typically don't need to enable `showHeader` on the internal ChatInterface.
+
+```tsx
+import { ChatWidget, ChatInterface } from '@termix-it/react-tool';
+import '@termix-it/react-tool/dist/styles.css';
+
+function App() {
+  return (
+    <div className="relative h-screen">
+      {/* Your main content */}
+      <div>Your application content</div>
+      
+      {/* Fixed positioned chat widget */}
+      <div className="fixed bottom-6 right-6">
+        <ChatWidget
+          title="AI Assistant"
+          subtitle="How can we help you today?"
+        >
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            apiBaseUrl="/api/proxy"
+            authorization="Bearer your-token"
+            enableStreamingMode={true}
+            welcomeMessage="Hello! How can I help you?"
+            className="h-full"
+          />
+        </ChatWidget>
+      </div>
+    </div>
+  );
+}
+```
+
+## ChatWidget Props
+
+Complete reference for all ChatWidget configuration options:
+
+<ParamField path="title" type="string" default="AI Assistant">
+  Dialog header title displayed at the top of the chat widget
+</ParamField>
+
+<ParamField path="subtitle" type="string" default="智能助手为您服务">
+  Dialog header subtitle displayed below the title
+</ParamField>
+
+<ParamField path="buttonIcon" type="string" default="undefined">
+  Custom button icon URL. When not specified, uses the default chat icon
+</ParamField>
+
+<ParamField path="className" type="string" default="">
+  CSS classes for the widget container
+</ParamField>
+
+<ParamField path="buttonClassName" type="string" default="">
+  CSS classes for the floating chat button
+</ParamField>
+
+<ParamField path="dialogClassName" type="string" default="">
+  CSS classes for the chat dialog container
+</ParamField>
+
+<ParamField path="defaultOpen" type="boolean" default="false">
+  Whether the dialog should be open by default when the component mounts
+</ParamField>
+
+<ParamField path="onOpenChange" type="(open: boolean) => void" default="undefined">
+  Callback function called when the dialog open state changes
+</ParamField>
+
+<ParamField path="children" type="React.ReactNode" required>
+  Dialog content, typically a ChatInterface component
+</ParamField>
+
+## Advanced Examples
+
+### Custom Button Icon
+
+Replace the default chat icon with your own branding:
+
+```tsx
+<ChatWidget
+  buttonIcon="/assets/support-icon.png"
+  title="Customer Support"
+  subtitle="We're here to help!"
+  buttonClassName="shadow-lg border-2 border-blue-500"
+>
+  <ChatInterface {...chatProps} />
+</ChatWidget>
+```
+
+### Controlled State Management
+
+Control the widget's open/closed state programmatically:
+
+```tsx
+import { useState } from 'react';
+
+function ControlledWidget() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [hasNewMessage, setHasNewMessage] = useState(false);
+  
+  // Open widget when there's a new message
+  const handleNewMessage = () => {
+    setHasNewMessage(true);
+    setIsOpen(true);
+  };
+  
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (open) {
+      setHasNewMessage(false); // Clear notification when opened
+    }
+  };
+  
+  return (
+    <div className="fixed bottom-6 right-6">
+      <ChatWidget
+        defaultOpen={isOpen}
+        onOpenChange={handleOpenChange}
+        title="Support Chat"
+        subtitle={hasNewMessage ? "New message!" : "We're here to help"}
+        buttonClassName={hasNewMessage ? "animate-bounce bg-red-500" : ""}
+      >
+        <ChatInterface
+          {...chatProps}
+          onResponseReceived={handleNewMessage}
+        />
+      </ChatWidget>
+    </div>
+  );
+}
+```
+
+### Multi-language Support
+
+Dynamically change widget text based on user language:
+
+```tsx
+function MultiLanguageWidget() {
+  const [language, setLanguage] = useState<'en' | 'es' | 'fr' | 'zh'>('en');
+  
+  const translations = {
+    en: { title: "AI Assistant", subtitle: "How can we help?" },
+    es: { title: "Asistente IA", subtitle: "¿Cómo podemos ayudarte?" },
+    fr: { title: "Assistant IA", subtitle: "Comment pouvons-nous vous aider?" },
+    zh: { title: "智能助手", subtitle: "我们如何为您提供帮助?" }
+  };
+  
+  return (
+    <div className="fixed bottom-6 right-6">
+      <ChatWidget
+        title={translations[language].title}
+        subtitle={translations[language].subtitle}
+      >
+        <ChatInterface
+          {...chatProps}
+          welcomeMessage={translations[language].subtitle}
+        />
+      </ChatWidget>
+    </div>
+  );
+}
+```
+
+### Integration with Analytics
+
+Track widget usage and interactions:
+
+```tsx
+function AnalyticsWidget() {
+  const handleOpenChange = (open: boolean) => {
+    // Track widget interactions
+    if (open) {
+      analytics.track('chat_widget_opened');
+    } else {
+      analytics.track('chat_widget_closed');
+    }
+  };
+  
+  const handleMessageSent = (message: Message) => {
+    analytics.track('chat_message_sent', {
+      messageLength: message.content.length,
+      timestamp: message.timestamp
+    });
+  };
+  
+  return (
+    <div className="fixed bottom-6 right-6">
+      <ChatWidget
+        title="Support"
+        subtitle="Ask us anything!"
+        onOpenChange={handleOpenChange}
+      >
+        <ChatInterface
+          {...chatProps}
+          onMessageSent={handleMessageSent}
+        />
+      </ChatWidget>
+    </div>
+  );
+}
+```
+
+## Styling and Positioning
+
+### Custom Positioning
+
+Place the widget in different screen positions:
+
+<Tabs>
+  <Tab title="Bottom Right">
+    ```tsx
+    <div className="fixed bottom-6 right-6">
+      <ChatWidget title="Support">
+        <ChatInterface {...props} />
+      </ChatWidget>
+    </div>
+    ```
+  </Tab>
+  
+  <Tab title="Bottom Left">
+    ```tsx
+    <div className="fixed bottom-6 left-6">
+      <ChatWidget title="Support">
+        <ChatInterface {...props} />
+      </ChatWidget>
+    </div>
+    ```
+  </Tab>
+  
+  <Tab title="Top Right">
+    ```tsx
+    <div className="fixed top-6 right-6">
+      <ChatWidget title="Support">
+        <ChatInterface {...props} />
+      </ChatWidget>
+    </div>
+    ```
+  </Tab>
+</Tabs>
+
+### Custom Button Styling
+
+Style the floating button to match your brand:
+
+```tsx
+<ChatWidget
+  title="Custom Support"
+  subtitle="We're online!"
+  buttonClassName="
+    bg-gradient-to-r from-purple-500 to-pink-500 
+    hover:from-purple-600 hover:to-pink-600
+    shadow-lg hover:shadow-xl
+    transform hover:scale-110 
+    transition-all duration-200
+    border-4 border-white
+  "
+  className="z-50"
+>
+  <ChatInterface {...chatProps} />
+</ChatWidget>
+```
+
+### Dialog Customization
+
+Customize the chat dialog appearance:
+
+```tsx
+<ChatWidget
+  title="Premium Support"
+  subtitle="Priority assistance"
+  dialogClassName="
+    border-2 border-gold-400 
+    shadow-2xl 
+    bg-gradient-to-b from-white to-gray-50
+  "
+>
+  <ChatInterface
+    {...chatProps}
+    className="bg-transparent"
+    messagesClassName="bg-white/90"
+  />
+</ChatWidget>
+```
+
+## Integration Patterns
+
+### With Authentication
+
+Show different widget states based on user authentication:
+
+```tsx
+function AuthenticatedWidget() {
+  const { user, isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    return (
+      <ChatWidget
+        title="Guest Support"
+        subtitle="Sign in for personalized help"
+      >
+        <div className="p-4 text-center">
+          <p className="mb-4">Sign in to access full support features</p>
+          <button className="bg-blue-500 text-white px-4 py-2 rounded">
+            Sign In
+          </button>
+        </div>
+      </ChatWidget>
+    );
+  }
+  
+  return (
+    <ChatWidget
+      title={`Hi ${user.name}!`}
+      subtitle="How can we help you today?"
+    >
+      <ChatInterface
+        {...chatProps}
+        welcomeMessage={`Welcome back, ${user.name}! How can I assist you?`}
+      />
+    </ChatWidget>
+  );
+}
+```
+
+### With Conditional Display
+
+Show the widget only when appropriate:
+
+```tsx
+function ConditionalWidget() {
+  const [shouldShow, setShouldShow] = useState(false);
+  const { pathname } = useRouter();
+  
+  useEffect(() => {
+    // Only show widget on certain pages
+    const supportPages = ['/dashboard', '/settings', '/billing'];
+    setShouldShow(supportPages.includes(pathname));
+  }, [pathname]);
+  
+  if (!shouldShow) return null;
+  
+  return (
+    <div className="fixed bottom-6 right-6">
+      <ChatWidget title="Page Help" subtitle="Need help with this page?">
+        <ChatInterface {...chatProps} />
+      </ChatWidget>
+    </div>
+  );
+}
+```
+
+## Best Practices
+
+<Tip>
+**Header Integration**: The ChatWidget provides its own header, so set `showHeader={false}` on your internal ChatInterface to avoid duplication.
+</Tip>
+
+<Tip>
+**Mobile Optimization**: The widget automatically adjusts for mobile devices, but test your specific implementation on various screen sizes.
+</Tip>
+
+<Tip>
+**Z-Index Management**: Ensure your widget has appropriate z-index values to appear above other content, especially modals and dropdowns.
+</Tip>
+
+<Warning>
+Avoid placing multiple ChatWidgets on the same page as this can confuse users and create overlapping dialogs.
+</Warning>
+
+## Accessibility
+
+The ChatWidget includes built-in accessibility features:
+
+- **Keyboard Navigation**: Full keyboard support for opening, closing, and navigating
+- **Screen Reader Support**: Proper ARIA labels and announcements
+- **Focus Management**: Automatic focus handling when opening and closing
+- **High Contrast Support**: Works with high contrast and dark mode themes
+
+## Common Use Cases
+
+<AccordionGroup>
+  <Accordion title="Customer Support">
+    Provide instant customer support without leaving the current page. Users can get help while continuing their workflow.
+  </Accordion>
+  
+  <Accordion title="Documentation Assistant">
+    Help users navigate complex documentation or find specific information relevant to their current page context.
+  </Accordion>
+  
+  <Accordion title="Onboarding Guide">
+    Guide new users through your application with contextual help and interactive tutorials.
+  </Accordion>
+  
+  <Accordion title="Sales Assistant">
+    Assist potential customers with product questions and guide them through the purchase process.
+  </Accordion>
+</AccordionGroup>
+
+The ChatWidget component provides a seamless way to integrate AI assistance into any application while maintaining a clean, unobtrusive user interface.
