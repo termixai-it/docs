@@ -1,6 +1,6 @@
 # @termix-it/react-tool
 
-A configurable AI chat interface component library for React applications with advanced function calling and smart contract integration.
+TermiX offers a library of out-of-the-box React components that enable your dApp to support intelligent AI conversations and Web3 workflows in minutes. These components are highly customizable and can even be fully white-labeled. This means you have access to out-of-the-box natural language interaction, smart contract calls, MCP tool integration, and more..
 
 ## Features
 
