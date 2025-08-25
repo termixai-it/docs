@@ -24,6 +24,7 @@
     "dropdowns": [
       {
         "dropdown": "Documentation",
+        "icon": "book-open",
         "groups": [
           {
             "group": "Getting Started",
