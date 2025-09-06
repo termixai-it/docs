@@ -30,7 +30,6 @@ The ChatWidget wraps a ChatInterface component and provides its own header, so y
 
 ```tsx
 import { ChatWidget, ChatInterface } from '@termix-it/react-tool';
-import '@termix-it/react-tool/dist/styles.css';
 
 function App() {
   return (
@@ -42,15 +41,12 @@ function App() {
       <div className="fixed bottom-6 right-6">
         <ChatWidget
           title="AI Assistant"
-          subtitle="How can we help you today?"
         >
           <ChatInterface
             projectId="your-project-id"
             aiConfigId="your-ai-config-id"
-            apiBaseUrl="/api/proxy"
             authorization="Bearer your-token"
             enableStreamingMode={true}
-            welcomeMessage="Hello! How can I help you?"
             className="h-full"
           />
         </ChatWidget>
@@ -68,9 +64,6 @@ Complete reference for all ChatWidget configuration options:
   Dialog header title displayed at the top of the chat widget
 </ParamField>
 
-<ParamField path="subtitle" type="string" default="智能助手为您服务">
-  Dialog header subtitle displayed below the title
-</ParamField>
 
 <ParamField path="buttonIcon" type="string" default="undefined">
   Custom button icon URL. When not specified, uses the default chat icon
@@ -80,12 +73,24 @@ Complete reference for all ChatWidget configuration options:
   CSS classes for the widget container
 </ParamField>
 
+<ParamField path="style" type="React.CSSProperties" default="undefined">
+  Inline styles for the widget container
+</ParamField>
+
 <ParamField path="buttonClassName" type="string" default="">
   CSS classes for the floating chat button
 </ParamField>
 
+<ParamField path="buttonStyle" type="React.CSSProperties" default="undefined">
+  Inline styles for the chat button
+</ParamField>
+
 <ParamField path="dialogClassName" type="string" default="">
   CSS classes for the chat dialog container
+</ParamField>
+
+<ParamField path="dialogStyle" type="React.CSSProperties" default="undefined">
+  Inline styles for the dialog
 </ParamField>
 
 <ParamField path="defaultOpen" type="boolean" default="false">
@@ -110,7 +115,6 @@ Replace the default chat icon with your own branding:
 <ChatWidget
   buttonIcon="/assets/support-icon.png"
   title="Customer Support"
-  subtitle="We're here to help!"
   buttonClassName="shadow-lg border-2 border-blue-500"
 >
   <ChatInterface {...chatProps} />
@@ -146,8 +150,7 @@ function ControlledWidget() {
       <ChatWidget
         defaultOpen={isOpen}
         onOpenChange={handleOpenChange}
-        title="Support Chat"
-        subtitle={hasNewMessage ? "New message!" : "We're here to help"}
+        title={hasNewMessage ? "New message!" : "Support Chat"}
         buttonClassName={hasNewMessage ? "animate-bounce bg-red-500" : ""}
       >
         <ChatInterface
@@ -169,21 +172,20 @@ function MultiLanguageWidget() {
   const [language, setLanguage] = useState<'en' | 'es' | 'fr' | 'zh'>('en');
   
   const translations = {
-    en: { title: "AI Assistant", subtitle: "How can we help?" },
-    es: { title: "Asistente IA", subtitle: "¿Cómo podemos ayudarte?" },
-    fr: { title: "Assistant IA", subtitle: "Comment pouvons-nous vous aider?" },
-    zh: { title: "智能助手", subtitle: "我们如何为您提供帮助?" }
+    en: { title: "AI Assistant", placeholder: "How can we help?" },
+    es: { title: "Asistente IA", placeholder: "¿Cómo podemos ayudarte?" },
+    fr: { title: "Assistant IA", placeholder: "Comment pouvons-nous vous aider?" },
+    zh: { title: "智能助手", placeholder: "我们如何为您提供帮助?" }
   };
   
   return (
     <div className="fixed bottom-6 right-6">
       <ChatWidget
         title={translations[language].title}
-        subtitle={translations[language].subtitle}
       >
         <ChatInterface
           {...chatProps}
-          welcomeMessage={translations[language].subtitle}
+          placeholder={translations[language].placeholder}
         />
       </ChatWidget>
     </div>
@@ -217,7 +219,6 @@ function AnalyticsWidget() {
     <div className="fixed bottom-6 right-6">
       <ChatWidget
         title="Support"
-        subtitle="Ask us anything!"
         onOpenChange={handleOpenChange}
       >
         <ChatInterface
@@ -275,7 +276,6 @@ Style the floating button to match your brand:
 ```tsx
 <ChatWidget
   title="Custom Support"
-  subtitle="We're online!"
   buttonClassName="
     bg-gradient-to-r from-purple-500 to-pink-500 
     hover:from-purple-600 hover:to-pink-600
@@ -297,7 +297,6 @@ Customize the chat dialog appearance:
 ```tsx
 <ChatWidget
   title="Premium Support"
-  subtitle="Priority assistance"
   dialogClassName="
     border-2 border-gold-400 
     shadow-2xl 
@@ -326,7 +325,6 @@ function AuthenticatedWidget() {
     return (
       <ChatWidget
         title="Guest Support"
-        subtitle="Sign in for personalized help"
       >
         <div className="p-4 text-center">
           <p className="mb-4">Sign in to access full support features</p>
@@ -341,11 +339,10 @@ function AuthenticatedWidget() {
   return (
     <ChatWidget
       title={`Hi ${user.name}!`}
-      subtitle="How can we help you today?"
     >
       <ChatInterface
         {...chatProps}
-        welcomeMessage={`Welcome back, ${user.name}! How can I assist you?`}
+        placeholder={`Hi ${user.name}, ask me anything...`}
       />
     </ChatWidget>
   );
@@ -371,7 +368,7 @@ function ConditionalWidget() {
   
   return (
     <div className="fixed bottom-6 right-6">
-      <ChatWidget title="Page Help" subtitle="Need help with this page?">
+      <ChatWidget title="Page Help">
         <ChatInterface {...chatProps} />
       </ChatWidget>
     </div>

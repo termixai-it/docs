@@ -1,11 +1,11 @@
 ---
 title: "Advanced Usage"
-description: "Learn advanced features including function calling, smart contract integration, knowledge base setup, and custom implementations"
+description: "Learn advanced features including function calling, smart contract integration, knowledge base setup, custom implementations, styling, and API integration"
 ---
 
 # Advanced Usage
 
-Unlock the full potential of @termix-it/react-tool with advanced features like function calling, smart contract integration, streaming mode, floating chat widgets, and custom implementations.
+Unlock the full potential of @termix-it/react-tool with advanced features like function calling, smart contract integration, streaming mode, floating chat widgets, custom implementations, and comprehensive API integration.
 
 ## Function Calling
 
@@ -20,12 +20,10 @@ import { useState } from 'react';
 import { ChatInterface, FunctionCall, ExecutionResult } from '@termix-it/react-tool';
 
 function APIIntegratedChat() {
-  const [apiHeaders, setApiHeaders] = useState(
-    JSON.stringify({
-      'X-API-Key': 'your-api-key',
-      'Content-Type': 'application/json'
-    })
-  );
+  const apiHeaders = {
+    'X-API-Key': 'your-api-key',
+    'Content-Type': 'application/json'
+  };
 
   const handleFunctionExecution = (call: FunctionCall, result: ExecutionResult) => {
     if (call.metadata?.type === 'api') {
@@ -47,12 +45,10 @@ function APIIntegratedChat() {
     <ChatInterface
       projectId="your-project-id"
       aiConfigId="your-ai-config-id"
-      apiBaseUrl="/api/proxy"
       authorization="Bearer your-token"
       restExecuteHeader={apiHeaders}
-      enableFunctionCalls={true}
       onFunctionExecuted={handleFunctionExecution}
-      welcomeMessage="I can help you access user data, update settings, and more!"
+      placeholder="I can help you access user data, update settings, and more!"
     />
   );
 }
@@ -65,16 +61,16 @@ Update API headers dynamically based on user state:
 ```tsx
 function DynamicHeadersChat() {
   const [userToken, setUserToken] = useState('');
-  const [customHeaders, setCustomHeaders] = useState('{}');
+  const [customHeaders, setCustomHeaders] = useState<Record<string, string>>({});
 
   useEffect(() => {
     // Update headers when user token changes
     if (userToken) {
-      setCustomHeaders(JSON.stringify({
+      setCustomHeaders({
         'Authorization': `Bearer ${userToken}`,
         'X-User-ID': 'current-user-id',
         'X-Timestamp': Date.now().toString()
-      }));
+      });
     }
   }, [userToken]);
 
@@ -91,10 +87,8 @@ function DynamicHeadersChat() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        apiBaseUrl="/api/proxy"
         authorization={`Bearer ${userToken}`}
         restExecuteHeader={customHeaders}
-        enableFunctionCalls={true}
         placeholder="Ask me to fetch your data or update settings..."
       />
     </div>
@@ -156,7 +150,6 @@ function DynamicWidget() {
       <div className="fixed bottom-6 right-6">
         <ChatWidget
           title="Guest Support"
-          subtitle="Sign in for personalized help"
           buttonClassName="opacity-75"
         >
           <div className="p-4 text-center">
@@ -179,8 +172,7 @@ function DynamicWidget() {
       )}
       
       <ChatWidget
-        title={`Hi ${user.name}!`}
-        subtitle={currentPage === '/dashboard' ? 'Dashboard Help' : 'Support'}
+        title={currentPage === '/dashboard' ? `Hi ${user.name}! - Dashboard Help` : `Hi ${user.name}!`}
         defaultOpen={isOpen}
         onOpenChange={handleOpenChange}
         buttonClassName={unreadCount > 0 ? 'animate-pulse ring-2 ring-red-400' : ''}
@@ -188,11 +180,9 @@ function DynamicWidget() {
         <ChatInterface
           projectId="your-project-id"
           aiConfigId="your-ai-config-id"
-          apiBaseUrl="/api/proxy"
           authorization={`Bearer ${user.token}`}
           enableStreamingMode={true}
-          enableFunctionCalls={true}
-          welcomeMessage={getContextualWelcome()}
+          placeholder={getContextualWelcome()}
           onResponseReceived={handleNewResponse}
           apiHeaders={{
             'X-User-ID': user.id,
@@ -228,7 +218,6 @@ function MultiWidgetApp() {
       <div className="fixed bottom-6 right-6">
         <ChatWidget
           title="Customer Support"
-          subtitle="General help & questions"
           buttonIcon="/icons/support.svg"
           defaultOpen={activeWidgets.support}
           onOpenChange={(open) => setActiveWidgets(prev => ({...prev, support: open}))}
@@ -236,10 +225,9 @@ function MultiWidgetApp() {
           <ChatInterface
             projectId="support-project-id"
             aiConfigId="support-ai-config"
-            apiBaseUrl="/api/proxy"
             authorization="Bearer support-token"
             enableStreamingMode={true}
-            welcomeMessage="Hi! I'm your support assistant. How can I help?"
+            placeholder="Hi! I'm your support assistant. How can I help?"
           />
         </ChatWidget>
       </div>
@@ -248,7 +236,6 @@ function MultiWidgetApp() {
       <div className="fixed bottom-6 left-6">
         <ChatWidget
           title="Sales Assistant"
-          subtitle="Product info & pricing"
           buttonIcon="/icons/sales.svg"
           buttonClassName="bg-green-500 hover:bg-green-600"
           defaultOpen={activeWidgets.sales}
@@ -257,10 +244,9 @@ function MultiWidgetApp() {
           <ChatInterface
             projectId="sales-project-id"
             aiConfigId="sales-ai-config"
-            apiBaseUrl="/api/proxy"
             authorization="Bearer sales-token"
             enableStreamingMode={true}
-            welcomeMessage="Interested in our products? I can help with pricing and features!"
+            placeholder="Interested in our products? I can help with pricing and features!"
           />
         </ChatWidget>
       </div>
@@ -269,7 +255,6 @@ function MultiWidgetApp() {
       <div className="fixed top-6 right-6">
         <ChatWidget
           title="Technical Support"
-          subtitle="API & integration help"
           buttonIcon="/icons/technical.svg"
           buttonClassName="bg-purple-500 hover:bg-purple-600"
           defaultOpen={activeWidgets.technical}
@@ -278,11 +263,9 @@ function MultiWidgetApp() {
           <ChatInterface
             projectId="technical-project-id"
             aiConfigId="technical-ai-config"
-            apiBaseUrl="/api/proxy"
             authorization="Bearer technical-token"
             enableStreamingMode={true}
-            enableFunctionCalls={true}
-            welcomeMessage="Need technical help? I can assist with APIs, integrations, and troubleshooting."
+            placeholder="Need technical help? I can assist with APIs, integrations, and troubleshooting."
           />
         </ChatWidget>
       </div>
@@ -367,13 +350,12 @@ function MonitoredStreamingChat() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-token"
         enableStreamingMode={true}
         onMessageSent={handleMessageSent}
         onResponseReceived={handleResponseReceived}
         onError={handleError}
-        welcomeMessage="Streaming mode active! Watch the real-time stats above."
+        placeholder="Streaming mode active! Watch the real-time stats above."
       />
     </div>
   );
@@ -444,11 +426,10 @@ function AdaptiveStreamingChat() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-token"
         enableStreamingMode={streamingEnabled && streamingSupported}
         onError={handleError}
-        welcomeMessage={
+        placeholder={
           streamingEnabled && streamingSupported
             ? "Streaming mode enabled - responses will appear in real-time!"
             : "Regular mode active - responses will appear all at once."
@@ -522,11 +503,9 @@ function DeFiChat() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="defi-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-token"
-        enableFunctionCalls={true}
         onFunctionExecuted={handleContractExecution}
-        welcomeMessage={
+        placeholder={
           isConnected 
             ? "I can help you interact with smart contracts, check balances, and execute transactions!"
             : "Please connect your wallet to enable smart contract interactions."
@@ -577,11 +556,9 @@ function MultiChainDeFiChat() {
     <ChatInterface
       projectId="your-project-id"
       aiConfigId="multi-chain-config-id"
-      apiBaseUrl="/api/proxy"
       authorization="Bearer your-token"
-      enableFunctionCalls={true}
       onFunctionExecuted={handleContractExecution}
-      welcomeMessage="I can help you interact with contracts on Ethereum, Polygon, and Arbitrum!"
+      placeholder="I can help you interact with contracts on Ethereum, Polygon, and Arbitrum!"
     />
   );
 }
@@ -621,13 +598,9 @@ function DocumentationAssistant() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="docs-assistant-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-token"
-        enableKnowledgeBase={true}
-        showKnowledgeReferences={true}
         maxKnowledgeResults={5}
         onResponseReceived={handleResponse}
-        welcomeMessage="I can search through your documentation and help you find relevant information!"
         placeholder="Ask me about your docs, APIs, or code examples..."
       />
     </div>
@@ -688,7 +661,6 @@ function ThemedChat() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-token"
         className="custom-chat"
       />
@@ -737,12 +709,9 @@ function ReActEnabledChat() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="react-pattern-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-token"
-        enableReActPattern={true}
-        enableFunctionCalls={true}
         onResponseReceived={handleResponse}
-        welcomeMessage="I'll show you my reasoning process as I work through complex problems!"
+        placeholder="I'll show you my reasoning process as I work through complex problems!"
       />
     </div>
   );
@@ -806,10 +775,8 @@ function RobustChat() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-token"
         onError={handleError}
-        enableFunctionCalls={true}
       />
     </div>
   );
@@ -851,7 +818,6 @@ const OptimizedChat = memo(function OptimizedChat({
     <ChatInterface
       projectId={projectId}
       aiConfigId={aiConfigId}
-      apiBaseUrl="/api/proxy"
       authorization={`Bearer ${userToken}`}
       apiHeaders={apiHeaders}
       onFunctionExecuted={handleFunctionExecution}
@@ -865,6 +831,188 @@ const OptimizedChat = memo(function OptimizedChat({
 
 export default OptimizedChat;
 ```
+
+## API Integration
+
+### Default API Configuration
+
+The SDK now automatically connects to the Termix API:
+- **Production**: `https://dashboard.termix.ai`
+- **Local Development**: `http://127.0.0.1:3001` (when using `npm run dev:local`)
+
+```tsx
+<ChatInterface
+  projectId="your-project-id"
+  aiConfigId="your-ai-config-id"
+  authorization="Bearer your-token"
+  enableStreamingMode={true}
+  // ... other props
+/>
+```
+
+### Development Setup
+
+For local development with a local backend server:
+
+1. **Install the SDK in your project:**
+   ```bash
+   npm install @termix-it/react-tool
+   ```
+
+2. **For local backend development:**
+   
+   If you need to connect to a local backend server running at `http://127.0.0.1:3001`, you have two options:
+   
+   **Option 1: Build the SDK locally with local configuration**
+   ```bash
+   # In the react-tool directory
+   npm run dev:local
+   
+   # Then link it to your project
+   npm link
+   
+   # In your project directory
+   npm link @termix-it/react-tool
+   ```
+   
+   **Option 2: Use environment variable (if your build system supports it)**
+   ```bash
+   # Set the environment variable before building
+   REACT_APP_API_LOCAL=true npm run build
+   ```
+
+### API Endpoints
+
+The SDK automatically connects to these Termix API endpoints:
+
+#### Chat Endpoints
+- `POST /api/v1/ai/projects/{projectId}/chat` - Regular chat messages
+- `POST /api/v1/ai/projects/{projectId}/chat/stream` - Streaming chat messages (SSE)
+- `GET /api/v1/ai/projects/{projectId}/configs/{configId}` - Get AI config (including greeting message)
+
+#### Function Execution
+- REST API endpoints for function calls (auto-detected)
+- Smart contract execution via web3 providers
+
+#### Knowledge Base
+- `GET /api/v1/projects/{projectId}/knowledge-base/search` - Search knowledge base
+- `GET /api/v1/knowledge/{projectId}` - Get all knowledge
+
+#### MCP Tools
+- `GET /api/v1/mcp-tools/{projectId}/parsed-endpoints` - Get parsed API endpoints
+- `GET /api/v1/mcp-tools/{projectId}/parsed-contracts` - Get parsed smart contracts
+
+## Styling and Customization
+
+### Style Import
+
+Styles are now automatically bundled with the components - no separate CSS import needed:
+
+```tsx
+import { ChatInterface } from '@termix-it/react-tool';
+// No need to import CSS - styles are now bundled with components
+```
+
+All styles are scoped with `.termix-` prefix to prevent conflicts.
+
+### Using Inline Styles
+
+Both `ChatInterface` and `ChatWidget` support inline styles via the `style` prop:
+
+```tsx
+// ChatInterface with custom styles
+<ChatInterface
+  projectId="your-project-id"
+  aiConfigId="your-ai-config-id"
+  style={{ 
+    height: '600px', 
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  }}
+  messagesStyle={{ 
+    backgroundColor: '#f9f9f9' 
+  }}
+  inputStyle={{ 
+    fontSize: '16px',
+    padding: '12px 16px'
+  }}
+/>
+
+// ChatWidget with custom button and dialog styles
+<ChatWidget
+  style={{ position: 'fixed', bottom: '20px', right: '20px' }}
+  buttonStyle={{ 
+    width: '60px', 
+    height: '60px',
+    backgroundColor: '#6366f1'
+  }}
+  dialogStyle={{ 
+    width: '400px',
+    height: '500px',
+    borderRadius: '16px'
+  }}
+>
+  <ChatInterface {...props} />
+</ChatWidget>
+```
+
+### Custom Theming with CSS Variables
+
+You can override the default colors using CSS custom properties:
+
+```css
+:root {
+  --primary: 220 100% 50%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222.2 84% 4.9%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 222.2 84% 4.9%;
+}
+```
+
+## Exported Components and Utilities
+
+```tsx
+// Main components
+export { ChatInterface } from './components/ChatInterface';
+export { ChatWidget } from './components/ChatWidget';
+export { FunctionCallDisplay } from './components/FunctionCallDisplay';
+
+// Services
+export { APIService } from './services/api';
+export { FunctionCallExecutor } from './services/functionCallExecutor';
+export { ToolCallProcessor } from './services/toolCallProcessor';
+
+// Utilities
+export { cn, extractFunctionCalls } from './lib/utils';
+
+// Hooks
+export { useToast } from './hooks/useToast';
+```
+
+## Troubleshooting
+
+### Styles Not Loading Correctly
+
+You must manually import the styles. If you experience issues:
+
+1. **Check for CSS conflicts**: The library's styles are scoped to `.termix-container` to avoid conflicts, but ensure your global styles don't override them.
+
+2. **Tailwind CSS conflicts**: If your project uses Tailwind CSS, the scoped styles should prevent conflicts. The components also use inline styles for critical styling.
+
+3. **Header visibility**: The chat header uses inline styles to ensure proper display:
+   - Blue gradient background: `linear-gradient(to right, #3b82f6, #2563eb)`
+   - White text color is explicitly set
+
+### Input Alignment Issues
+
+The input area automatically aligns the text input and send button vertically. If you experience alignment issues, check that parent containers don't override the flex layout.
 
 ## Best Practices Summary
 

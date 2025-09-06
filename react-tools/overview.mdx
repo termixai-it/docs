@@ -1,6 +1,6 @@
 ---
-title: "@termix-it/react-tool"
-description: "A powerful, configurable AI chat interface component library designed for React applications. This library provides everything you need to integrate advanced AI conversations with function calling capabilities, knowledge base integration, and smart contract execution."
+title: "TermiX Frontend SDK - Easy to Use"
+description: "TermiX offers a library of out-of-the-box React components that enable your dApp to support intelligent AI conversations and Web3 workflows in minutes. These components are highly customizable and can even be fully white-labeled. This means you have access to out-of-the-box natural language interaction, smart contract calls, MCP tool integration, and more."
 ---
 
 
@@ -30,6 +30,12 @@ description: "A powerful, configurable AI chat interface component library desig
   </Card>
   <Card title="🚀 TypeScript" icon="code">
     Full TypeScript support with comprehensive type definitions
+  </Card>
+  <Card title="📱 Responsive" icon="mobile">
+    Works seamlessly on desktop and mobile devices
+  </Card>
+  <Card title="🌊 Real-time Streaming" icon="stream">
+    Server-Sent Events (SSE) support for live chat responses
   </Card>
 </CardGroup>
 
@@ -85,7 +91,7 @@ Here's what a basic implementation looks like:
 
 ```tsx
 import { ChatInterface } from '@termix-it/react-tool';
-import '@termix-it/react-tool/dist/styles.css';
+// No need to import CSS - styles are now bundled with components
 
 function App() {
   return (
@@ -93,15 +99,9 @@ function App() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-jwt-token"
-        welcomeMessage="Hello! How can I help you today?"
-        enableKnowledgeBase={true}
-        enableFunctionCalls={true}
-        enableReActPattern={true}
-        onFunctionExecuted={(call, result) => {
-          console.log('Function executed:', call.name, result);
-        }}
+        enableStreamingMode={true} // Enable real-time streaming
+        placeholder="Type your message..."
       />
     </div>
   );

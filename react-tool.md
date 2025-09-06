@@ -1,6 +1,5 @@
-# @termix-it/react-tool
-
-TermiX offers a library of out-of-the-box React components that enable your dApp to support intelligent AI conversations and Web3 workflows in minutes. These components are highly customizable and can even be fully white-labeled. This means you have access to out-of-the-box natural language interaction, smart contract calls, MCP tool integration, and more..
+# TermiX Frontend SDK - Easy to Use
+TermiX offers a library of out-of-the-box React components that enable your dApp to support intelligent AI conversations and Web3 workflows in minutes. These components are highly customizable and can even be fully white-labeled. This means you have access to out-of-the-box natural language interaction, smart contract calls, MCP tool integration, and more.
 
 ## Features
 
@@ -42,7 +41,7 @@ This library requires the following peer dependencies:
 
 ```tsx
 import { ChatInterface } from '@termix-it/react-tool';
-import '@termix-it/react-tool/dist/styles.css'; // Import required styles
+// No need to import CSS - styles are now bundled with components
 
 function App() {
   return (
@@ -50,16 +49,19 @@ function App() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-jwt-token"
         enableStreamingMode={true} // Enable real-time streaming
-        welcomeMessage="Hello! How can I help you today?"
         placeholder="Type your message..."
       />
     </div>
   );
 }
 ```
+
+**Note:** 
+- Styles are now automatically bundled with the components - no separate CSS import needed
+- All styles are scoped with `.termix-` prefix to prevent conflicts
+- The API base URL is built into the SDK and defaults to `https://dashboard.termix.ai`
 
 ## Chat Widget Component
 
@@ -69,7 +71,6 @@ The `ChatWidget` component provides a floating chat button with a popup dialog, 
 
 ```tsx
 import { ChatWidget, ChatInterface } from '@termix-it/react-tool';
-import '@termix-it/react-tool/dist/styles.css';
 
 function App() {
   return (
@@ -81,15 +82,12 @@ function App() {
       <div className="fixed bottom-6 right-6">
         <ChatWidget
           title="AI Assistant"
-          subtitle="智能助手为您服务"
         >
           <ChatInterface
             projectId="your-project-id"
             aiConfigId="your-ai-config-id"
-            apiBaseUrl="/api/proxy"
             authorization="Bearer your-token"
             enableStreamingMode={true}
-            welcomeMessage="Hello! How can I help you?"
             className="h-full"
           />
         </ChatWidget>
@@ -105,10 +103,12 @@ function App() {
 |------|------|---------|-------------|
 | `buttonIcon` | `string` | `undefined` | Custom button icon URL |
 | `title` | `string` | `"AI Assistant"` | Dialog header title |
-| `subtitle` | `string` | `"智能助手为您服务"` | Dialog header subtitle |
 | `className` | `string` | `""` | CSS classes for the widget container |
+| `style` | `React.CSSProperties` | `undefined` | Inline styles for the widget container |
 | `buttonClassName` | `string` | `""` | CSS classes for the chat button |
+| `buttonStyle` | `React.CSSProperties` | `undefined` | Inline styles for the chat button |
 | `dialogClassName` | `string` | `""` | CSS classes for the dialog |
+| `dialogStyle` | `React.CSSProperties` | `undefined` | Inline styles for the dialog |
 | `defaultOpen` | `boolean` | `false` | Whether dialog is open by default |
 | `onOpenChange` | `(open: boolean) => void` | `undefined` | Called when dialog open state changes |
 | `children` | `React.ReactNode` | - | Dialog content (usually ChatInterface) |
@@ -119,7 +119,6 @@ function App() {
 <ChatWidget
   buttonIcon="/path/to/your/icon.png"
   title="Custom Support"
-  subtitle="We're here to help!"
 >
   <ChatInterface {...chatProps} />
 </ChatWidget>
@@ -176,7 +175,6 @@ The header features:
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `apiBaseUrl` | `string` | `''` | Base URL for API requests |
 | `authorization` | `string` | `undefined` | Authorization header value (e.g., 'Bearer token') |
 | `apiHeaders` | `Record<string, string>` | `{}` | Additional headers for API requests |
 | `restExecuteHeader` | `Record<string, string>` | `undefined` | Custom headers object for REST execution |
@@ -185,33 +183,37 @@ The header features:
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `welcomeMessage` | `string` | `"Hello! I'm your AI assistant..."` | Initial greeting message |
 | `placeholder` | `string` | `"Type your message..."` | Input placeholder text |
-| `sendButtonText` | `string` | `"Send"` | Send button text |
-| `modelName` | `string` | `undefined` | Display name for the AI model |
-| `personalityName` | `string` | `undefined` | Display name for the AI personality |
+| `sendButtonText` | `string` | `""` | Send button text (empty string shows default icon) |
+| `modelName` | `string` | `"AI Model"` | Fallback model name if API config fetch fails |
+| `personalityName` | `string` | `undefined` | Optional override for personality name (overrides API config value) |
 
 ### Feature Toggles
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `enableKnowledgeBase` | `boolean` | `true` | Enable knowledge base search integration |
-| `enableFunctionCalls` | `boolean` | `true` | Enable AI function calling and execution |
-| `enableReActPattern` | `boolean` | `true` | Enable ReAct reasoning pattern |
 | `enableStreamingMode` | `boolean` | `false` | Enable real-time streaming responses via SSE |
 | `showHeader` | `boolean` | `false` | Show/hide the chat header with title and model info |
-| `showUsageInfo` | `boolean` | `true` | Show token usage and cost information |
-| `showTimestamp` | `boolean` | `true` | Show message timestamps |
-| `showKnowledgeReferences` | `boolean` | `true` | Show knowledge base references |
+| `showUsageInfo` | `boolean` | `false` | Show token usage and cost information |
+| `showTimestamp` | `boolean` | `false` | Show message timestamps |
 | `maxKnowledgeResults` | `number` | `3` | Maximum knowledge base results to show |
+
+**Note:** The following features are now always enabled and cannot be disabled:
+- Knowledge base integration
+- Function calls (REST API and smart contracts)
+- ReAct pattern (reasoning and acting)
+- Knowledge references display
 
 ### Styling Props
 
 | Prop | Type | Description |
 |------|------|-------------|
 | `className` | `string` | Additional CSS classes for the main container |
+| `style` | `React.CSSProperties` | Inline styles for the main container |
 | `messagesClassName` | `string` | CSS classes for the messages area |
+| `messagesStyle` | `React.CSSProperties` | Inline styles for the messages area |
 | `inputClassName` | `string` | CSS classes for the input field |
+| `inputStyle` | `React.CSSProperties` | Inline styles for the input field |
 
 ### Event Callbacks
 
@@ -232,7 +234,6 @@ The ChatInterface supports real-time streaming responses using Server-Sent Event
 <ChatInterface
   projectId="your-project-id"
   aiConfigId="your-ai-config-id"
-  apiBaseUrl="/api/proxy"
   authorization="Bearer your-token"
   enableStreamingMode={true} // Enable streaming
   // ... other props
@@ -274,13 +275,14 @@ data: {"type":"done","sessionId":"session-id-here"}
 ### Custom Headers for REST API Calls
 
 ```tsx
+// Pass custom headers as an object
 const customHeaders = { "X-API-Key": "your-key", "X-Custom": "value" };
 
 <ChatInterface
   projectId="your-project-id"
   aiConfigId="your-ai-config-id"
   authorization="Bearer your-token"
-  restExecuteHeader={customHeaders}
+  restExecuteHeader={customHeaders} // Pass object directly, not as string
   // ... other props
 />
 ```
@@ -290,7 +292,6 @@ const customHeaders = { "X-API-Key": "your-key", "X-Custom": "value" };
 ```tsx
 <ChatInterface
   // ... required props
-  enableFunctionCalls={true}
   onFunctionExecuted={(functionCall, result) => {
     console.log('Function executed:', functionCall.name);
     
@@ -319,31 +320,27 @@ const customHeaders = { "X-API-Key": "your-key", "X-Custom": "value" };
 ```tsx
 export default function AdvancedChat() {
   const [authorization, setAuthorization] = useState('Bearer your-token');
-  const [customHeaders, setCustomHeaders] = useState('{}');
+  const customHeaders = { "X-API-Key": "your-key", "X-Custom": "value" };
 
   return (
     <ChatInterface
       projectId="689b0b0a67504c373d86bed6"
       aiConfigId="689b0ce8ed28bfae5038fe82"
-      apiBaseUrl="/api/proxy"
       authorization={authorization}
       restExecuteHeader={customHeaders}
       
-      // Enable all features
-      enableKnowledgeBase={true}
-      enableFunctionCalls={true}
-      enableReActPattern={true}
+      // Features configuration
       enableStreamingMode={true} // Enable real-time streaming
       showHeader={true} // Show chat header with model info
-      showUsageInfo={true}
-      showTimestamp={true}
-      showKnowledgeReferences={true}
+      showUsageInfo={true} // Optional: show token usage
+      showTimestamp={true} // Optional: show timestamps
+      maxKnowledgeResults={5} // Max knowledge base results to show
       
       // Customization
-      welcomeMessage="Welcome! I can help with API calls, smart contracts, and more."
       placeholder="Ask me anything..."
-      modelName="GPT-4"
-      personalityName="Advanced Assistant"
+      sendButtonText="" // Empty string shows icon
+      modelName="GPT-4" // Fallback if API config fetch fails
+      personalityName="Advanced Assistant" // Optional: override API config personality name
       
       // Callbacks
       onMessageSent={(message) => console.log('Sent:', message)}
@@ -354,6 +351,36 @@ export default function AdvancedChat() {
   );
 }
 ```
+
+## Important Changes in Latest Version
+
+### Automatic Feature Enablement
+The following features are now **always enabled** and cannot be disabled (they are hardcoded as true in the component):
+- **Knowledge Base Integration**: Automatically searches and references knowledge base
+- **Function Calls**: AI can execute REST APIs and smart contracts
+- **ReAct Pattern**: Reasoning and acting pattern for complex tasks
+- **Knowledge References**: Always displays knowledge base references when available
+
+These previously configurable props have been removed:
+- `enableKnowledgeBase` (always true)
+- `enableFunctionCalls` (always true)
+- `enableReActPattern` (always true)
+- `showKnowledgeReferences` (always true)
+
+### Welcome Message and Personality from API
+The component now automatically fetches configuration from the AI config API:
+1. **Welcome Message**: Uses greeting from API config or generates default
+2. **Personality Name**: Uses name from API config, can be overridden with `personalityName` prop
+3. **Re-fetching**: Automatically re-fetches when `projectId` or `aiConfigId` changes
+
+Default fallback: `"Hello! I'm [personality name]. How can I help you today?"`
+
+### Default Values
+- `sendButtonText`: Now defaults to `""` (empty string shows icon instead of text)
+- `showUsageInfo`: Defaults to `false`
+- `showTimestamp`: Defaults to `false`
+- `showHeader`: Defaults to `false`
+- `enableStreamingMode`: Defaults to `false`
 
 ## Function Calling
 
@@ -378,10 +405,47 @@ The ChatInterface automatically handles different types of function calls:
 
 ## Styling
 
-This library uses Tailwind CSS for styling. Import the required styles:
+The styles are now **automatically bundled** with the components - no separate CSS import needed. All styles are scoped with `.termix-` prefix to prevent conflicts with your application's styles.
+
+### Using Inline Styles
+
+Both `ChatInterface` and `ChatWidget` support inline styles via the `style` prop:
 
 ```tsx
-import '@termix-it/react-tool/dist/styles.css';
+// ChatInterface with custom styles
+<ChatInterface
+  projectId="your-project-id"
+  aiConfigId="your-ai-config-id"
+  style={{ 
+    height: '600px', 
+    borderRadius: '12px',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+  }}
+  messagesStyle={{ 
+    backgroundColor: '#f9f9f9' 
+  }}
+  inputStyle={{ 
+    fontSize: '16px',
+    padding: '12px 16px'
+  }}
+/>
+
+// ChatWidget with custom button and dialog styles
+<ChatWidget
+  style={{ position: 'fixed', bottom: '20px', right: '20px' }}
+  buttonStyle={{ 
+    width: '60px', 
+    height: '60px',
+    backgroundColor: '#6366f1'
+  }}
+  dialogStyle={{ 
+    width: '400px',
+    height: '500px',
+    borderRadius: '16px'
+  }}
+>
+  <ChatInterface {...props} />
+</ChatWidget>
 ```
 
 ### Custom Theming
@@ -493,41 +557,59 @@ export { useToast } from './hooks/useToast';
 
 ## API Integration
 
-### Direct API Usage
+### Default API Configuration
 
-For direct integration with Termix API:
+The SDK now automatically connects to the Termix API:
+- **Production**: `https://dashboard.termix.ai`
+- **Local Development**: `http://127.0.0.1:3001` (when using `npm run dev:local`)
 
 ```tsx
 <ChatInterface
   projectId="your-project-id"
   aiConfigId="your-ai-config-id"
-  apiBaseUrl="https://api.termix.it"
   authorization="Bearer your-token"
   enableStreamingMode={true}
   // ... other props
 />
 ```
 
-### Proxy Configuration
+### Development
 
-For development or when using a proxy server:
+For local development with a local backend server:
 
-```tsx
-<ChatInterface
-  projectId="your-project-id"
-  aiConfigId="your-ai-config-id"
-  apiBaseUrl="/api/proxy"
-  authorization="Bearer your-token"
-  enableStreamingMode={true}
-  // ... other props
-/>
-```
+1. **Install the SDK in your project:**
+   ```bash
+   npm install @termix-it/react-tool
+   ```
 
-Your proxy should forward requests to these Termix API endpoints:
+2. **For local backend development:**
+   
+   If you need to connect to a local backend server running at `http://127.0.0.1:3001`, you have two options:
+   
+   **Option 1: Build the SDK locally with local configuration**
+   ```bash
+   # In the react-tool directory
+   npm run dev:local
+   
+   # Then link it to your project
+   npm link
+   
+   # In your project directory
+   npm link @termix-it/react-tool
+   ```
+   
+   **Option 2: Use environment variable (if your build system supports it)**
+   ```bash
+   # Set the environment variable before building
+   REACT_APP_API_LOCAL=true npm run build
+   ```
+
+The SDK will automatically connect to these Termix API endpoints:
 
 ### Chat Endpoints
 - `POST /api/v1/ai/projects/{projectId}/chat` - Regular chat messages
 - `POST /api/v1/ai/projects/{projectId}/chat/stream` - Streaming chat messages (SSE)
+- `GET /api/v1/ai/projects/{projectId}/configs/{configId}` - Get AI config (including greeting message)
 
 ### Function Execution
 - REST API endpoints for function calls (auto-detected)
@@ -589,14 +671,11 @@ Make sure users have a web3 wallet connected when contract execution is enabled.
 
 ### Styles Not Loading Correctly
 
-If you experience issues with styles (e.g., white text on white background), ensure:
+You must manually import the styles. If you experience issues:
 
-1. **Import the CSS file**:
-   ```tsx
-   import '@termix-it/react-tool/dist/styles.css';
-   ```
+1. **Check for CSS conflicts**: The library's styles are scoped to `.termix-container` to avoid conflicts, but ensure your global styles don't override them.
 
-2. **Check Tailwind CSS conflicts**: If your project uses Tailwind CSS, there might be conflicts. The components use inline styles for critical styling to avoid this issue.
+2. **Tailwind CSS conflicts**: If your project uses Tailwind CSS, the scoped styles should prevent conflicts. The components also use inline styles for critical styling.
 
 3. **Header visibility**: The chat header uses inline styles to ensure proper display:
    - Blue gradient background: `linear-gradient(to right, #3b82f6, #2563eb)`

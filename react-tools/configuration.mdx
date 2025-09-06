@@ -23,12 +23,6 @@ These props are required for the component to function:
 
 Configure how the component connects to your backend services:
 
-<ParamField path="apiBaseUrl" type="string" default="">
-  Base URL for API requests. This should point to your proxy endpoint that forwards requests to the Termix API.
-  
-  **Example:** `/api/proxy` or `https://yourapi.com/proxy`
-</ParamField>
-
 <ParamField path="authorization" type="string" default="undefined">
   Authorization header value for API requests. Typically a Bearer token.
   
@@ -46,11 +40,11 @@ Configure how the component connects to your backend services:
   ```
 </ParamField>
 
-<ParamField path="restExecuteHeader" type="string" default="undefined">
-  JSON string containing custom headers for REST function execution.
+<ParamField path="restExecuteHeader" type="Record<string, string>" default="undefined">
+  Custom headers object for REST function execution.
   
   ```tsx
-  restExecuteHeader='{"X-API-Key": "secret", "Content-Type": "application/json"}'
+  restExecuteHeader={{ "X-API-Key": "secret", "Content-Type": "application/json" }}
   ```
 </ParamField>
 
@@ -58,41 +52,27 @@ Configure how the component connects to your backend services:
 
 Control the appearance and text of the chat interface:
 
-<ParamField path="welcomeMessage" type="string" default="Hello! I'm your AI assistant...">
-  Initial greeting message displayed when the chat loads.
+<ParamField path="personalityName" type="string" default="undefined">
+  Optional override for personality name (overrides API config value).
 </ParamField>
 
 <ParamField path="placeholder" type="string" default="Type your message...">
   Placeholder text shown in the message input field.
 </ParamField>
 
-<ParamField path="sendButtonText" type="string" default="Send">
-  Text displayed on the send button.
+<ParamField path="sendButtonText" type="string" default="">
+  Text displayed on the send button. Empty string shows default icon instead of text.
 </ParamField>
 
-<ParamField path="modelName" type="string" default="undefined">
-  Display name for the AI model, shown in the chat header.
-</ParamField>
-
-<ParamField path="personalityName" type="string" default="undefined">
-  Display name for the AI personality, shown in the chat header.
+<ParamField path="modelName" type="string" default="AI Model">
+  Fallback model name if API config fetch fails.
 </ParamField>
 
 ## Feature Toggles
 
 Enable or disable specific functionality:
 
-<ParamField path="enableKnowledgeBase" type="boolean" default="true">
-  Enable knowledge base search integration. When enabled, the AI can search for and reference relevant information.
-</ParamField>
-
-<ParamField path="enableFunctionCalls" type="boolean" default="true">
-  Enable AI function calling and execution. This allows the AI to make API calls and execute smart contracts.
-</ParamField>
-
-<ParamField path="enableReActPattern" type="boolean" default="true">
-  Enable ReAct (Reasoning and Acting) pattern for AI responses. This provides more structured thinking and action sequences.
-</ParamField>
+**Note:** Knowledge base, function calls, ReAct pattern, and knowledge references are now enabled by default and cannot be disabled.
 
 <ParamField path="enableStreamingMode" type="boolean" default="false">
   Enable real-time streaming responses using Server-Sent Events (SSE). Messages appear character-by-character as they're generated.
@@ -104,16 +84,12 @@ Enable or disable specific functionality:
   Show/hide the chat header with AI model name and personality information. Features blue gradient background with white text.
 </ParamField>
 
-<ParamField path="showUsageInfo" type="boolean" default="true">
+<ParamField path="showUsageInfo" type="boolean" default="false">
   Display token usage and cost information for each message. Also shows total cost in header when `showHeader` is enabled.
 </ParamField>
 
-<ParamField path="showTimestamp" type="boolean" default="true">
+<ParamField path="showTimestamp" type="boolean" default="false">
   Show timestamps on messages.
-</ParamField>
-
-<ParamField path="showKnowledgeReferences" type="boolean" default="true">
-  Display references to knowledge base sources used in responses.
 </ParamField>
 
 <ParamField path="maxKnowledgeResults" type="number" default="3">
@@ -205,10 +181,6 @@ When using the `ChatWidget` component, these additional props are available:
   Dialog header title displayed at the top of the chat widget.
 </ParamField>
 
-<ParamField path="subtitle" type="string" default="智能助手为您服务">
-  Dialog header subtitle displayed below the title.
-</ParamField>
-
 <ParamField path="buttonIcon" type="string" default="undefined">
   Custom button icon URL. When not specified, uses the default chat icon.
 </ParamField>
@@ -239,7 +211,6 @@ function WidgetExample() {
     <div className="fixed bottom-6 right-6">
       <ChatWidget
         title="Support Assistant"
-        subtitle="How can we help you today?"
         buttonIcon="/custom-icon.svg"
         buttonClassName="shadow-lg border-2 border-blue-500"
         onOpenChange={(open) => console.log('Widget is', open ? 'open' : 'closed')}
@@ -247,7 +218,6 @@ function WidgetExample() {
         <ChatInterface
           projectId="your-project-id"
           aiConfigId="your-ai-config-id"
-          apiBaseUrl="/api/proxy"
           authorization="Bearer your-token"
           enableStreamingMode={true}
           // Note: showHeader=false since ChatWidget provides its own header
@@ -264,11 +234,10 @@ Here's an example with all major configuration options:
 
 ```tsx
 import { ChatInterface } from '@termix-it/react-tool';
-import '@termix-it/react-tool/dist/styles.css';
 
 function AdvancedChat() {
   const [authorization, setAuthorization] = useState('Bearer your-token');
-  const [customHeaders, setCustomHeaders] = useState('{"X-API-Key": "secret"}');
+  const customHeaders = { "X-API-Key": "secret" };
 
   return (
     <ChatInterface
@@ -277,7 +246,6 @@ function AdvancedChat() {
       aiConfigId="689b0ce8ed28bfae5038fe82"
       
       // API configuration
-      apiBaseUrl="/api/proxy"
       authorization={authorization}
       apiHeaders={{
         'X-Client-Version': '1.0.0',
@@ -286,21 +254,16 @@ function AdvancedChat() {
       restExecuteHeader={customHeaders}
       
       // UI customization
-      welcomeMessage="Welcome! I can help with API calls, smart contracts, and more."
       placeholder="Ask me anything..."
-      sendButtonText="Send Message"
-      modelName="GPT-4"
-      personalityName="Advanced Assistant"
+      sendButtonText="" // Empty string shows icon instead of text
+      modelName="GPT-4" // Fallback if API config fetch fails
+      personalityName="Advanced Assistant" // Optional: override API config personality name
       
       // Feature toggles
-      enableKnowledgeBase={true}
-      enableFunctionCalls={true}
-      enableReActPattern={true}
       enableStreamingMode={true} // Enable real-time streaming
       showHeader={true} // Show chat header with model info
-      showUsageInfo={true}
-      showTimestamp={true}
-      showKnowledgeReferences={true}
+      showUsageInfo={true} // Optional: show token usage
+      showTimestamp={true} // Optional: show timestamps
       maxKnowledgeResults={5}
       
       // Styling
@@ -339,12 +302,10 @@ function AdvancedChat() {
     <ChatInterface
       projectId="dev-project-id"
       aiConfigId="dev-config-id"
-      apiBaseUrl="http://localhost:3000/api/proxy"
       authorization={`Bearer ${process.env.DEV_TOKEN}`}
       enableStreamingMode={true} // Test streaming in development
       showHeader={true} // Show header for debugging
       showUsageInfo={true}
-      enableFunctionCalls={true}
     />
     ```
   </Tab>
@@ -354,16 +315,36 @@ function AdvancedChat() {
     <ChatInterface
       projectId={process.env.REACT_APP_PROJECT_ID}
       aiConfigId={process.env.REACT_APP_AI_CONFIG_ID}
-      apiBaseUrl="/api/proxy"
       authorization={`Bearer ${userToken}`}
       enableStreamingMode={true} // Enable streaming for better UX
       showHeader={false} // Hide header in production
       showUsageInfo={false} // Hide usage info for cleaner UI
-      enableFunctionCalls={true}
     />
     ```
   </Tab>
 </Tabs>
+
+## Important Changes in Latest Version
+
+### Automatic Feature Enablement
+The following features are now **enabled by default** and cannot be disabled:
+- **Knowledge Base Integration**: Automatically searches and references knowledge base
+- **Function Calls**: AI can execute REST APIs and smart contracts
+- **ReAct Pattern**: Reasoning and acting pattern for complex tasks
+- **Knowledge References**: Always displays knowledge base references when available
+
+### Welcome Message and Personality from API
+The component now automatically fetches configuration from the AI config API:
+1. **Welcome Message**: Uses greeting from API config or generates default
+2. **Personality Name**: Uses name from API config, can be overridden with `personalityName` prop
+3. **Re-fetching**: Automatically re-fetches when `projectId` or `aiConfigId` changes
+
+Default fallback: `"Hello! I'm [personality name]. How can I help you today?"`
+
+### Default Values Changed
+- `showUsageInfo`: Now defaults to `false` (was `true`)
+- `showTimestamp`: Now defaults to `false` (was `true`)
+- Knowledge references are always shown (removed `showKnowledgeReferences` prop)
 
 ## Best Practices
 

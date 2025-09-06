@@ -112,33 +112,30 @@ interface ChatInterfaceProps {
   aiConfigId: string;
 
   // API Configuration
-  apiBaseUrl?: string;
   authorization?: string;
   apiHeaders?: Record<string, string>;
-  restExecuteHeader?: string;
+  restExecuteHeader?: Record<string, string>;
 
   // UI Customization
-  welcomeMessage?: string;
   placeholder?: string;
   sendButtonText?: string;
   modelName?: string;
   personalityName?: string;
 
   // Feature Toggles
-  enableKnowledgeBase?: boolean;
-  enableFunctionCalls?: boolean;
-  enableReActPattern?: boolean;
   enableStreamingMode?: boolean;
   showHeader?: boolean;
   showUsageInfo?: boolean;
   showTimestamp?: boolean;
-  showKnowledgeReferences?: boolean;
   maxKnowledgeResults?: number;
 
   // Styling
   className?: string;
+  style?: React.CSSProperties;
   messagesClassName?: string;
+  messagesStyle?: React.CSSProperties;
   inputClassName?: string;
+  inputStyle?: React.CSSProperties;
 
   // Event Callbacks
   onMessageSent?: (message: Message) => void;
@@ -156,13 +153,15 @@ Interface for the ChatWidget component:
 interface ChatWidgetProps {
   // Display Configuration
   title?: string;
-  subtitle?: string;
   buttonIcon?: string;
 
   // Styling
   className?: string;
+  style?: React.CSSProperties;
   buttonClassName?: string;
+  buttonStyle?: React.CSSProperties;
   dialogClassName?: string;
+  dialogStyle?: React.CSSProperties;
 
   // State Management
   defaultOpen?: boolean;
@@ -250,9 +249,6 @@ const TypedChat: React.FC<ChatProps> = ({
       projectId={projectId}
       aiConfigId={aiConfigId}
       authorization={`Bearer ${userToken}`}
-      apiBaseUrl="/api/proxy"
-      enableFunctionCalls={true}
-      enableKnowledgeBase={true}
       onMessageSent={handleMessageSent}
       onResponseReceived={handleResponseReceived}
       onFunctionExecuted={handleFunctionExecuted}
@@ -355,8 +351,7 @@ const TypedChatWidget: React.FC<TypedWidgetProps> = ({
 
   // Widget props with proper typing
   const widgetProps: ChatWidgetProps = {
-    title: "AI Assistant",
-    subtitle: `${widgetState.unreadCount > 0 ? `${widgetState.unreadCount} new messages` : 'How can we help?'}`,
+    title: widgetState.unreadCount > 0 ? `AI Assistant (${widgetState.unreadCount} new)` : "AI Assistant",
     defaultOpen: widgetState.isOpen,
     onOpenChange: handleOpenChange,
     buttonClassName: widgetState.unreadCount > 0 ? 'animate-pulse ring-2 ring-blue-400' : ''
@@ -367,9 +362,7 @@ const TypedChatWidget: React.FC<TypedWidgetProps> = ({
     projectId,
     aiConfigId,
     authorization: `Bearer ${userToken}`,
-    apiBaseUrl: '/api/proxy',
     enableStreamingMode: true,
-    enableFunctionCalls: true,
     onResponseReceived: handleResponseReceived,
     onFunctionExecuted: handleFunctionExecuted,
     className: 'h-full'
@@ -444,7 +437,6 @@ const StreamingTypedChat: React.FC<{
     projectId,
     aiConfigId,
     authorization: `Bearer ${userToken}`,
-    apiBaseUrl: '/api/proxy',
     enableStreamingMode: true,
     onStreamingStatusChange: handleStreamingStatusChange,
     onStreamingStatsUpdate: handleStreamingStatsUpdate
@@ -590,11 +582,7 @@ const AdvancedTypedChat: React.FC<AdvancedChatProps> = ({
     projectId,
     aiConfigId,
     authorization: `Bearer ${userToken}`,
-    apiBaseUrl: '/api/proxy',
     apiHeaders,
-    enableFunctionCalls: true,
-    enableKnowledgeBase: true,
-    enableReActPattern: true,
     onResponseReceived: handleResponseReceived,
     onFunctionExecuted: handleExecution,
     onError: handleTypedError,
@@ -1002,7 +990,6 @@ const ConditionalChat: React.FC<ConditionalChatProps> = ({ mode, ...props }) => 
     return (
       <ChatInterface
         {...props}
-        enableFunctionCalls={false}
         showUsageInfo={false}
       />
     );
@@ -1011,8 +998,6 @@ const ConditionalChat: React.FC<ConditionalChatProps> = ({ mode, ...props }) => 
   return (
     <ChatInterface
       {...props}
-      enableFunctionCalls={true}
-      enableKnowledgeBase={true}
       showUsageInfo={true}
     />
   );

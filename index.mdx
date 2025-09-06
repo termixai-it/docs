@@ -80,7 +80,7 @@ Here's what a basic implementation looks like:
 
 ```tsx
 import { ChatInterface } from '@termix-it/react-tool';
-import '@termix-it/react-tool/dist/styles.css';
+// No need to import CSS - styles are now bundled with components
 
 function App() {
   return (
@@ -88,13 +88,9 @@ function App() {
       <ChatInterface
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        apiBaseUrl="/api/proxy"
         authorization="Bearer your-jwt-token"
-        enableFunctionCalls={true}
-        enableKnowledgeBase={true}
-        onFunctionExecuted={(call, result) => {
-          console.log('Function executed:', call.name, result);
-        }}
+        enableStreamingMode={true} // Enable real-time streaming
+        placeholder="Type your message..."
       />
     </div>
   );
