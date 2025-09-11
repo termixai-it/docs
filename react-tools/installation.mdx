@@ -160,15 +160,6 @@ You'll need these essential parameters to get started:
   Authorization header value, typically a Bearer token for authentication.
 </ParamField>
 
-## API Integration
-
-The SDK automatically connects to the Termix API:
-- **Production**: `https://dashboard.termix.ai`  
-- **Local Development**: `http://127.0.0.1:3001` (when using `npm run dev:local`)
-
-<Warning>
-Never expose your API keys directly in the frontend. The SDK expects you to provide appropriate authorization headers.
-</Warning>
 
 <Info>
 **Streaming Mode Requirements**: If you enable `enableStreamingMode={true}`, your proxy endpoint must support Server-Sent Events (SSE). See the [Streaming Mode guide](/react-tools/streaming) for detailed implementation instructions.
@@ -217,7 +208,7 @@ If you enabled streaming mode, you should see:
 Now that you have the basic setup working, you can:
 
 <CardGroup cols={2}>
-  <Card title="Explore Configuration" icon="gear" href="/react-tools/configuration">
+  <Card title="Explore Configuration" icon="gear" href="/react-tools/chat-interface">
     Learn about all available props and customization options
   </Card>
   <Card title="ChatWidget Component" icon="comment" href="/react-tools/widget">
@@ -233,12 +224,3 @@ Now that you have the basic setup working, you can:
     Learn about type definitions and TypeScript-specific features
   </Card>
 </CardGroup>
-
-## Example Projects
-
-Check out these example implementations:
-
-- **Basic Chat** - Simple chat interface with minimal configuration
-- **Function Calling** - Chat with REST API integration
-- **Smart Contracts** - DeFi chat interface with MetaMask integration
-- **Knowledge Base** - Documentation assistant with search capabilities

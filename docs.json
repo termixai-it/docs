@@ -34,13 +34,6 @@
             ]
           },
           {
-            "group": "Core Concepts",
-            "pages": [
-              "react-tools/overview",
-              "react-tools/configuration"
-            ]
-          },
-          {
             "group": "Advanced Features",
             "pages": [
               "react-tools/advanced-usage",
@@ -51,6 +44,7 @@
           {
             "group": "Components",
             "pages": [
+              "react-tools/chat-interface",
               "react-tools/widget"
             ]
           }
