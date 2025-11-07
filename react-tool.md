@@ -24,20 +24,72 @@ yarn add @termix-it/react-tool
 pnpm add @termix-it/react-tool
 ```
 
-## Dependencies
+After installation, you'll have access to:
+- ✅ ChatInterface component with AI chat capabilities
+- ✅ ChatWidget component for floating chat button
+- ✅ Built-in styles (no separate CSS import needed)
+- ✅ Built-in UI components (Lucide icons, Markdown rendering)
+- ✅ TypeScript support with full type definitions
+- ✅ Automatic knowledge base integration
+- ✅ Function calling (REST APIs & smart contracts)
+- ✅ Real-time streaming support
+- ✅ Tree-shaking optimized (only bundles what you use)
 
-This library requires the following peer dependencies:
+## Peer Dependencies
+
+This library requires the following peer dependencies to be installed in your project:
+
+```bash
+npm install react react-dom ethers
+# or
+yarn add react react-dom ethers
+# or
+pnpm add react react-dom ethers
+```
+
+**Required peer dependencies:**
 
 ```json
 {
   "react": ">=16.9.0",
-  "react-dom": ">=16.9.0"
+  "react-dom": ">=16.9.0",
+  "ethers": "^5.7.0 || ^6.15.0"
 }
 ```
 
+**Note:** UI dependencies (`lucide-react`, `react-markdown`, `remark-breaks`, `remark-gfm`) are now bundled with the library and support tree-shaking to minimize bundle size. Only the icons and markdown features you use will be included in your final build.
+
+### Ethers.js Version Compatibility
+
+This library supports both **ethers v5** and **ethers v6** through an internal compatibility layer. You can use either version in your project:
+
+- **ethers v5**: `npm install ethers@^5.7.0`
+- **ethers v6**: `npm install ethers@^6.15.0`
+
+The library will automatically detect which version you have installed and adapt accordingly. All Web3-related functionality (smart contract calls, wallet connections, etc.) works seamlessly with both versions.
+
+**Recommendation:** We recommend using ethers v6 for new projects as it offers better performance and improved TypeScript support. However, if your project already uses ethers v5, you don't need to upgrade - this library will work perfectly with your existing setup.
+
 ## Quick Start
 
-### Basic Usage
+### Minimal Setup
+
+The absolute minimum code needed to get started:
+
+```tsx
+import { ChatInterface } from '@termix-it/react-tool';
+
+function App() {
+  return (
+    <ChatInterface
+      projectId="your-project-id"
+      aiConfigId="your-ai-config-id"
+    />
+  );
+}
+```
+
+### Basic Usage with Common Options
 
 ```tsx
 import { ChatInterface } from '@termix-it/react-tool';
@@ -47,11 +99,22 @@ function App() {
   return (
     <div className="h-screen">
       <ChatInterface
+        // Required props
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
+        
+        // Authentication (optional but recommended)
         authorization="Bearer your-jwt-token"
+        
+        // Common options
         enableStreamingMode={true} // Enable real-time streaming
+        showHeader={false} // Set to true to show chat header
         placeholder="Type your message..."
+        
+        // Optional callbacks
+        onMessageSent={(message) => console.log('Sent:', message)}
+        onResponseReceived={(message) => console.log('Received:', message)}
+        onError={(error) => console.error('Error:', error)}
       />
     </div>
   );
@@ -71,6 +134,7 @@ The `ChatWidget` component provides a floating chat button with a popup dialog, 
 
 ```tsx
 import { ChatWidget, ChatInterface } from '@termix-it/react-tool';
+// No need to import CSS - styles are now bundled with components
 
 function App() {
   return (
@@ -81,13 +145,23 @@ function App() {
       {/* Fixed positioned chat widget */}
       <div className="fixed bottom-6 right-6">
         <ChatWidget
-          title="AI Assistant"
+          title="AI Assistant" // Dialog header title
+          defaultOpen={false} // Start closed
+          onOpenChange={(open) => console.log('Widget open:', open)}
         >
           <ChatInterface
+            // Required props
             projectId="your-project-id"
             aiConfigId="your-ai-config-id"
+            
+            // Authentication
             authorization="Bearer your-token"
+            
+            // Features
             enableStreamingMode={true}
+            showHeader={false} // Widget has its own header
+            
+            // Style
             className="h-full"
           />
         </ChatWidget>
@@ -151,7 +225,6 @@ The ChatInterface component includes an optional header that displays the AI mod
 ```tsx
 <ChatInterface
   showHeader={true}  // Default: false
-  modelName="GPT-4"
   personalityName="AI Assistant"
   showUsageInfo={true}  // Shows total cost in header when available
   // ... other props
@@ -184,8 +257,6 @@ The header features:
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `placeholder` | `string` | `"Type your message..."` | Input placeholder text |
-| `sendButtonText` | `string` | `""` | Send button text (empty string shows default icon) |
-| `modelName` | `string` | `"AI Model"` | Fallback model name if API config fetch fails |
 | `personalityName` | `string` | `undefined` | Optional override for personality name (overrides API config value) |
 
 ### Feature Toggles
@@ -338,8 +409,6 @@ export default function AdvancedChat() {
       
       // Customization
       placeholder="Ask me anything..."
-      sendButtonText="" // Empty string shows icon
-      modelName="GPT-4" // Fallback if API config fetch fails
       personalityName="Advanced Assistant" // Optional: override API config personality name
       
       // Callbacks
@@ -376,7 +445,6 @@ The component now automatically fetches configuration from the AI config API:
 Default fallback: `"Hello! I'm [personality name]. How can I help you today?"`
 
 ### Default Values
-- `sendButtonText`: Now defaults to `""` (empty string shows icon instead of text)
 - `showUsageInfo`: Defaults to `false`
 - `showTimestamp`: Defaults to `false`
 - `showHeader`: Defaults to `false`
@@ -693,6 +761,67 @@ MIT
 
 Please read our contributing guidelines and submit pull requests to help improve this library.
 
+## Development
+
+### Running the Test App
+
+A test application with **interactive control panel** is included for development and testing:
+
+```bash
+# From the react-tool directory
+npm run dev:example
+# or
+pnpm dev:example
+```
+
+This will start a Vite dev server at http://localhost:3002 with hot reload.
+
+**Features:**
+- ✅ **Control Panel** - Real-time property adjustment for all component props
+- ✅ **Message Test Cases** - Pre-built conversation scenarios for fast debugging
+- ✅ **Live Preview** - Test both ChatInterface and ChatWidget components
+- ✅ **Hot Reload** - Changes to source code are reflected immediately
+- ✅ **No Code Editing** - Configure everything through the UI
+
+The control panel allows you to:
+- **Load test conversations** - 6 pre-built scenarios (greetings, knowledge context, function calls, etc.)
+- **Copy messages** - Export current conversation as JSON for creating new test cases
+- **Clear messages** - Reset to empty state
+- Switch between ChatInterface and ChatWidget views
+- Update API credentials (Project ID, Config ID, Authorization)
+- Configure ChatWidget-specific options (title, button icon, default open state)
+- Customize ChatInterface text (placeholder, button text, model name)
+- Toggle features (streaming, header, usage info, timestamps)
+- See changes applied instantly with context-sensitive controls
+
+See `example/README.md` for more details.
+
+### Building the Library
+
+```bash
+# Build for production
+npm run build
+
+# Build for development (with dev API URL)
+npm run build:dev
+
+# Watch mode - rebuild on changes
+npm run dev:prod
+npm run dev:local
+```
+
 ## Support
 
 For issues and questions, please use the GitHub issue tracker.
+
+## Publishing
+
+```bash
+# Publish the package
+npm publish --access public
+
+# Update version
+npm version patch  # 1.0.0 → 1.0.1
+npm version minor  # 1.0.0 → 1.1.0
+npm version major  # 1.0.0 → 2.0.0
+```

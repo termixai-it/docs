@@ -33,22 +33,61 @@ pnpm add @termix-it/react-tool
 ```
 </CodeGroup>
 
-## Dependencies
+After installation, you'll have access to:
+- ✅ ChatInterface component with AI chat capabilities
+- ✅ ChatWidget component for floating chat button
+- ✅ Built-in styles (no separate CSS import needed)
+- ✅ Built-in UI components (Lucide icons, Markdown rendering)
+- ✅ TypeScript support with full type definitions
+- ✅ Automatic knowledge base integration
+- ✅ Function calling (REST APIs & smart contracts)
+- ✅ Real-time streaming support
+- ✅ Tree-shaking optimized (only bundles what you use)
 
-This library requires the following peer dependencies:
+## Peer Dependencies
+
+This library requires the following peer dependencies to be installed in your project:
+
+<CodeGroup>
+```bash npm
+npm install react react-dom ethers
+```
+
+```bash yarn
+yarn add react react-dom ethers
+```
+
+```bash pnpm
+pnpm add react react-dom ethers
+```
+</CodeGroup>
+
+**Required peer dependencies:**
 
 ```json
 {
   "react": ">=16.9.0",
-  "react-dom": ">=16.9.0"
+  "react-dom": ">=16.9.0",
+  "ethers": "^5.7.0 || ^6.15.0"
 }
 ```
 
-These should be automatically installed with most React applications, but you can install them manually if needed:
+<Note>
+**UI dependencies** (`lucide-react`, `react-markdown`, `remark-breaks`, `remark-gfm`) are now bundled with the library and support tree-shaking to minimize bundle size. Only the icons and markdown features you use will be included in your final build.
+</Note>
 
-```bash
-npm install react react-dom
-```
+### Ethers.js Version Compatibility
+
+This library supports both **ethers v5** and **ethers v6** through an internal compatibility layer. You can use either version in your project:
+
+- **ethers v5**: `npm install ethers@^5.7.0`
+- **ethers v6**: `npm install ethers@^6.15.0`
+
+The library will automatically detect which version you have installed and adapt accordingly. All Web3-related functionality (smart contract calls, wallet connections, etc.) works seamlessly with both versions.
+
+<Tip>
+**Recommendation:** We recommend using ethers v6 for new projects as it offers better performance and improved TypeScript support. However, if your project already uses ethers v5, you don't need to upgrade - this library will work perfectly with your existing setup.
+</Tip>
 
 ## Styles
 
@@ -60,7 +99,28 @@ If you're already using Tailwind CSS in your project, the bundled styles won't c
 
 ## Basic Setup
 
-Here's the minimal setup to get a chat interface running:
+### Minimal Setup
+
+The absolute minimum code needed to get started:
+
+```tsx App.tsx
+import { ChatInterface } from '@termix-it/react-tool';
+
+function App() {
+  return (
+    <ChatInterface
+      projectId="your-project-id"
+      aiConfigId="your-ai-config-id"
+    />
+  );
+}
+
+export default App;
+```
+
+### Basic Usage with Common Options
+
+Here's a more complete setup with commonly used options:
 
 ```tsx App.tsx
 import { ChatInterface } from '@termix-it/react-tool';
@@ -70,11 +130,22 @@ function App() {
   return (
     <div className="h-screen">
       <ChatInterface
+        // Required props
         projectId="your-project-id"
         aiConfigId="your-ai-config-id"
-        authorization="Bearer your-token"
+
+        // Authentication (optional but recommended)
+        authorization="Bearer your-jwt-token"
+
+        // Common options
         enableStreamingMode={true} // Enable real-time streaming
+        showHeader={false} // Set to true to show chat header
         placeholder="Type your message..."
+
+        // Optional callbacks
+        onMessageSent={(message) => console.log('Sent:', message)}
+        onResponseReceived={(message) => console.log('Received:', message)}
+        onError={(error) => console.error('Error:', error)}
       />
     </div>
   );
@@ -91,23 +162,34 @@ For a non-intrusive floating chat widget, use the `ChatWidget` component:
 
 ```tsx FloatingChat.tsx
 import { ChatWidget, ChatInterface } from '@termix-it/react-tool';
+// No need to import CSS - styles are now bundled with components
 
 function App() {
   return (
     <div className="relative h-screen">
       {/* Your main application content */}
       <div>Your application content here</div>
-      
+
       {/* Floating chat widget - positioned bottom right */}
       <div className="fixed bottom-6 right-6">
         <ChatWidget
-          title="AI Assistant"
+          title="AI Assistant" // Dialog header title
+          defaultOpen={false} // Start closed
+          onOpenChange={(open) => console.log('Widget open:', open)}
         >
           <ChatInterface
+            // Required props
             projectId="your-project-id"
             aiConfigId="your-ai-config-id"
+
+            // Authentication
             authorization="Bearer your-token"
+
+            // Features
             enableStreamingMode={true}
+            showHeader={false} // Widget has its own header
+
+            // Style
             className="h-full"
           />
         </ChatWidget>
@@ -155,11 +237,9 @@ You'll need these essential parameters to get started:
   AI configuration identifier that defines the model and behavior settings.
 </ParamField>
 
-
-<ParamField path="authorization" type="string" required>
-  Authorization header value, typically a Bearer token for authentication.
+<ParamField path="authorization" type="string">
+  Authorization header value, typically a Bearer token for authentication (optional but recommended).
 </ParamField>
-
 
 <Info>
 **Streaming Mode Requirements**: If you enable `enableStreamingMode={true}`, your proxy endpoint must support Server-Sent Events (SSE). See the [Streaming Mode guide](/react-tools/streaming) for detailed implementation instructions.

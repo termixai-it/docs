@@ -60,14 +60,6 @@ Control the appearance and text of the chat interface:
   Placeholder text shown in the message input field.
 </ParamField>
 
-<ParamField path="sendButtonText" type="string" default="">
-  Text displayed on the send button. Empty string shows default icon instead of text.
-</ParamField>
-
-<ParamField path="modelName" type="string" default="AI Model">
-  Fallback model name if API config fetch fails.
-</ParamField>
-
 ## Feature Toggles
 
 Enable or disable specific functionality:
@@ -255,8 +247,6 @@ function AdvancedChat() {
       
       // UI customization
       placeholder="Ask me anything..."
-      sendButtonText="" // Empty string shows icon instead of text
-      modelName="GPT-4" // Fallback if API config fetch fails
       personalityName="Advanced Assistant" // Optional: override API config personality name
       
       // Feature toggles
@@ -341,10 +331,11 @@ The component now automatically fetches configuration from the AI config API:
 
 Default fallback: `"Hello! I'm [personality name]. How can I help you today?"`
 
-### Default Values Changed
-- `showUsageInfo`: Now defaults to `false` (was `true`)
-- `showTimestamp`: Now defaults to `false` (was `true`)
-- Knowledge references are always shown (removed `showKnowledgeReferences` prop)
+### Default Values
+- `showUsageInfo`: Defaults to `false`
+- `showTimestamp`: Defaults to `false`
+- `showHeader`: Defaults to `false`
+- `enableStreamingMode`: Defaults to `false`
 
 ## Best Practices
 
