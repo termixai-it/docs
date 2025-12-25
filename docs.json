@@ -11,11 +11,6 @@
   "navigation": {
     "anchors": [
       {
-        "anchor": "GitHub",
-        "href": "https://github.com/termix-ai/react-tool",
-        "icon": "github"
-      },
-      {
         "anchor": "NPM",
         "href": "https://www.npmjs.com/package/@termix-it/react-tool",
         "icon": "box"
@@ -56,19 +51,7 @@
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg"
   },
-  "navbar": {
-    "links": [
-      {
-        "label": "GitHub",
-        "href": "https://github.com/termix-ai/react-tool"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "https://github.com/termix-ai/react-tool"
-    }
-  },
+  "navbar": {},
   "contextual": {
     "options": [
      "copy",
@@ -79,9 +62,5 @@
      "vscode"
    ]
   },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/termix-ai/react-tool"
-    }
-  }
+  "footer": {}
 }
