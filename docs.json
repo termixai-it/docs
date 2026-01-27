@@ -33,7 +33,7 @@
             "pages": [
               "react-tools/advanced-usage",
               "react-tools/streaming",
-              "react-tools/typescript"
+              "common/typescript"
             ]
           },
           {
