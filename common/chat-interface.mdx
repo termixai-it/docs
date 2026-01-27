@@ -1,0 +1,578 @@
+---
+title: "ChatInterface Component"
+# description: "Complete reference for all ChatInterface component props and configuration options"
+---
+
+{/* # ChatInterface Component */}
+
+The `ChatInterface` component offers extensive configuration options to customize behavior, appearance, and functionality.
+
+## Required Props
+
+These props are required for the component to function:
+
+<ParamField path="projectId" type="string" required>
+  Your Termix project identifier. You can find this in your Termix dashboard under project settings.
+</ParamField>
+
+<ParamField path="aiConfigId" type="string" required>
+  AI configuration identifier that defines the model, prompts, and behavior settings for your AI assistant.
+</ParamField>
+
+
+<ParamField path="authorization" type="string" required>
+  Authorization header value for API requests. Api key.
+</ParamField>
+
+## API
+
+Configure how the component connects to your backend services:
+
+
+<ParamField path="apiHeaders" type="Record<string, string>" default="{}">
+  Additional headers to include with all API requests.
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      apiHeaders={{
+        'X-API-Key': 'your-api-key',
+        'X-Client-Version': '1.0.0'
+      }}
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      :api-headers="{
+        'X-API-Key': 'your-api-key',
+        'X-Client-Version': '1.0.0'
+      }"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="restExecuteHeader" type="Record<string, string>" default="undefined">
+  Custom headers object for REST function execution.
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      restExecuteHeader={{ "X-API-Key": "secret", "Content-Type": "application/json" }}
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      :rest-execute-header="{ 'X-API-Key': 'secret', 'Content-Type': 'application/json' }"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+## UI Customization
+
+Control the appearance and text of the chat interface:
+
+<ParamField path="personalityName" type="string" default="undefined">
+  Optional override for personality name (overrides API config value).
+</ParamField>
+
+<ParamField path="placeholder" type="string" default="Type your message...">
+  Placeholder text shown in the message input field.
+</ParamField>
+
+## Feature Toggles
+
+Enable or disable specific functionality:
+
+**Note:** Knowledge base, function calls, ReAct pattern, and knowledge references are now enabled by default and cannot be disabled.
+
+<ParamField path="enableStreamingMode" type="boolean" default="false">
+  Enable real-time streaming responses using Server-Sent Events (SSE). Messages appear character-by-character as they're generated.
+  
+  **Note**: Requires proper SSE endpoint configuration. See [Streaming Mode guide](/react-tools/streaming) for setup details.
+</ParamField>
+
+<ParamField path="showHeader" type="boolean" default="false">
+  Show/hide the chat header with AI model name and personality information. Features blue gradient background with white text.
+</ParamField>
+
+<ParamField path="showUsageInfo" type="boolean" default="false">
+  Display token usage and cost information for each message. Also shows total cost in header when `showHeader` is enabled.
+</ParamField>
+
+<ParamField path="showTimestamp" type="boolean" default="false">
+  Show timestamps on messages.
+</ParamField>
+
+<ParamField path="maxKnowledgeResults" type="number" default="3">
+  Maximum number of knowledge base results to display for each query.
+</ParamField>
+
+## Styling Props
+
+Customize the visual appearance using CSS classes:
+
+<ParamField path="className" type="string">
+  Additional CSS classes for the main chat container.
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      className="border-2 border-gray-300 rounded-lg shadow-lg"
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      class="border-2 border-gray-300 rounded-lg shadow-lg"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="messagesClassName" type="string">
+  CSS classes for the messages area container.
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      messagesClassName="bg-gray-50 p-4"
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      messages-class-name="bg-gray-50 p-4"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="inputClassName" type="string">
+  CSS classes for the message input field.
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      inputClassName="border-blue-500 focus:ring-blue-500"
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      input-class-name="border-blue-500 focus:ring-blue-500"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+## Event Callbacks
+
+Handle events and customize behavior with callback functions:
+
+<ParamField path="onMessageSent" type="(message: Message) => void">
+  Called when a user sends a message.
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      onMessageSent={(message) => {
+        console.log('User sent:', message.content);
+        // Track user interactions
+      }}
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      @message-sent="(message) => {
+        console.log('User sent:', message.content);
+        // Track user interactions
+      }"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="onResponseReceived" type="(message: Message) => void">
+  Called when the AI responds with a message.
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      onResponseReceived={(message) => {
+        console.log('AI responded:', message.content);
+        // Handle AI responses
+      }}
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      @response-received="(message) => {
+        console.log('AI responded:', message.content);
+        // Handle AI responses
+      }"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="onFunctionExecuted" type="(functionCall: FunctionCall, result: ExecutionResult) => void">
+  Called when a function call is executed (API call, smart contract, etc.).
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      onFunctionExecuted={(call, result) => {
+        if (result.type === 'contract' && result.success) {
+          console.log('Transaction hash:', result.data?.transactionHash);
+        }
+      }}
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      @function-executed="(call, result) => {
+        if (result.type === 'contract' && result.success) {
+          console.log('Transaction hash:', result.data?.transactionHash);
+        }
+      }"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="onError" type="(error: any) => void">
+  Called when an error occurs during operation.
+
+  <Tabs>
+    <Tab title="React">
+      ```tsx
+      onError={(error) => {
+        console.error('Chat error:', error);
+        // Show user-friendly error message
+      }}
+      ```
+    </Tab>
+    <Tab title="Vue">
+      ```vue
+      @error="(error) => {
+        console.error('Chat error:', error);
+        // Show user-friendly error message
+      }"
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+## ChatWidget Configuration
+
+When using the `ChatWidget` component, these additional props are available:
+
+<ParamField path="title" type="string" default="AI Assistant">
+  Dialog header title displayed at the top of the chat widget.
+</ParamField>
+
+<ParamField path="buttonIcon" type="string" default="undefined">
+  Custom button icon URL. When not specified, uses the default chat icon.
+</ParamField>
+
+<ParamField path="buttonClassName" type="string" default="">
+  CSS classes for the floating chat button.
+</ParamField>
+
+<ParamField path="dialogClassName" type="string" default="">
+  CSS classes for the chat dialog container.
+</ParamField>
+
+<ParamField path="defaultOpen" type="boolean" default="false">
+  Whether the dialog should be open by default when the component mounts.
+</ParamField>
+
+<ParamField path="onOpenChange" type="(open: boolean) => void" default="undefined">
+  Callback function called when the dialog open state changes.
+</ParamField>
+
+### ChatWidget Example
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { ChatWidget, ChatInterface } from '@termix-it/react-tool';
+
+    function WidgetExample() {
+      return (
+        <div className="fixed bottom-6 right-6">
+          <ChatWidget
+            title="Support Assistant"
+            buttonIcon="/custom-icon.svg"
+            buttonClassName="shadow-lg border-2 border-blue-500"
+            onOpenChange={(open) => console.log('Widget is', open ? 'open' : 'closed')}
+          >
+            <ChatInterface
+              projectId="your-project-id"
+              aiConfigId="your-ai-config-id"
+              authorization="your-api-key"
+              enableStreamingMode={true}
+              // Note: showHeader=false since ChatWidget provides its own header
+            />
+          </ChatWidget>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup>
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+
+    const handleOpenChange = (open) => {
+      console.log('Widget is', open ? 'open' : 'closed');
+    };
+    </script>
+
+    <template>
+      <div class="fixed bottom-6 right-6">
+        <ChatWidget
+          title="Support Assistant"
+          button-icon="/custom-icon.svg"
+          button-class-name="shadow-lg border-2 border-blue-500"
+          @open-change="handleOpenChange"
+        >
+          <ChatInterface
+            project-id="your-project-id"
+            ai-config-id="your-ai-config-id"
+            authorization="your-api-key"
+            :enable-streaming-mode="true"
+          />
+          <!-- Note: showHeader=false since ChatWidget provides its own header -->
+        </ChatWidget>
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Complete Configuration Example
+
+Here's an example with all major configuration options:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { ChatInterface } from '@termix-it/react-tool';
+
+    function AdvancedChat() {
+      const [authorization, setAuthorization] = useState('your-api-key');
+      const customHeaders = { "X-API-Key": "secret" };
+
+      return (
+        <ChatInterface
+          // Required props
+          projectId="689b0b0a67504c373d86bed6"
+          aiConfigId="689b0ce8ed28bfae5038fe82"
+
+          // API configuration
+          authorization={authorization}
+          apiHeaders={{
+            'X-Client-Version': '1.0.0',
+            'X-Session-ID': 'unique-session-id'
+          }}
+          restExecuteHeader={customHeaders}
+
+          // UI customization
+          placeholder="Ask me anything..."
+          personalityName="Advanced Assistant" // Optional: override API config personality name
+
+          // Feature toggles
+          enableStreamingMode={true} // Enable real-time streaming
+          showHeader={true} // Show chat header with model info
+          showUsageInfo={true} // Optional: show token usage
+          showTimestamp={true} // Optional: show timestamps
+          maxKnowledgeResults={5}
+
+          // Styling
+          className="h-full border border-gray-200 rounded-lg"
+          messagesClassName="bg-white"
+          inputClassName="border-gray-300 focus:border-blue-500"
+
+          // Event callbacks
+          onMessageSent={(message) => console.log('Sent:', message)}
+          onResponseReceived={(message) => console.log('Received:', message)}
+          onFunctionExecuted={(call, result) => {
+            console.log('Function executed:', call.name);
+
+            if (result.type === 'contract' && result.success) {
+              console.log('Transaction:', result.data?.transactionHash);
+            }
+
+            if (result.type === 'api') {
+              console.log('API result:', result.data);
+            }
+          }}
+          onError={(error) => {
+            console.error('Error:', error);
+            // Show user notification
+          }}
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup>
+    import { ref } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+
+    const authorization = ref('your-api-key');
+    const customHeaders = { "X-API-Key": "secret" };
+
+    const handleMessageSent = (message) => console.log('Sent:', message);
+    const handleResponseReceived = (message) => console.log('Received:', message);
+    const handleFunctionExecuted = (call, result) => {
+      console.log('Function executed:', call.name);
+
+      if (result.type === 'contract' && result.success) {
+        console.log('Transaction:', result.data?.transactionHash);
+      }
+
+      if (result.type === 'api') {
+        console.log('API result:', result.data);
+      }
+    };
+    const handleError = (error) => {
+      console.error('Error:', error);
+      // Show user notification
+    };
+    </script>
+
+    <template>
+      <ChatInterface
+        project-id="689b0b0a67504c373d86bed6"
+        ai-config-id="689b0ce8ed28bfae5038fe82"
+
+        :authorization="authorization"
+        :api-headers="{
+          'X-Client-Version': '1.0.0',
+          'X-Session-ID': 'unique-session-id'
+        }"
+        :rest-execute-header="customHeaders"
+
+        placeholder="Ask me anything..."
+        personality-name="Advanced Assistant"
+
+        :enable-streaming-mode="true"
+        :show-header="true"
+        :show-usage-info="true"
+        :show-timestamp="true"
+        :max-knowledge-results="5"
+
+        class="h-full border border-gray-200 rounded-lg"
+        messages-class-name="bg-white"
+        input-class-name="border-gray-300 focus:border-blue-500"
+
+        @message-sent="handleMessageSent"
+        @response-received="handleResponseReceived"
+        @function-executed="handleFunctionExecuted"
+        @error="handleError"
+      />
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Environment-Specific Configurations
+
+<Tabs>
+  <Tab title="React Development">
+    ```tsx
+    <ChatInterface
+      projectId="dev-project-id"
+      aiConfigId="dev-config-id"
+      authorization="dev-api-key"
+      enableStreamingMode={true} // Test streaming in development
+      showHeader={true} // Show header for debugging
+      showUsageInfo={true}
+    />
+    ```
+  </Tab>
+
+  <Tab title="React Production">
+    ```tsx
+    <ChatInterface
+      projectId={process.env.REACT_APP_PROJECT_ID}
+      aiConfigId={process.env.REACT_APP_AI_CONFIG_ID}
+      authorization={process.env.REACT_APP_PROD_API_KEY}
+      enableStreamingMode={true} // Enable streaming for better UX
+      showHeader={false} // Hide header in production
+      showUsageInfo={false} // Hide usage info for cleaner UI
+    />
+    ```
+  </Tab>
+
+  <Tab title="Vue Development">
+    ```vue
+    <ChatInterface
+      project-id="dev-project-id"
+      ai-config-id="dev-config-id"
+      authorization="dev-api-key"
+      :enable-streaming-mode="true"
+      :show-header="true"
+      :show-usage-info="true"
+    />
+    ```
+  </Tab>
+
+  <Tab title="Vue Production">
+    ```vue
+    <ChatInterface
+      :project-id="runtimeConfig.public.projectId"
+      :ai-config-id="runtimeConfig.public.aiConfigId"
+      :authorization="runtimeConfig.public.apiKey"
+      :enable-streaming-mode="true"
+      :show-header="false"
+      :show-usage-info="false"
+    />
+    ```
+  </Tab>
+</Tabs>
+
+## Important Changes in Latest Version
+
+### Automatic Feature Enablement
+The following features are now **enabled by default** and cannot be disabled:
+- **Knowledge Base Integration**: Automatically searches and references knowledge base
+- **Function Calls**: AI can execute REST APIs and smart contracts
+- **ReAct Pattern**: Reasoning and acting pattern for complex tasks
+- **Knowledge References**: Always displays knowledge base references when available
+
+### Welcome Message and Personality from API
+The component now automatically fetches configuration from the AI config API:
+1. **Welcome Message**: Uses greeting from API config or generates default
+2. **Personality Name**: Uses name from API config, can be overridden with `personalityName` prop
+3. **Re-fetching**: Automatically re-fetches when `projectId` or `aiConfigId` changes
+
+Default fallback: `"Hello! I'm [personality name]. How can I help you today?"`
+
+### Default Values
+- `showUsageInfo`: Defaults to `false`
+- `showTimestamp`: Defaults to `false`
+- `showHeader`: Defaults to `false`
+- `enableStreamingMode`: Defaults to `false`
+
+## Best Practices
+
+<Tip>
+**Security**: Never hardcode sensitive information like API keys or tokens in your frontend code. Use environment variables and server-side proxies.
+</Tip>
+
+<Tip>
+**Performance**: Disable features you don't need (like `showUsageInfo` in production) to reduce overhead.
+</Tip>
+
+<Tip>
+**User Experience**: Provide clear welcome messages and placeholders that guide users on what they can do.
+</Tip>
+
+<Warning>
+Make sure to handle errors gracefully using the `onError` callback to provide good user experience when things go wrong.
+</Warning>

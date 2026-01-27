@@ -39,7 +39,7 @@
           {
             "group": "Components",
             "pages": [
-              "react-tools/chat-interface",
+              "common/chat-interface",
               "react-tools/widget"
             ]
           }
