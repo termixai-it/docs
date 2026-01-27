@@ -11,7 +11,7 @@ Get your AI chat interface up and running in minutes.
 <Card
   title="Installation & Setup"
   icon="rocket"
-  href="/react-tools/installation"
+  href="/common/installation"
   horizontal
 >
   Install the library and create your first chat interface with our step-by-step guide.
@@ -78,24 +78,48 @@ Build powerful applications with advanced AI capabilities.
 
 Here's what a basic implementation looks like:
 
-```tsx
-import { ChatInterface } from '@termix-it/react-tool';
-// No need to import CSS - styles are now bundled with components
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { ChatInterface } from '@termix-it/react-tool';
+    // No need to import CSS - styles are now bundled with components
 
-function App() {
-  return (
-    <div className="h-screen">
-      <ChatInterface
-        projectId="your-project-id"
-        aiConfigId="your-ai-config-id"
-        authorization="Bearer your-jwt-token"
-        enableStreamingMode={true} // Enable real-time streaming
-        placeholder="Type your message..."
-      />
-    </div>
-  );
-}
-```
+    function App() {
+      return (
+        <div className="h-screen">
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            authorization="Bearer your-jwt-token"
+            enableStreamingMode={true} // Enable real-time streaming
+            placeholder="Type your message..."
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    </script>
+
+    <template>
+      <div class="h-screen">
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="your-ai-config-id"
+          authorization="Bearer your-jwt-token"
+          :enable-streaming-mode="true"
+          placeholder="Type your message..."
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
 
 ## Next Steps
 
@@ -103,7 +127,7 @@ function App() {
   <Card
     title="Get Started"
     icon="play"
-    href="/react-tools/installation"
+    href="/common/installation"
   >
     Install the library and set up your first chat interface
   </Card>
