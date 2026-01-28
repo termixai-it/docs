@@ -32,7 +32,7 @@
             "group": "Advanced Features",
             "pages": [
               "common//advanced-usage",
-              "react-tools/streaming",
+              "common/streaming",
               "common/typescript"
             ]
           },
