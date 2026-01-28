@@ -11,7 +11,7 @@ Get your AI chat interface up and running in minutes.
 <Card
   title="Installation & Setup"
   icon="rocket"
-  href="/react-tools/installation"
+  href="/common/installation"
   horizontal
 >
   Install the library and create your first chat interface with our step-by-step guide.
@@ -25,28 +25,28 @@ Everything you need to build sophisticated AI-powered chat experiences.
   <Card
     title="🤖 AI Chat Interface"
     icon="robot"
-    href="/react-tools/chat-interface"
+    href="/common/chat-interface"
   >
     Ready-to-use chat component with streaming responses and real-time interactions
   </Card>
   <Card
     title="🛠️ Function Calling"
     icon="wrench"
-    href="/react-tools/advanced-usage"
+    href="/common/advanced-usage"
   >
     Automatic AI function calling with REST API and smart contract execution
   </Card>
   <Card
     title="💬 Chat Widget"
     icon="comment"
-    href="/react-tools/widget"
+    href="/common/widget"
   >
     Floating chat widget for customer support and help functionality
   </Card>
   <Card
     title="🚀 TypeScript"
     icon="code"
-    href="/react-tools/typescript"
+    href="/common/typescript"
   >
     Full TypeScript support with comprehensive type definitions
   </Card>
@@ -78,24 +78,48 @@ Build powerful applications with advanced AI capabilities.
 
 Here's what a basic implementation looks like:
 
-```tsx
-import { ChatInterface } from '@termix-it/react-tool';
-// No need to import CSS - styles are now bundled with components
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { ChatInterface } from '@termix-it/react-tool';
+    // No need to import CSS - styles are now bundled with components
 
-function App() {
-  return (
-    <div className="h-screen">
-      <ChatInterface
-        projectId="your-project-id"
-        aiConfigId="your-ai-config-id"
-        authorization="Bearer your-jwt-token"
-        enableStreamingMode={true} // Enable real-time streaming
-        placeholder="Type your message..."
-      />
-    </div>
-  );
-}
-```
+    function App() {
+      return (
+        <div className="h-screen">
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            authorization="Bearer your-jwt-token"
+            enableStreamingMode={true} // Enable real-time streaming
+            placeholder="Type your message..."
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    </script>
+
+    <template>
+      <div class="h-screen">
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="your-ai-config-id"
+          authorization="Bearer your-jwt-token"
+          :enable-streaming-mode="true"
+          placeholder="Type your message..."
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
 
 ## Next Steps
 
@@ -103,21 +127,21 @@ function App() {
   <Card
     title="Get Started"
     icon="play"
-    href="/react-tools/installation"
+    href="/common/installation"
   >
     Install the library and set up your first chat interface
   </Card>
   <Card
     title="Configuration"
     icon="gear"
-    href="/react-tools/chat-interface"
+    href="/common/chat-interface"
   >
     Learn about all available props and customization options
   </Card>
   <Card
     title="Advanced Features"
     icon="rocket"
-    href="/react-tools/advanced-usage"
+    href="/common/advanced-usage"
   >
     Explore smart contracts, function calling, and custom implementations
   </Card>

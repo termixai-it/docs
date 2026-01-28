@@ -25,22 +25,22 @@
             "group": "Getting Started",
             "pages": [
               "index",
-              "react-tools/installation"
+              "common/installation"
             ]
           },
           {
             "group": "Advanced Features",
             "pages": [
-              "react-tools/advanced-usage",
-              "react-tools/streaming",
-              "react-tools/typescript"
+              "common//advanced-usage",
+              "common/streaming",
+              "common/typescript"
             ]
           },
           {
             "group": "Components",
             "pages": [
-              "react-tools/chat-interface",
-              "react-tools/widget"
+              "common/chat-interface",
+              "common/widget"
             ]
           }
         ]

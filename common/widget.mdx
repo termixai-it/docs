@@ -1,0 +1,712 @@
+---
+title: "ChatWidget Component"
+description: "Add a floating chat widget to your application with the ChatWidget component for seamless customer support and help functionality"
+---
+
+The `ChatWidget` component provides a floating chat button with a popup dialog interface, perfect for customer service, help functionality, or any application where you want to offer AI assistance without dedicating screen space to a full chat interface.
+
+## Features
+
+<CardGroup cols={2}>
+  <Card title="🎈 Floating Interface" icon="comment">
+    Non-intrusive floating button that expands into a full chat dialog
+  </Card>
+  <Card title="🎨 Customizable Button" icon="palette">
+    Custom button icons, positioning, and styling options
+  </Card>
+  <Card title="📱 Responsive Design" icon="mobile">
+    Optimized for both desktop and mobile interactions
+  </Card>
+  <Card title="🔧 Easy Integration" icon="plug">
+    Works seamlessly with existing ChatInterface configurations
+  </Card>
+</CardGroup>
+
+## Basic Usage
+
+The ChatWidget wraps a ChatInterface component and provides its own header, so you typically don't need to enable `showHeader` on the internal ChatInterface.
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { ChatWidget, ChatInterface } from '@termix-it/react-tool';
+
+    function App() {
+      return (
+        <div className="relative h-screen">
+          {/* Your main content */}
+          <div>Your application content</div>
+
+          {/* Fixed positioned chat widget */}
+          <div className="fixed bottom-6 right-6">
+            <ChatWidget
+              title="AI Assistant"
+            >
+              <ChatInterface
+                projectId="your-project-id"
+                aiConfigId="your-ai-config-id"
+                authorization="your-api-key"
+                enableStreamingMode={true}
+                className="h-full"
+              />
+            </ChatWidget>
+          </div>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup>
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+    </script>
+
+    <template>
+      <div class="relative h-screen">
+        <!-- Your main content -->
+        <div>Your application content</div>
+
+        <!-- Fixed positioned chat widget -->
+        <div class="fixed bottom-6 right-6">
+          <ChatWidget title="AI Assistant">
+            <ChatInterface
+              project-id="your-project-id"
+              ai-config-id="your-ai-config-id"
+              authorization="your-api-key"
+              :enable-streaming-mode="true"
+              class="h-full"
+            />
+          </ChatWidget>
+        </div>
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## ChatWidget Props
+
+Complete reference for all ChatWidget configuration options:
+
+<ParamField path="title" type="string" default="AI Assistant">
+  Dialog header title displayed at the top of the chat widget
+</ParamField>
+
+
+<ParamField path="buttonIcon" type="string" default="undefined">
+  Custom button icon URL. When not specified, uses the default chat icon
+</ParamField>
+
+<ParamField path="className" type="string" default="">
+  CSS classes for the widget container
+</ParamField>
+
+<ParamField path="style" type="React.CSSProperties" default="undefined">
+  Inline styles for the widget container
+</ParamField>
+
+<ParamField path="buttonClassName" type="string" default="">
+  CSS classes for the floating chat button
+</ParamField>
+
+<ParamField path="buttonStyle" type="React.CSSProperties" default="undefined">
+  Inline styles for the chat button
+</ParamField>
+
+<ParamField path="dialogClassName" type="string" default="">
+  CSS classes for the chat dialog container
+</ParamField>
+
+<ParamField path="dialogStyle" type="React.CSSProperties" default="undefined">
+  Inline styles for the dialog
+</ParamField>
+
+<ParamField path="defaultOpen" type="boolean" default="false">
+  Whether the dialog should be open by default when the component mounts
+</ParamField>
+
+<ParamField path="onOpenChange" type="(open: boolean) => void" default="undefined">
+  Callback function called when the dialog open state changes
+</ParamField>
+
+<ParamField path="children" type="React.ReactNode" required>
+  Dialog content, typically a ChatInterface component
+</ParamField>
+
+## Advanced Examples
+
+### Custom Button Icon
+
+Replace the default chat icon with your own branding:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    <ChatWidget
+      buttonIcon="/assets/support-icon.png"
+      title="Customer Support"
+      buttonClassName="shadow-lg border-2 border-blue-500"
+    >
+      <ChatInterface {...chatProps} />
+    </ChatWidget>
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <ChatWidget
+      button-icon="/assets/support-icon.png"
+      title="Customer Support"
+      button-class-name="shadow-lg border-2 border-blue-500"
+    >
+      <ChatInterface v-bind="chatProps" />
+    </ChatWidget>
+    ```
+  </Tab>
+</Tabs>
+
+### Controlled State Management
+
+Control the widget's open/closed state programmatically:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { useState } from 'react';
+
+    function ControlledWidget() {
+      const [isOpen, setIsOpen] = useState(false);
+      const [hasNewMessage, setHasNewMessage] = useState(false);
+
+      // Open widget when there's a new message
+      const handleNewMessage = () => {
+        setHasNewMessage(true);
+        setIsOpen(true);
+      };
+
+      const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        if (open) {
+          setHasNewMessage(false); // Clear notification when opened
+        }
+      };
+
+      return (
+        <div className="fixed bottom-6 right-6">
+          <ChatWidget
+            defaultOpen={isOpen}
+            onOpenChange={handleOpenChange}
+            title={hasNewMessage ? "New message!" : "Support Chat"}
+            buttonClassName={hasNewMessage ? "animate-bounce bg-red-500" : ""}
+          >
+            <ChatInterface
+              {...chatProps}
+              onResponseReceived={handleNewMessage}
+            />
+          </ChatWidget>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup>
+    import { ref } from 'vue';
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+
+    const isOpen = ref(false);
+    const hasNewMessage = ref(false);
+
+    // Open widget when there's a new message
+    const handleNewMessage = () => {
+      hasNewMessage.value = true;
+      isOpen.value = true;
+    };
+
+    const handleOpenChange = (open) => {
+      isOpen.value = open;
+      if (open) {
+        hasNewMessage.value = false; // Clear notification when opened
+      }
+    };
+    </script>
+
+    <template>
+      <div class="fixed bottom-6 right-6">
+        <ChatWidget
+          :default-open="isOpen"
+          @open-change="handleOpenChange"
+          :title="hasNewMessage ? 'New message!' : 'Support Chat'"
+          :button-class-name="hasNewMessage ? 'animate-bounce bg-red-500' : ''"
+        >
+          <ChatInterface
+            v-bind="chatProps"
+            @response-received="handleNewMessage"
+          />
+        </ChatWidget>
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+### Multi-language Support
+
+Dynamically change widget text based on user language:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function MultiLanguageWidget() {
+      const [language, setLanguage] = useState<'en' | 'es' | 'fr' | 'zh'>('en');
+
+      const translations = {
+        en: { title: "AI Assistant", placeholder: "How can we help?" },
+        es: { title: "Asistente IA", placeholder: "¿Cómo podemos ayudarte?" },
+        fr: { title: "Assistant IA", placeholder: "Comment pouvons-nous vous aider?" },
+        zh: { title: "智能助手", placeholder: "我们如何为您提供帮助?" }
+      };
+
+      return (
+        <div className="fixed bottom-6 right-6">
+          <ChatWidget
+            title={translations[language].title}
+          >
+            <ChatInterface
+              {...chatProps}
+              placeholder={translations[language].placeholder}
+            />
+          </ChatWidget>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup>
+    import { ref, computed } from 'vue';
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+
+    const language = ref('en');
+
+    const translations = {
+      en: { title: "AI Assistant", placeholder: "How can we help?" },
+      es: { title: "Asistente IA", placeholder: "¿Cómo podemos ayudarte?" },
+      fr: { title: "Assistant IA", placeholder: "Comment pouvons-nous vous aider?" },
+      zh: { title: "智能助手", placeholder: "我们如何为您提供帮助?" }
+    };
+
+    const currentTranslation = computed(() => translations[language.value]);
+    </script>
+
+    <template>
+      <div class="fixed bottom-6 right-6">
+        <ChatWidget :title="currentTranslation.title">
+          <ChatInterface
+            v-bind="chatProps"
+            :placeholder="currentTranslation.placeholder"
+          />
+        </ChatWidget>
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+### Integration with Analytics
+
+Track widget usage and interactions:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function AnalyticsWidget() {
+      const handleOpenChange = (open: boolean) => {
+        // Track widget interactions
+        if (open) {
+          analytics.track('chat_widget_opened');
+        } else {
+          analytics.track('chat_widget_closed');
+        }
+      };
+
+      const handleMessageSent = (message: Message) => {
+        analytics.track('chat_message_sent', {
+          messageLength: message.content.length,
+          timestamp: message.timestamp
+        });
+      };
+
+      return (
+        <div className="fixed bottom-6 right-6">
+          <ChatWidget
+            title="Support"
+            onOpenChange={handleOpenChange}
+          >
+            <ChatInterface
+              {...chatProps}
+              onMessageSent={handleMessageSent}
+            />
+          </ChatWidget>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup>
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+
+    const handleOpenChange = (open) => {
+      // Track widget interactions
+      if (open) {
+        analytics.track('chat_widget_opened');
+      } else {
+        analytics.track('chat_widget_closed');
+      }
+    };
+
+    const handleMessageSent = (message) => {
+      analytics.track('chat_message_sent', {
+        messageLength: message.content.length,
+        timestamp: message.timestamp
+      });
+    };
+    </script>
+
+    <template>
+      <div class="fixed bottom-6 right-6">
+        <ChatWidget
+          title="Support"
+          @open-change="handleOpenChange"
+        >
+          <ChatInterface
+            v-bind="chatProps"
+            @message-sent="handleMessageSent"
+          />
+        </ChatWidget>
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Styling and Positioning
+
+### Custom Positioning
+
+Place the widget in different screen positions:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    {/* Bottom Right */}
+    <div className="fixed bottom-6 right-6">
+      <ChatWidget title="Support">
+        <ChatInterface {...props} />
+      </ChatWidget>
+    </div>
+
+    {/* Bottom Left */}
+    <div className="fixed bottom-6 left-6">
+      <ChatWidget title="Support">
+        <ChatInterface {...props} />
+      </ChatWidget>
+    </div>
+
+    {/* Top Right */}
+    <div className="fixed top-6 right-6">
+      <ChatWidget title="Support">
+        <ChatInterface {...props} />
+      </ChatWidget>
+    </div>
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <!-- Bottom Right -->
+    <div class="fixed bottom-6 right-6">
+      <ChatWidget title="Support">
+        <ChatInterface v-bind="props" />
+      </ChatWidget>
+    </div>
+
+    <!-- Bottom Left -->
+    <div class="fixed bottom-6 left-6">
+      <ChatWidget title="Support">
+        <ChatInterface v-bind="props" />
+      </ChatWidget>
+    </div>
+
+    <!-- Top Right -->
+    <div class="fixed top-6 right-6">
+      <ChatWidget title="Support">
+        <ChatInterface v-bind="props" />
+      </ChatWidget>
+    </div>
+    ```
+  </Tab>
+</Tabs>
+
+### Custom Button Styling
+
+Style the floating button to match your brand:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    <ChatWidget
+      title="Custom Support"
+      buttonClassName="
+        bg-gradient-to-r from-purple-500 to-pink-500
+        hover:from-purple-600 hover:to-pink-600
+        shadow-lg hover:shadow-xl
+        transform hover:scale-110
+        transition-all duration-200
+        border-4 border-white
+      "
+      className="z-50"
+    >
+      <ChatInterface {...chatProps} />
+    </ChatWidget>
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <ChatWidget
+      title="Custom Support"
+      button-class-name="
+        bg-gradient-to-r from-purple-500 to-pink-500
+        hover:from-purple-600 hover:to-pink-600
+        shadow-lg hover:shadow-xl
+        transform hover:scale-110
+        transition-all duration-200
+        border-4 border-white
+      "
+      class="z-50"
+    >
+      <ChatInterface v-bind="chatProps" />
+    </ChatWidget>
+    ```
+  </Tab>
+</Tabs>
+
+### Dialog Customization
+
+Customize the chat dialog appearance:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    <ChatWidget
+      title="Premium Support"
+      dialogClassName="
+        border-2 border-gold-400
+        shadow-2xl
+        bg-gradient-to-b from-white to-gray-50
+      "
+    >
+      <ChatInterface
+        {...chatProps}
+        className="bg-transparent"
+        messagesClassName="bg-white/90"
+      />
+    </ChatWidget>
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <ChatWidget
+      title="Premium Support"
+      dialog-class-name="
+        border-2 border-gold-400
+        shadow-2xl
+        bg-gradient-to-b from-white to-gray-50
+      "
+    >
+      <ChatInterface
+        v-bind="chatProps"
+        class="bg-transparent"
+        messages-class-name="bg-white/90"
+      />
+    </ChatWidget>
+    ```
+  </Tab>
+</Tabs>
+
+## Integration Patterns
+
+### With Authentication
+
+Show different widget states based on user authentication:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function AuthenticatedWidget() {
+      const { user, isAuthenticated } = useAuth();
+
+      if (!isAuthenticated) {
+        return (
+          <ChatWidget
+            title="Guest Support"
+          >
+            <div className="p-4 text-center">
+              <p className="mb-4">Sign in to access full support features</p>
+              <button className="bg-blue-500 text-white px-4 py-2 rounded">
+                Sign In
+              </button>
+            </div>
+          </ChatWidget>
+        );
+      }
+
+      return (
+        <ChatWidget
+          title={`Hi ${user.name}!`}
+        >
+          <ChatInterface
+            {...chatProps}
+            placeholder={`Hi ${user.name}, ask me anything...`}
+          />
+        </ChatWidget>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup>
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+
+    const { user, isAuthenticated } = useAuth();
+    </script>
+
+    <template>
+      <!-- Guest view -->
+      <ChatWidget v-if="!isAuthenticated" title="Guest Support">
+        <div class="p-4 text-center">
+          <p class="mb-4">Sign in to access full support features</p>
+          <button class="bg-blue-500 text-white px-4 py-2 rounded">
+            Sign In
+          </button>
+        </div>
+      </ChatWidget>
+
+      <!-- Authenticated view -->
+      <ChatWidget v-else :title="`Hi ${user.name}!`">
+        <ChatInterface
+          v-bind="chatProps"
+          :placeholder="`Hi ${user.name}, ask me anything...`"
+        />
+      </ChatWidget>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+### With Conditional Display
+
+Show the widget only when appropriate:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function ConditionalWidget() {
+      const [shouldShow, setShouldShow] = useState(false);
+      const { pathname } = useRouter();
+
+      useEffect(() => {
+        // Only show widget on certain pages
+        const supportPages = ['/dashboard', '/settings', '/billing'];
+        setShouldShow(supportPages.includes(pathname));
+      }, [pathname]);
+
+      if (!shouldShow) return null;
+
+      return (
+        <div className="fixed bottom-6 right-6">
+          <ChatWidget title="Page Help">
+            <ChatInterface {...chatProps} />
+          </ChatWidget>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup>
+    import { ref, watch, computed } from 'vue';
+    import { useRoute } from 'vue-router';
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+
+    const route = useRoute();
+
+    // Only show widget on certain pages
+    const supportPages = ['/dashboard', '/settings', '/billing'];
+    const shouldShow = computed(() => supportPages.includes(route.path));
+    </script>
+
+    <template>
+      <div v-if="shouldShow" class="fixed bottom-6 right-6">
+        <ChatWidget title="Page Help">
+          <ChatInterface v-bind="chatProps" />
+        </ChatWidget>
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<Tip>
+**Header Integration**: The ChatWidget provides its own header, so set `showHeader={false}` on your internal ChatInterface to avoid duplication.
+</Tip>
+
+<Tip>
+**Mobile Optimization**: The widget automatically adjusts for mobile devices, but test your specific implementation on various screen sizes.
+</Tip>
+
+<Tip>
+**Z-Index Management**: Ensure your widget has appropriate z-index values to appear above other content, especially modals and dropdowns.
+</Tip>
+
+<Warning>
+Avoid placing multiple ChatWidgets on the same page as this can confuse users and create overlapping dialogs.
+</Warning>
+
+## Accessibility
+
+The ChatWidget includes built-in accessibility features:
+
+- **Keyboard Navigation**: Full keyboard support for opening, closing, and navigating
+- **Screen Reader Support**: Proper ARIA labels and announcements
+- **Focus Management**: Automatic focus handling when opening and closing
+- **High Contrast Support**: Works with high contrast and dark mode themes
+
+## Common Use Cases
+
+<AccordionGroup>
+  <Accordion title="Customer Support">
+    Provide instant customer support without leaving the current page. Users can get help while continuing their workflow.
+  </Accordion>
+  
+  <Accordion title="Documentation Assistant">
+    Help users navigate complex documentation or find specific information relevant to their current page context.
+  </Accordion>
+  
+  <Accordion title="Onboarding Guide">
+    Guide new users through your application with contextual help and interactive tutorials.
+  </Accordion>
+  
+  <Accordion title="Sales Assistant">
+    Assist potential customers with product questions and guide them through the purchase process.
+  </Accordion>
+</AccordionGroup>
+
+The ChatWidget component provides a seamless way to integrate AI assistance into any application while maintaining a clean, unobtrusive user interface.

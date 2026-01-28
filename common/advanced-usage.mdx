@@ -1,0 +1,2122 @@
+---
+title: "Advanced Usage"
+description: "Learn advanced features including function calling, smart contract integration, knowledge base setup, custom implementations, styling, and API integration"
+---
+
+Unlock the full potential of @termix-it/react-tool with advanced features like function calling, smart contract integration, streaming mode, floating chat widgets, custom implementations, and comprehensive API integration.
+
+## Function Calling
+
+The ChatInterface automatically handles different types of function calls based on your AI configuration.
+
+### REST API Function Calls
+
+Configure your AI to make REST API calls that are automatically executed:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { useState } from 'react';
+    import { ChatInterface, FunctionCall, ExecutionResult } from '@termix-it/react-tool';
+
+    function APIIntegratedChat() {
+      const apiHeaders = {
+        'X-API-Key': 'your-api-key',
+        'Content-Type': 'application/json'
+      };
+
+      const handleFunctionExecution = (call: FunctionCall, result: ExecutionResult) => {
+        if (call.metadata?.type === 'api') {
+          console.log(`API call to ${call.metadata.path}:`, result.data);
+
+          if (result.success) {
+            // Handle successful API response
+            if (call.name === 'getUserData') {
+              // Update user state or show notification
+            }
+          } else {
+            // Handle API errors
+            console.error('API call failed:', result.error);
+          }
+        }
+      };
+
+      return (
+        <ChatInterface
+          projectId="your-project-id"
+          aiConfigId="your-ai-config-id"
+          authorization="your-api-key"
+          restExecuteHeader={apiHeaders}
+          onFunctionExecuted={handleFunctionExecution}
+          placeholder="I can help you access user data, update settings, and more!"
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    import type { FunctionCall, ExecutionResult } from '@termix-it/vue-tool';
+
+    const apiHeaders = {
+      'X-API-Key': 'your-api-key',
+      'Content-Type': 'application/json'
+    };
+
+    const handleFunctionExecution = (call: FunctionCall, result: ExecutionResult) => {
+      if (call.metadata?.type === 'api') {
+        console.log(`API call to ${call.metadata.path}:`, result.data);
+
+        if (result.success) {
+          // Handle successful API response
+          if (call.name === 'getUserData') {
+            // Update user state or show notification
+          }
+        } else {
+          // Handle API errors
+          console.error('API call failed:', result.error);
+        }
+      }
+    };
+    </script>
+
+    <template>
+      <ChatInterface
+        project-id="your-project-id"
+        ai-config-id="your-ai-config-id"
+        authorization="your-api-key"
+        :rest-execute-header="apiHeaders"
+        @function-executed="handleFunctionExecution"
+        placeholder="I can help you access user data, update settings, and more!"
+      />
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+### Dynamic Header Management
+
+Update API headers dynamically based on user state:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function DynamicHeadersChat() {
+      const [userToken, setUserToken] = useState('');
+      const [customHeaders, setCustomHeaders] = useState<Record<string, string>>({});
+
+      useEffect(() => {
+        // Update headers when user token changes
+        if (userToken) {
+          setCustomHeaders({
+            'Authorization': `Bearer ${userToken}`,
+            'X-User-ID': 'current-user-id',
+            'X-Timestamp': Date.now().toString()
+          });
+        }
+      }, [userToken]);
+
+      return (
+        <div>
+          <input
+            type="text"
+            placeholder="Enter your API token"
+            value={userToken}
+            onChange={(e) => setUserToken(e.target.value)}
+            className="mb-4 p-2 border rounded"
+          />
+
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            authorization="your-api-key"
+            restExecuteHeaders={customHeaders}
+            placeholder="Ask me to fetch your data or update settings..."
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ref, computed } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+
+    const userToken = ref('');
+
+    // Computed headers that update when userToken changes
+    const customHeaders = computed(() => {
+      if (userToken.value) {
+        return {
+          'Authorization': `Bearer ${userToken.value}`,
+          'X-User-ID': 'current-user-id',
+          'X-Timestamp': Date.now().toString()
+        };
+      }
+      return {};
+    });
+    </script>
+
+    <template>
+      <div>
+        <input
+          type="text"
+          placeholder="Enter your API token"
+          v-model="userToken"
+          class="mb-4 p-2 border rounded"
+        />
+
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="your-ai-config-id"
+          authorization="your-api-key"
+          :rest-execute-headers="customHeaders"
+          placeholder="Ask me to fetch your data or update settings..."
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## ChatWidget Advanced Usage
+
+The ChatWidget component provides sophisticated floating chat capabilities with extensive customization options.
+
+### Dynamic Widget State Management
+
+Control widget behavior based on application state and user interactions:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { useState, useEffect, useCallback } from 'react';
+    import { ChatWidget, ChatInterface, Message, FunctionCall, ExecutionResult } from '@termix-it/react-tool';
+
+    function DynamicWidget() {
+      const [isOpen, setIsOpen] = useState(false);
+      const [unreadCount, setUnreadCount] = useState(0);
+      const [currentPage, setCurrentPage] = useState('/dashboard');
+      const { user, isAuthenticated } = useAuth();
+
+      // Auto-open widget for new users
+      useEffect(() => {
+        if (isAuthenticated && user.isFirstTimeUser) {
+          setIsOpen(true);
+        }
+      }, [isAuthenticated, user]);
+
+      // Page-specific context
+      const getContextualWelcome = useCallback(() => {
+        const contexts = {
+          '/dashboard': 'Need help with your dashboard? I can explain any metrics or features.',
+          '/settings': 'Having trouble with settings? I can guide you through configuration.',
+          '/billing': 'Questions about billing or subscription? I\'m here to help.',
+          default: 'Hi! How can I assist you today?'
+        };
+        return contexts[currentPage] || contexts.default;
+      }, [currentPage]);
+
+      const handleNewResponse = useCallback((message: Message) => {
+        if (!isOpen) {
+          setUnreadCount(prev => prev + 1);
+        }
+      }, [isOpen]);
+
+      const handleOpenChange = useCallback((open: boolean) => {
+        setIsOpen(open);
+        if (open) {
+          setUnreadCount(0); // Clear notifications when opened
+        }
+      }, []);
+
+      if (!isAuthenticated) {
+        return (
+          <div className="fixed bottom-6 right-6">
+            <ChatWidget
+              title="Guest Support"
+              buttonClassName="opacity-75"
+            >
+              <div className="p-4 text-center">
+                <p className="mb-4">Please sign in to access AI assistance</p>
+                <button className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                  Sign In
+                </button>
+              </div>
+            </ChatWidget>
+          </div>
+        );
+      }
+
+      return (
+        <div className="fixed bottom-6 right-6">
+          {unreadCount > 0 && (
+            <div className="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs z-10">
+              {unreadCount}
+            </div>
+          )}
+
+          <ChatWidget
+            title={currentPage === '/dashboard' ? `Hi ${user.name}! - Dashboard Help` : `Hi ${user.name}!`}
+            defaultOpen={isOpen}
+            onOpenChange={handleOpenChange}
+            buttonClassName={unreadCount > 0 ? 'animate-pulse ring-2 ring-red-400' : ''}
+          >
+            <ChatInterface
+              projectId="your-project-id"
+              aiConfigId="your-ai-config-id"
+              authorization="your-api-key"
+              enableStreamingMode={true}
+              placeholder={getContextualWelcome()}
+              onResponseReceived={handleNewResponse}
+              apiHeaders={{
+                'X-User-ID': user.id,
+                'X-Current-Page': currentPage,
+                'X-User-Role': user.role
+              }}
+              className="h-full"
+            />
+          </ChatWidget>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ref, computed, watch } from 'vue';
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    import type { Message } from '@termix-it/vue-tool';
+    import { useAuth } from './composables/useAuth'; // Your auth composable
+
+    const isOpen = ref(false);
+    const unreadCount = ref(0);
+    const currentPage = ref('/dashboard');
+    const { user, isAuthenticated } = useAuth();
+
+    // Auto-open widget for new users
+    watch(
+      [isAuthenticated, user],
+      ([authenticated, currentUser]) => {
+        if (authenticated && currentUser?.isFirstTimeUser) {
+          isOpen.value = true;
+        }
+      },
+      { immediate: true }
+    );
+
+    // Page-specific context
+    const contextualWelcome = computed(() => {
+      const contexts: Record<string, string> = {
+        '/dashboard': 'Need help with your dashboard? I can explain any metrics or features.',
+        '/settings': 'Having trouble with settings? I can guide you through configuration.',
+        '/billing': 'Questions about billing or subscription? I\'m here to help.',
+        default: 'Hi! How can I assist you today?'
+      };
+      return contexts[currentPage.value] || contexts.default;
+    });
+
+    // Dynamic title based on current page
+    const widgetTitle = computed(() => {
+      return currentPage.value === '/dashboard'
+        ? `Hi ${user.value?.name}! - Dashboard Help`
+        : `Hi ${user.value?.name}!`;
+    });
+
+    // Dynamic button class for unread notifications
+    const buttonClass = computed(() => {
+      return unreadCount.value > 0 ? 'animate-pulse ring-2 ring-red-400' : '';
+    });
+
+    // API headers for chat requests
+    const apiHeaders = computed(() => ({
+      'X-User-ID': user.value?.id,
+      'X-Current-Page': currentPage.value,
+      'X-User-Role': user.value?.role
+    }));
+
+    const handleNewResponse = (message: Message) => {
+      if (!isOpen.value) {
+        unreadCount.value++;
+      }
+    };
+
+    const handleOpenChange = (open: boolean) => {
+      isOpen.value = open;
+      if (open) {
+        unreadCount.value = 0; // Clear notifications when opened
+      }
+    };
+    </script>
+
+    <template>
+      <!-- Guest view -->
+      <div v-if="!isAuthenticated" class="fixed bottom-6 right-6">
+        <ChatWidget
+          title="Guest Support"
+          button-class-name="opacity-75"
+        >
+          <div class="p-4 text-center">
+            <p class="mb-4">Please sign in to access AI assistance</p>
+            <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+              Sign In
+            </button>
+          </div>
+        </ChatWidget>
+      </div>
+
+      <!-- Authenticated view -->
+      <div v-else class="fixed bottom-6 right-6">
+        <div
+          v-if="unreadCount > 0"
+          class="absolute -top-2 -left-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs z-10"
+        >
+          {{ unreadCount }}
+        </div>
+
+        <ChatWidget
+          :title="widgetTitle"
+          :default-open="isOpen"
+          :button-class-name="buttonClass"
+          @open-change="handleOpenChange"
+        >
+          <ChatInterface
+            project-id="your-project-id"
+            ai-config-id="your-ai-config-id"
+            authorization="your-api-key"
+            :enable-streaming-mode="true"
+            :placeholder="contextualWelcome"
+            :api-headers="apiHeaders"
+            class="h-full"
+            @response-received="handleNewResponse"
+          />
+        </ChatWidget>
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+### Multi-Widget Implementation
+
+Deploy multiple specialized widgets for different use cases:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function MultiWidgetApp() {
+      const [activeWidgets, setActiveWidgets] = useState({
+        support: false,
+        sales: false,
+        technical: false
+      });
+
+      return (
+        <div className="relative min-h-screen">
+          {/* Main content */}
+          <div>Your application content</div>
+
+          {/* Support Widget - Bottom Right */}
+          <div className="fixed bottom-6 right-6">
+            <ChatWidget
+              title="Customer Support"
+              buttonIcon="/icons/support.svg"
+              defaultOpen={activeWidgets.support}
+              onOpenChange={(open) => setActiveWidgets(prev => ({...prev, support: open}))}
+            >
+              <ChatInterface
+                projectId="support-project-id"
+                aiConfigId="support-ai-config"
+                authorization="support-api-key"
+                enableStreamingMode={true}
+                placeholder="Hi! I'm your support assistant. How can I help?"
+              />
+            </ChatWidget>
+          </div>
+
+          {/* Sales Widget - Bottom Left */}
+          <div className="fixed bottom-6 left-6">
+            <ChatWidget
+              title="Sales Assistant"
+              buttonIcon="/icons/sales.svg"
+              buttonClassName="bg-green-500 hover:bg-green-600"
+              defaultOpen={activeWidgets.sales}
+              onOpenChange={(open) => setActiveWidgets(prev => ({...prev, sales: open}))}
+            >
+              <ChatInterface
+                projectId="sales-project-id"
+                aiConfigId="sales-ai-config"
+                authorization="sales-api-key"
+                enableStreamingMode={true}
+                placeholder="Interested in our products? I can help with pricing and features!"
+              />
+            </ChatWidget>
+          </div>
+
+          {/* Technical Widget - Top Right */}
+          <div className="fixed top-6 right-6">
+            <ChatWidget
+              title="Technical Support"
+              buttonIcon="/icons/technical.svg"
+              buttonClassName="bg-purple-500 hover:bg-purple-600"
+              defaultOpen={activeWidgets.technical}
+              onOpenChange={(open) => setActiveWidgets(prev => ({...prev, technical: open}))}
+            >
+              <ChatInterface
+                projectId="technical-project-id"
+                aiConfigId="technical-ai-config"
+                authorization="technical-api-key"
+                enableStreamingMode={true}
+                placeholder="Need technical help? I can assist with APIs, integrations, and troubleshooting."
+              />
+            </ChatWidget>
+          </div>
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { reactive } from 'vue';
+    import { ChatWidget, ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+
+    const activeWidgets = reactive({
+      support: false,
+      sales: false,
+      technical: false
+    });
+    </script>
+
+    <template>
+      <div class="relative min-h-screen">
+        <!-- Main content -->
+        <div>Your application content</div>
+
+        <!-- Support Widget - Bottom Right -->
+        <div class="fixed bottom-6 right-6">
+          <ChatWidget
+            title="Customer Support"
+            button-icon="/icons/support.svg"
+            :default-open="activeWidgets.support"
+            @open-change="(open) => activeWidgets.support = open"
+          >
+            <ChatInterface
+              project-id="support-project-id"
+              ai-config-id="support-ai-config"
+              authorization="support-api-key"
+              :enable-streaming-mode="true"
+              placeholder="Hi! I'm your support assistant. How can I help?"
+            />
+          </ChatWidget>
+        </div>
+
+        <!-- Sales Widget - Bottom Left -->
+        <div class="fixed bottom-6 left-6">
+          <ChatWidget
+            title="Sales Assistant"
+            button-icon="/icons/sales.svg"
+            button-class-name="bg-green-500 hover:bg-green-600"
+            :default-open="activeWidgets.sales"
+            @open-change="(open) => activeWidgets.sales = open"
+          >
+            <ChatInterface
+              project-id="sales-project-id"
+              ai-config-id="sales-ai-config"
+              authorization="sales-api-key"
+              :enable-streaming-mode="true"
+              placeholder="Interested in our products? I can help with pricing and features!"
+            />
+          </ChatWidget>
+        </div>
+
+        <!-- Technical Widget - Top Right -->
+        <div class="fixed top-6 right-6">
+          <ChatWidget
+            title="Technical Support"
+            button-icon="/icons/technical.svg"
+            button-class-name="bg-purple-500 hover:bg-purple-600"
+            :default-open="activeWidgets.technical"
+            @open-change="(open) => activeWidgets.technical = open"
+          >
+            <ChatInterface
+              project-id="technical-project-id"
+              ai-config-id="technical-ai-config"
+              authorization="technical-api-key"
+              :enable-streaming-mode="true"
+              placeholder="Need technical help? I can assist with APIs, integrations, and troubleshooting."
+            />
+          </ChatWidget>
+        </div>
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Real-time Streaming Implementation
+
+Advanced streaming configurations for optimal user experience:
+
+### Streaming with Connection Monitoring
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { useState, useCallback, useRef, useEffect } from 'react';
+
+    function MonitoredStreamingChat() {
+      const [connectionStatus, setConnectionStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected');
+      const [streamingStats, setStreamingStats] = useState({
+        charactersReceived: 0,
+        chunksReceived: 0,
+        averageLatency: 0
+      });
+      const streamStartTimeRef = useRef<number>(0);
+
+      const handleMessageSent = useCallback((message: Message) => {
+        setConnectionStatus('connecting');
+        streamStartTimeRef.current = Date.now();
+        setStreamingStats(prev => ({ ...prev, charactersReceived: 0, chunksReceived: 0 }));
+      }, []);
+
+      const handleResponseReceived = useCallback((message: Message) => {
+        setConnectionStatus('connected');
+        const streamEndTime = Date.now();
+        const latency = streamEndTime - streamStartTimeRef.current;
+
+        setStreamingStats(prev => ({
+          ...prev,
+          charactersReceived: message.content.length,
+          averageLatency: latency
+        }));
+      }, []);
+
+      const handleError = useCallback((error: any) => {
+        setConnectionStatus('error');
+        console.error('Streaming error:', error);
+      }, []);
+
+      return (
+        <div className="space-y-4">
+          {/* Connection Status Dashboard */}
+          <div className="p-4 border rounded-lg bg-gray-50">
+            <h3 className="text-sm font-semibold mb-2">Streaming Status</h3>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <span className="text-gray-600">Status:</span>
+                <span className={`ml-2 font-semibold ${
+                  connectionStatus === 'connected' ? 'text-green-600' :
+                  connectionStatus === 'connecting' ? 'text-yellow-600' :
+                  connectionStatus === 'error' ? 'text-red-600' :
+                  'text-gray-500'
+                }`}>
+                  {connectionStatus}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Characters:</span>
+                <span className="ml-2 font-mono">{streamingStats.charactersReceived}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Chunks:</span>
+                <span className="ml-2 font-mono">{streamingStats.chunksReceived}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Latency:</span>
+                <span className="ml-2 font-mono">{streamingStats.averageLatency}ms</span>
+              </div>
+            </div>
+          </div>
+
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            authorization="your-api-key"
+            enableStreamingMode={true}
+            onMessageSent={handleMessageSent}
+            onResponseReceived={handleResponseReceived}
+            onError={handleError}
+            placeholder="Streaming mode active! Watch the real-time stats above."
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ref, reactive, computed } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    import type { Message } from '@termix-it/vue-tool';
+
+    type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
+
+    const connectionStatus = ref<ConnectionStatus>('disconnected');
+    const streamingStats = reactive({
+      charactersReceived: 0,
+      chunksReceived: 0,
+      averageLatency: 0
+    });
+    let streamStartTime = 0;
+
+    // Computed class for status color
+    const statusClass = computed(() => {
+      const classes: Record<ConnectionStatus, string> = {
+        connected: 'text-green-600',
+        connecting: 'text-yellow-600',
+        error: 'text-red-600',
+        disconnected: 'text-gray-500'
+      };
+      return classes[connectionStatus.value];
+    });
+
+    const handleMessageSent = (message: Message) => {
+      connectionStatus.value = 'connecting';
+      streamStartTime = Date.now();
+      streamingStats.charactersReceived = 0;
+      streamingStats.chunksReceived = 0;
+    };
+
+    const handleResponseReceived = (message: Message) => {
+      connectionStatus.value = 'connected';
+      const streamEndTime = Date.now();
+      const latency = streamEndTime - streamStartTime;
+
+      streamingStats.charactersReceived = message.content.length;
+      streamingStats.averageLatency = latency;
+    };
+
+    const handleError = (error: any) => {
+      connectionStatus.value = 'error';
+      console.error('Streaming error:', error);
+    };
+    </script>
+
+    <template>
+      <div class="space-y-4">
+        <!-- Connection Status Dashboard -->
+        <div class="p-4 border rounded-lg bg-gray-50">
+          <h3 class="text-sm font-semibold mb-2">Streaming Status</h3>
+          <div class="grid grid-cols-2 gap-4 text-xs">
+            <div>
+              <span class="text-gray-600">Status:</span>
+              <span :class="['ml-2 font-semibold', statusClass]">
+                {{ connectionStatus }}
+              </span>
+            </div>
+            <div>
+              <span class="text-gray-600">Characters:</span>
+              <span class="ml-2 font-mono">{{ streamingStats.charactersReceived }}</span>
+            </div>
+            <div>
+              <span class="text-gray-600">Chunks:</span>
+              <span class="ml-2 font-mono">{{ streamingStats.chunksReceived }}</span>
+            </div>
+            <div>
+              <span class="text-gray-600">Latency:</span>
+              <span class="ml-2 font-mono">{{ streamingStats.averageLatency }}ms</span>
+            </div>
+          </div>
+        </div>
+
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="your-ai-config-id"
+          authorization="your-api-key"
+          :enable-streaming-mode="true"
+          placeholder="Streaming mode active! Watch the real-time stats above."
+          @message-sent="handleMessageSent"
+          @response-received="handleResponseReceived"
+          @error="handleError"
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+### Streaming with Progressive Enhancement
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function AdaptiveStreamingChat() {
+      const [streamingSupported, setStreamingSupported] = useState(true);
+      const [streamingEnabled, setStreamingEnabled] = useState(true);
+      const [retryCount, setRetryCount] = useState(0);
+      const maxRetries = 3;
+
+      const handleError = useCallback((error: any) => {
+        console.error('Streaming error:', error);
+
+        // Check if it's a streaming-specific error
+        if (error.message?.includes('EventSource') || error.message?.includes('text/event-stream')) {
+          setRetryCount(prev => prev + 1);
+
+          if (retryCount >= maxRetries) {
+            console.warn('Streaming failed after retries, falling back to regular mode');
+            setStreamingEnabled(false);
+            setStreamingSupported(false);
+          }
+        }
+      }, [retryCount]);
+
+      const toggleStreaming = useCallback(() => {
+        setStreamingEnabled(prev => !prev);
+        setRetryCount(0); // Reset retry count when manually toggling
+      }, []);
+
+      return (
+        <div className="space-y-4">
+          {/* Streaming Controls */}
+          <div className="flex items-center justify-between p-3 border rounded bg-blue-50">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium">Streaming Mode:</span>
+              <button
+                onClick={toggleStreaming}
+                disabled={!streamingSupported}
+                className={`px-3 py-1 text-xs rounded font-medium ${
+                  streamingEnabled && streamingSupported
+                    ? 'bg-green-100 text-green-800 border border-green-300'
+                    : 'bg-gray-100 text-gray-600 border border-gray-300'
+                } ${!streamingSupported ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                {streamingEnabled && streamingSupported ? 'ON' : 'OFF'}
+              </button>
+            </div>
+
+            {!streamingSupported && (
+              <span className="text-xs text-orange-600">
+                Fallback to regular mode
+              </span>
+            )}
+
+            {retryCount > 0 && streamingSupported && (
+              <span className="text-xs text-yellow-600">
+                Retry {retryCount}/{maxRetries}
+              </span>
+            )}
+          </div>
+
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            authorization="your-api-key"
+            enableStreamingMode={streamingEnabled && streamingSupported}
+            onError={handleError}
+            placeholder={
+              streamingEnabled && streamingSupported
+                ? "Streaming mode enabled - responses will appear in real-time!"
+                : "Regular mode active - responses will appear all at once."
+            }
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ref, computed } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+
+    const streamingSupported = ref(true);
+    const streamingEnabled = ref(true);
+    const retryCount = ref(0);
+    const maxRetries = 3;
+
+    // Computed for streaming mode
+    const isStreamingActive = computed(() => streamingEnabled.value && streamingSupported.value);
+
+    // Computed for button styling
+    const buttonClass = computed(() => {
+      const base = 'px-3 py-1 text-xs rounded font-medium';
+      const activeClass = 'bg-green-100 text-green-800 border border-green-300';
+      const inactiveClass = 'bg-gray-100 text-gray-600 border border-gray-300';
+      const disabledClass = 'opacity-50 cursor-not-allowed';
+      const enabledClass = 'cursor-pointer';
+
+      return [
+        base,
+        isStreamingActive.value ? activeClass : inactiveClass,
+        streamingSupported.value ? enabledClass : disabledClass
+      ].join(' ');
+    });
+
+    // Computed for placeholder text
+    const placeholderText = computed(() => {
+      return isStreamingActive.value
+        ? "Streaming mode enabled - responses will appear in real-time!"
+        : "Regular mode active - responses will appear all at once.";
+    });
+
+    const handleError = (error: any) => {
+      console.error('Streaming error:', error);
+
+      // Check if it's a streaming-specific error
+      if (error.message?.includes('EventSource') || error.message?.includes('text/event-stream')) {
+        retryCount.value++;
+
+        if (retryCount.value >= maxRetries) {
+          console.warn('Streaming failed after retries, falling back to regular mode');
+          streamingEnabled.value = false;
+          streamingSupported.value = false;
+        }
+      }
+    };
+
+    const toggleStreaming = () => {
+      streamingEnabled.value = !streamingEnabled.value;
+      retryCount.value = 0; // Reset retry count when manually toggling
+    };
+    </script>
+
+    <template>
+      <div class="space-y-4">
+        <!-- Streaming Controls -->
+        <div class="flex items-center justify-between p-3 border rounded bg-blue-50">
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-medium">Streaming Mode:</span>
+            <button
+              :disabled="!streamingSupported"
+              :class="buttonClass"
+              @click="toggleStreaming"
+            >
+              {{ isStreamingActive ? 'ON' : 'OFF' }}
+            </button>
+          </div>
+
+          <span v-if="!streamingSupported" class="text-xs text-orange-600">
+            Fallback to regular mode
+          </span>
+
+          <span v-if="retryCount > 0 && streamingSupported" class="text-xs text-yellow-600">
+            Retry {{ retryCount }}/{{ maxRetries }}
+          </span>
+        </div>
+
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="your-ai-config-id"
+          authorization="your-api-key"
+          :enable-streaming-mode="isStreamingActive"
+          :placeholder="placeholderText"
+          @error="handleError"
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Smart Contract Integration
+
+Enable blockchain interactions with automatic smart contract execution:
+
+### Basic Smart Contract Setup
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { ChatInterface, FunctionCall, ExecutionResult } from '@termix-it/react-tool';
+    import { useWeb3 } from './hooks/useWeb3'; // Your web3 hook
+
+    function DeFiChat() {
+      const { account, connect, isConnected } = useWeb3();
+
+      const handleContractExecution = (call: FunctionCall, result: ExecutionResult) => {
+        if (call.metadata?.type === 'contract') {
+          const { contractName, contractAddress, chainName } = call.metadata;
+
+          console.log(`Contract call on ${chainName}:`, {
+            contract: contractName,
+            address: contractAddress,
+            function: call.name,
+            parameters: call.parameters
+          });
+
+          if (result.success && result.data?.transactionHash) {
+            // Show transaction confirmation
+            showTransactionNotification(result.data.transactionHash);
+
+            // Update UI state based on contract interaction
+            if (call.name === 'approve') {
+              // Handle approval transaction
+            } else if (call.name === 'transfer') {
+              // Handle transfer transaction
+            }
+          }
+        }
+      };
+
+      const showTransactionNotification = (txHash: string) => {
+        // Show success notification with etherscan link
+        console.log(`Transaction submitted: https://etherscan.io/tx/${txHash}`);
+      };
+
+      return (
+        <div>
+          {!isConnected && (
+            <button
+              onClick={connect}
+              className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Connect Wallet
+            </button>
+          )}
+
+          {isConnected && (
+            <div className="mb-4 p-3 bg-green-100 border border-green-400 rounded">
+              Connected: {account}
+            </div>
+          )}
+
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="defi-config-id"
+            authorization="your-defi-api-key"
+            onFunctionExecuted={handleContractExecution}
+            placeholder={
+              isConnected
+                ? "I can help you interact with smart contracts, check balances, and execute transactions!"
+                : "Please connect your wallet to enable smart contract interactions."
+            }
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { computed } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    import type { FunctionCall, ExecutionResult } from '@termix-it/vue-tool';
+    import { useWeb3 } from './composables/useWeb3'; // Your web3 composable
+
+    const { account, connect, isConnected } = useWeb3();
+
+    // Computed placeholder based on connection status
+    const placeholderText = computed(() => {
+      return isConnected.value
+        ? "I can help you interact with smart contracts, check balances, and execute transactions!"
+        : "Please connect your wallet to enable smart contract interactions.";
+    });
+
+    const handleContractExecution = (call: FunctionCall, result: ExecutionResult) => {
+      if (call.metadata?.type === 'contract') {
+        const { contractName, contractAddress, chainName } = call.metadata;
+
+        console.log(`Contract call on ${chainName}:`, {
+          contract: contractName,
+          address: contractAddress,
+          function: call.name,
+          parameters: call.parameters
+        });
+
+        if (result.success && result.data?.transactionHash) {
+          // Show transaction confirmation
+          showTransactionNotification(result.data.transactionHash);
+
+          // Update UI state based on contract interaction
+          if (call.name === 'approve') {
+            // Handle approval transaction
+          } else if (call.name === 'transfer') {
+            // Handle transfer transaction
+          }
+        }
+      }
+    };
+
+    const showTransactionNotification = (txHash: string) => {
+      // Show success notification with etherscan link
+      console.log(`Transaction submitted: https://etherscan.io/tx/${txHash}`);
+    };
+    </script>
+
+    <template>
+      <div>
+        <button
+          v-if="!isConnected"
+          class="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          @click="connect"
+        >
+          Connect Wallet
+        </button>
+
+        <div
+          v-if="isConnected"
+          class="mb-4 p-3 bg-green-100 border border-green-400 rounded"
+        >
+          Connected: {{ account }}
+        </div>
+
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="defi-config-id"
+          authorization="your-defi-api-key"
+          :placeholder="placeholderText"
+          @function-executed="handleContractExecution"
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+### Multi-Chain Contract Support
+
+Handle contracts across different blockchain networks:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function MultiChainDeFiChat() {
+      const [supportedChains] = useState([
+        { name: 'ethereum', rpc: 'https://mainnet.infura.io/v3/...' },
+        { name: 'polygon', rpc: 'https://polygon-rpc.com' },
+        { name: 'arbitrum', rpc: 'https://arb1.arbitrum.io/rpc' }
+      ]);
+
+      const handleContractExecution = (call: FunctionCall, result: ExecutionResult) => {
+        if (call.metadata?.type === 'contract') {
+          const chainName = call.metadata.chainName;
+          const chain = supportedChains.find(c => c.name === chainName);
+
+          if (result.success) {
+            console.log(`Transaction on ${chainName}:`, result.data?.transactionHash);
+
+            // Chain-specific handling
+            switch (chainName) {
+              case 'ethereum':
+                // Handle Ethereum transactions
+                break;
+              case 'polygon':
+                // Handle Polygon transactions
+                break;
+              case 'arbitrum':
+                // Handle Arbitrum transactions
+                break;
+            }
+          }
+        }
+      };
+
+      return (
+        <ChatInterface
+          projectId="your-project-id"
+          aiConfigId="multi-chain-config-id"
+          authorization="your-multi-chain-api-key"
+          onFunctionExecuted={handleContractExecution}
+          placeholder="I can help you interact with contracts on Ethereum, Polygon, and Arbitrum!"
+        />
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    import type { FunctionCall, ExecutionResult } from '@termix-it/vue-tool';
+
+    const supportedChains = [
+      { name: 'ethereum', rpc: 'https://mainnet.infura.io/v3/...' },
+      { name: 'polygon', rpc: 'https://polygon-rpc.com' },
+      { name: 'arbitrum', rpc: 'https://arb1.arbitrum.io/rpc' }
+    ];
+
+    const handleContractExecution = (call: FunctionCall, result: ExecutionResult) => {
+      if (call.metadata?.type === 'contract') {
+        const chainName = call.metadata.chainName;
+        const chain = supportedChains.find(c => c.name === chainName);
+
+        if (result.success) {
+          console.log(`Transaction on ${chainName}:`, result.data?.transactionHash);
+
+          // Chain-specific handling
+          switch (chainName) {
+            case 'ethereum':
+              // Handle Ethereum transactions
+              break;
+            case 'polygon':
+              // Handle Polygon transactions
+              break;
+            case 'arbitrum':
+              // Handle Arbitrum transactions
+              break;
+          }
+        }
+      }
+    };
+    </script>
+
+    <template>
+      <ChatInterface
+        project-id="your-project-id"
+        ai-config-id="multi-chain-config-id"
+        authorization="your-multi-chain-api-key"
+        placeholder="I can help you interact with contracts on Ethereum, Polygon, and Arbitrum!"
+        @function-executed="handleContractExecution"
+      />
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Knowledge Base Integration
+
+Set up sophisticated knowledge base search and reference systems:
+
+### Custom Knowledge Base Handling
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function DocumentationAssistant() {
+      const [knowledgeStats, setKnowledgeStats] = useState({
+        searchCount: 0,
+        documentsFound: 0
+      });
+
+      const handleResponse = (message: Message) => {
+        if (message.knowledgeContext && message.knowledgeContext.length > 0) {
+          setKnowledgeStats(prev => ({
+            searchCount: prev.searchCount + 1,
+            documentsFound: prev.documentsFound + message.knowledgeContext!.length
+          }));
+        }
+      };
+
+      return (
+        <div>
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+            <p className="text-sm">
+              Knowledge Base Stats: {knowledgeStats.searchCount} searches,
+              {knowledgeStats.documentsFound} documents referenced
+            </p>
+          </div>
+
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="docs-assistant-config-id"
+            authorization="your-docs-assistant-token"
+            maxKnowledgeResults={5}
+            onResponseReceived={handleResponse}
+            placeholder="Ask me about your docs, APIs, or code examples..."
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { reactive } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    import type { Message } from '@termix-it/vue-tool';
+
+    const knowledgeStats = reactive({
+      searchCount: 0,
+      documentsFound: 0
+    });
+
+    const handleResponse = (message: Message) => {
+      if (message.knowledgeContext && message.knowledgeContext.length > 0) {
+        knowledgeStats.searchCount++;
+        knowledgeStats.documentsFound += message.knowledgeContext.length;
+      }
+    };
+    </script>
+
+    <template>
+      <div>
+        <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+          <p class="text-sm">
+            Knowledge Base Stats: {{ knowledgeStats.searchCount }} searches,
+            {{ knowledgeStats.documentsFound }} documents referenced
+          </p>
+        </div>
+
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="docs-assistant-config-id"
+          authorization="your-docs-assistant-token"
+          :max-knowledge-results="5"
+          placeholder="Ask me about your docs, APIs, or code examples..."
+          @response-received="handleResponse"
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Custom Theming
+
+Implement advanced theming with CSS custom properties:
+
+### Dark Mode Theme
+
+<Tabs><Tab title="React">
+```css termix-theme.css
+/* Dark theme */
+[data-theme="dark"] {
+  --primary: 210 100% 60%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 25% 15%;
+  --secondary-foreground: 210 40% 90%;
+  --accent: 215 25% 20%;
+  --accent-foreground: 210 40% 90%;
+  --destructive: 0 75% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 215 25% 25%;
+  --input: 215 25% 20%;
+  --ring: 210 100% 60%;
+  --background: 215 30% 8%;
+  --foreground: 210 40% 98%;
+}
+
+/* Custom chat styling */
+.custom-chat {
+  --chat-bg: var(--background);
+  --message-user-bg: var(--primary);
+  --message-ai-bg: var(--secondary);
+  --input-bg: var(--input);
+}
+```
+</Tab>
+<Tab title="Vue">
+```css termix-theme.css
+
+/* Container */
+.termix-chat-interface {
+  background-color: var(--chat-bg, #ffffff);
+  color: var(--chat-text, #1a1a1a);
+  border-radius: 12px;
+  border: 1px solid var(--chat-border, #e5e7eb);
+}
+
+/* User message bubble */
+.termix-chat-interface__message-bubble--user {
+  background-color: var(--user-bubble-bg, #3b82f6);
+  color: var(--user-bubble-text, #ffffff);
+}
+
+/* Assistant message bubble */
+.termix-chat-interface__message-bubble--assistant {
+  background-color: var(--assistant-bubble-bg, #f3f4f6);
+  color: var(--assistant-bubble-text, #1f2937);
+}
+
+/* Input field */
+.termix-chat-interface__input-field {
+  background-color: var(--input-bg, #ffffff);
+  border-color: var(--input-border, #d1d5db);
+  color: var(--input-text, #1f2937);
+}
+
+/* Send button */
+.termix-chat-interface__input-button {
+  background-color: var(--button-bg, #3b82f6);
+}
+
+.termix-chat-interface__input-button:hover {
+  background-color: var(--button-hover-bg, #2563eb);
+}
+
+/* Dark theme using data attribute */
+[data-theme="dark"] {
+  --chat-bg: #1a1f2e;
+  --chat-text: #e2e8f0;
+  --chat-border: #374151;
+  --user-bubble-bg: #3b82f6;
+  --user-bubble-text: #ffffff;
+  --assistant-bubble-bg: #374151;
+  --assistant-bubble-text: #e2e8f0;
+  --input-bg: #1f2937;
+  --input-border: #4b5563;
+  --input-text: #e2e8f0;
+  --button-bg: #3b82f6;
+  --button-hover-bg: #2563eb;
+  --termix-border: #374151;
+}
+
+```
+</Tab>
+</Tabs>
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import './assets/termix-theme.css';
+
+    function ThemedChat() {
+      const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+      useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+      }, [theme]);
+
+      return (
+        <div>
+          <button
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className="mb-4 px-4 py-2 border rounded"
+          >
+            Switch to {theme === 'light' ? 'dark' : 'light'} mode
+          </button>
+
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            authorization="your-api-key"
+            className="custom-chat"
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+<script setup lang="ts">
+import { ref } from 'vue';
+import { ChatInterface } from '@anthropic/termix-vue';
+import './assets/termix-theme.css';
+
+  const theme = ref<'light' | 'dark'>('light');
+
+  const toggleTheme = () => {
+      theme.value = theme.value === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', theme.value);
+  };
+</script>
+
+<template>
+    <div>
+      <button @click="toggleTheme">
+        Switch to {{ theme === 'light' ? 'dark' : 'light' }} mode
+      </button>
+    
+      <ChatInterface
+        project-id="your-project-id"
+        ai-config-id="your-ai-config-id"
+        authorization="your-api-key"
+      />
+   </div>
+</template>
+
+    ```
+  </Tab>
+</Tabs>
+
+## ReAct Pattern Implementation
+
+Enable sophisticated reasoning and acting patterns:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function ReActEnabledChat() {
+      const [reasoningSteps, setReasoningSteps] = useState<string[]>([]);
+
+      const handleResponse = (message: Message) => {
+        // Extract reasoning steps from ReAct pattern responses
+        const reasoning = extractReasoningSteps(message.content);
+        if (reasoning.length > 0) {
+          setReasoningSteps(prev => [...prev, ...reasoning]);
+        }
+      };
+
+      const extractReasoningSteps = (content: string): string[] => {
+        const reasoningMatch = content.match(/Thought: (.+?)(?=\nAction:|$)/g);
+        return reasoningMatch ? reasoningMatch.map(step => step.replace('Thought: ', '')) : [];
+      };
+
+      return (
+        <div>
+          {reasoningSteps.length > 0 && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+              <h3 className="font-semibold mb-2">AI Reasoning Steps:</h3>
+              <ul className="text-sm space-y-1">
+                {reasoningSteps.slice(-3).map((step, index) => (
+                  <li key={index} className="flex items-start">
+                    <span className="mr-2">🤔</span>
+                    {step}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="react-pattern-config-id"
+            authorization="your-api-key"
+            onResponseReceived={handleResponse}
+            placeholder="I'll show you my reasoning process as I work through complex problems!"
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ref, computed } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    import type { Message } from '@termix-it/vue-tool';
+
+    const reasoningSteps = ref<string[]>([]);
+
+    const extractReasoningSteps = (content: string): string[] => {
+      const reasoningMatch = content.match(/Thought: (.+?)(?=\nAction:|$)/g);
+      return reasoningMatch ? reasoningMatch.map(step => step.replace('Thought: ', '')) : [];
+    };
+
+    const handleResponse = (message: Message) => {
+      // Extract reasoning steps from ReAct pattern responses
+      const reasoning = extractReasoningSteps(message.content);
+      if (reasoning.length > 0) {
+        reasoningSteps.value = [...reasoningSteps.value, ...reasoning];
+      }
+    };
+
+    // Get last 3 reasoning steps for display
+    const displayedSteps = computed(() => reasoningSteps.value.slice(-3));
+    </script>
+
+    <template>
+      <div>
+        <div
+          v-if="reasoningSteps.length > 0"
+          class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded"
+        >
+          <h3 class="font-semibold mb-2">AI Reasoning Steps:</h3>
+          <ul class="text-sm space-y-1">
+            <li
+              v-for="(step, index) in displayedSteps"
+              :key="index"
+              class="flex items-start"
+            >
+              <span class="mr-2">🤔</span>
+              {{ step }}
+            </li>
+          </ul>
+        </div>
+
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="react-pattern-config-id"
+          authorization="your-api-key"
+          placeholder="I'll show you my reasoning process as I work through complex problems!"
+          @response-received="handleResponse"
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Error Handling and Recovery
+
+Implement robust error handling:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    function RobustChat() {
+      const [errors, setErrors] = useState<string[]>([]);
+      const [isRetrying, setIsRetrying] = useState(false);
+
+      const handleError = (error: any) => {
+        const errorMessage = error.message || 'An unknown error occurred';
+        setErrors(prev => [...prev.slice(-2), errorMessage]); // Keep last 3 errors
+
+        // Implement retry logic for specific errors
+        if (error.code === 'NETWORK_ERROR' && !isRetrying) {
+          setIsRetrying(true);
+          setTimeout(() => {
+            setIsRetrying(false);
+            // Trigger retry mechanism
+          }, 2000);
+        }
+      };
+
+      const clearErrors = () => setErrors([]);
+
+      return (
+        <div>
+          {errors.length > 0 && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-red-800">Recent Errors:</h3>
+                  <ul className="text-sm text-red-700 mt-1">
+                    {errors.map((error, index) => (
+                      <li key={index}>• {error}</li>
+                    ))}
+                  </ul>
+                </div>
+                <button
+                  onClick={clearErrors}
+                  className="text-red-600 hover:text-red-800 text-sm"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isRetrying && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-blue-700">Retrying connection...</p>
+            </div>
+          )}
+
+          <ChatInterface
+            projectId="your-project-id"
+            aiConfigId="your-ai-config-id"
+            authorization="your-api-key"
+            onError={handleError}
+          />
+        </div>
+      );
+    }
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ref } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+
+    const errors = ref<string[]>([]);
+    const isRetrying = ref(false);
+
+    const handleError = (error: any) => {
+      const errorMessage = error.message || 'An unknown error occurred';
+      // Keep last 3 errors
+      errors.value = [...errors.value.slice(-2), errorMessage];
+
+      // Implement retry logic for specific errors
+      if (error.code === 'NETWORK_ERROR' && !isRetrying.value) {
+        isRetrying.value = true;
+        setTimeout(() => {
+          isRetrying.value = false;
+          // Trigger retry mechanism
+        }, 2000);
+      }
+    };
+
+    const clearErrors = () => {
+      errors.value = [];
+    };
+    </script>
+
+    <template>
+      <div>
+        <div
+          v-if="errors.length > 0"
+          class="mb-4 p-3 bg-red-50 border border-red-200 rounded"
+        >
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-semibold text-red-800">Recent Errors:</h3>
+              <ul class="text-sm text-red-700 mt-1">
+                <li v-for="(error, index) in errors" :key="index">• {{ error }}</li>
+              </ul>
+            </div>
+            <button
+              class="text-red-600 hover:text-red-800 text-sm"
+              @click="clearErrors"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="isRetrying"
+          class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded"
+        >
+          <p class="text-blue-700">Retrying connection...</p>
+        </div>
+
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="your-ai-config-id"
+          authorization="your-api-key"
+          @error="handleError"
+        />
+      </div>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## Performance Optimization
+
+Optimize performance for production use:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    import { memo, useMemo, useCallback } from 'react';
+
+    const OptimizedChat = memo(function OptimizedChat({
+      projectId,
+      aiConfigId,
+      apiKey
+    }: {
+      projectId: string;
+      aiConfigId: string;
+      apiKey: string;
+    }) {
+      // Memoize expensive calculations
+      const apiHeaders = useMemo(() => ({
+        'X-Client-Version': '1.0.0',
+        'X-Session-ID': `session-${Date.now()}`
+      }), []);
+
+      // Memoize callback functions
+      const handleFunctionExecution = useCallback((call: FunctionCall, result: ExecutionResult) => {
+        console.log('Function executed:', call.name, result.success);
+      }, []);
+
+      const handleError = useCallback((error: any) => {
+        console.error('Chat error:', error);
+      }, []);
+
+      return (
+        <ChatInterface
+          projectId={projectId}
+          aiConfigId={aiConfigId}
+          authorization={apiKey}
+          apiHeaders={apiHeaders}
+          onFunctionExecuted={handleFunctionExecution}
+          onError={handleError}
+          // Disable expensive features in production if not needed
+          showUsageInfo={false}
+          maxKnowledgeResults={3}
+        />
+      );
+    });
+
+    export default OptimizedChat;
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { computed } from 'vue';
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    import type { FunctionCall, ExecutionResult } from '@termix-it/vue-tool';
+
+    // Props with TypeScript definitions
+    const props = defineProps<{
+      projectId: string;
+      aiConfigId: string;
+      apiKey: string;
+    }>();
+
+    // Computed properties are automatically cached/memoized in Vue
+    const apiHeaders = computed(() => ({
+      'X-Client-Version': '1.0.0',
+      'X-Session-ID': `session-${Date.now()}`
+    }));
+
+    // In Vue, functions don't need explicit memoization like useCallback
+    // Vue's reactivity system handles this efficiently
+    const handleFunctionExecution = (call: FunctionCall, result: ExecutionResult) => {
+      console.log('Function executed:', call.name, result.success);
+    };
+
+    const handleError = (error: any) => {
+      console.error('Chat error:', error);
+    };
+    </script>
+
+    <template>
+      <ChatInterface
+        :project-id="props.projectId"
+        :ai-config-id="props.aiConfigId"
+        :authorization="props.apiKey"
+        :api-headers="apiHeaders"
+        :show-usage-info="false"
+        :max-knowledge-results="3"
+        @function-executed="handleFunctionExecution"
+        @error="handleError"
+      />
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+## API Integration
+
+### Default API Configuration
+
+The SDK now automatically connects to the Termix API:
+- **Production**: `https://dashboard.termix.ai`
+- **Local Development**: `http://127.0.0.1:3001` (when using `npm run dev:local`)
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    <ChatInterface
+      projectId="your-project-id"
+      aiConfigId="your-ai-config-id"
+      authorization="your-api-key"
+      enableStreamingMode={true}
+      // ... other props
+    />
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <template>
+      <ChatInterface
+        project-id="your-project-id"
+        ai-config-id="your-ai-config-id"
+        authorization="your-api-key"
+        :enable-streaming-mode="true"
+        <!-- ... other props -->
+      />
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+### Development Setup
+
+For local development with a local backend server:
+
+1. **Install the SDK in your project:**
+   <Tabs>
+     <Tab title="React">
+       ```bash
+       npm install @termix-it/react-tool
+       ```
+     </Tab>
+     <Tab title="Vue">
+       ```bash
+       npm install @termix-it/vue-tool
+       ```
+     </Tab>
+   </Tabs>
+
+2. **For local backend development:**
+   
+   If you need to connect to a local backend server running at `http://127.0.0.1:3001`, you have two options:
+   
+   **Option 1: Build the SDK locally with local configuration**
+   <Tabs>
+     <Tab title="React">
+       ```bash
+       # In the react-tool directory
+       npm run dev:local
+
+       # Then link it to your project
+       npm link
+
+       # In your project directory
+       npm link @termix-it/react-tool
+       ```
+     </Tab>
+     <Tab title="Vue">
+       ```bash
+       # In the vue-tool directory
+       npm run dev:local
+
+       # Then link it to your project
+       npm link
+
+       # In your project directory
+       npm link @termix-it/vue-tool
+       ```
+     </Tab>
+   </Tabs>
+
+   **Option 2: Use environment variable (if your build system supports it)**
+   <Tabs>
+     <Tab title="React">
+       ```bash
+       # Set the environment variable before building
+       REACT_APP_API_LOCAL=true npm run build
+       ```
+     </Tab>
+     <Tab title="Vue">
+       ```bash
+       # Set the environment variable before building
+       VITE_API_LOCAL=true npm run build
+       ```
+     </Tab>
+   </Tabs>
+
+### API Endpoints
+
+The SDK automatically connects to these Termix API endpoints:
+
+#### Chat Endpoints
+- `POST /api/v1/ai/projects/{projectId}/chat` - Regular chat messages
+- `POST /api/v1/ai/projects/{projectId}/chat/stream` - Streaming chat messages (SSE)
+- `GET /api/v1/ai/projects/{projectId}/configs/{configId}` - Get AI config (including greeting message)
+
+#### Function Execution
+- REST API endpoints for function calls (auto-detected)
+- Smart contract execution via web3 providers
+
+#### Knowledge Base
+- `GET /api/v1/projects/{projectId}/knowledge-base/search` - Search knowledge base
+- `GET /api/v1/knowledge/{projectId}` - Get all knowledge
+
+#### MCP Tools
+- `GET /api/v1/mcp-tools/{projectId}/parsed-endpoints` - Get parsed API endpoints
+- `GET /api/v1/mcp-tools/{projectId}/parsed-contracts` - Get parsed smart contracts
+
+## Styling and Customization
+
+### Style Import
+
+<Tabs>
+  <Tab title="React">
+    Styles are automatically bundled with the components - no separate CSS import needed:
+
+    ```tsx
+    import { ChatInterface } from '@termix-it/react-tool';
+    // No need to import CSS - styles are now bundled with components
+    ```
+  </Tab>
+  <Tab title="Vue">
+    Vue requires a separate CSS import for styles:
+
+    ```ts
+    import { ChatInterface } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+    ```
+  </Tab>
+</Tabs>
+
+All styles are scoped with `.termix-` prefix to prevent conflicts.
+
+### Using Inline Styles
+
+Both `ChatInterface` and `ChatWidget` support inline styles via the `style` prop:
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    // ChatInterface with custom styles
+    <ChatInterface
+      projectId="your-project-id"
+      aiConfigId="your-ai-config-id"
+      authorization="your-api-key"
+      style={{
+        height: '600px',
+        borderRadius: '12px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+      }}
+      messagesStyle={{
+        backgroundColor: '#f9f9f9'
+      }}
+      inputStyle={{
+        fontSize: '16px',
+        padding: '12px 16px'
+      }}
+    />
+
+    // ChatWidget with custom button and dialog styles
+    <ChatWidget
+      style={{ position: 'fixed', bottom: '20px', right: '20px' }}
+      buttonStyle={{
+        width: '60px',
+        height: '60px',
+        backgroundColor: '#6366f1'
+      }}
+      dialogStyle={{
+        width: '400px',
+        height: '500px',
+        borderRadius: '16px'
+      }}
+    >
+      <ChatInterface {...props} />
+    </ChatWidget>
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```vue
+    <script setup lang="ts">
+    import { ChatInterface, ChatWidget } from '@termix-it/vue-tool';
+    import '@termix-it/vue-tool/style.css';
+
+    // Define style objects
+    const chatInterfaceStyle = {
+      height: '600px',
+      borderRadius: '12px',
+      boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+    };
+
+    const messagesStyle = {
+      backgroundColor: '#f9f9f9'
+    };
+
+    const inputStyle = {
+      fontSize: '16px',
+      padding: '12px 16px'
+    };
+
+    const widgetStyle = {
+      position: 'fixed',
+      bottom: '20px',
+      right: '20px'
+    };
+
+    const buttonStyle = {
+      width: '60px',
+      height: '60px',
+      backgroundColor: '#6366f1'
+    };
+
+    const dialogStyle = {
+      width: '400px',
+      height: '500px',
+      borderRadius: '16px'
+    };
+    </script>
+
+    <template>
+      <!-- ChatInterface with custom styles -->
+      <ChatInterface
+        project-id="your-project-id"
+        ai-config-id="your-ai-config-id"
+        authorization="your-api-key"
+        :style="chatInterfaceStyle"
+        :messages-style="messagesStyle"
+        :input-style="inputStyle"
+      />
+
+      <!-- ChatWidget with custom button and dialog styles -->
+      <ChatWidget
+        :style="widgetStyle"
+        :button-style="buttonStyle"
+        :dialog-style="dialogStyle"
+      >
+        <ChatInterface
+          project-id="your-project-id"
+          ai-config-id="your-ai-config-id"
+          authorization="your-api-key"
+        />
+      </ChatWidget>
+    </template>
+    ```
+  </Tab>
+</Tabs>
+
+
+## Exported Components and Utilities
+
+<Tabs>
+  <Tab title="React">
+    ```tsx
+    // Components
+    export { ChatInterface } from './components/ChatInterface';
+    export { ChatWidget } from './components/ChatWidget';
+    export { PaymentApprovalModal } from './components/PaymentApprovalModal';
+
+    // Hooks
+    export { useAP2Payment } from './hooks/useAP2Payment';
+
+    // Utilities
+    export { hmacSign, hmacVerify, hmacSignBase64 } from './lib/utils';
+    ```
+  </Tab>
+  <Tab title="Vue">
+    ```ts
+    // Components
+    export { default as ChatInterface } from './components/ChatInterface.vue';
+    export { default as ChatWidget } from './components/ChatWidget.vue';
+    export { default as PaymentApprovalModal } from './components/PaymentApprovalModal.vue';
+
+    // Composables 
+    export { useAP2Payment } from './composables/useAP2Payment';
+
+    // Utilities
+    export { hmacSign, hmacVerify, hmacSignBase64 } from './lib/utils';
+    ```
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+### Styles Not Loading Correctly
+
+You must manually import the styles. If you experience issues:
+
+1. **Check for CSS conflicts**: The library's styles are scoped to `.termix-container` to avoid conflicts, but ensure your global styles don't override them.
+
+2. **Tailwind CSS conflicts**: If your project uses Tailwind CSS, the scoped styles should prevent conflicts. The components also use inline styles for critical styling.
+
+3. **Header visibility**: The chat header uses inline styles to ensure proper display:
+   - Blue gradient background: `linear-gradient(to right, #3b82f6, #2563eb)`
+   - White text color is explicitly set
+
+### Input Alignment Issues
+
+The input area automatically aligns the text input and send button vertically. If you experience alignment issues, check that parent containers don't override the flex layout.
+
+## Best Practices Summary
+
+<AccordionGroup>
+  <Accordion title="Security">
+    - Never expose API keys in frontend code
+    - Use server-side proxies for sensitive operations
+    - Validate user inputs and sanitize outputs
+    - Implement proper authentication and authorization
+  </Accordion>
+  
+  <Accordion title="Performance">
+    - Memoize expensive calculations and callbacks
+    - Disable unused features to reduce overhead
+    - Implement proper error boundaries
+    - Use lazy loading for large components
+  </Accordion>
+  
+  <Accordion title="User Experience">
+    - Provide clear feedback for loading states
+    - Handle errors gracefully with user-friendly messages
+    - Implement retry mechanisms for network failures
+    - Show progress indicators for long-running operations
+  </Accordion>
+  
+  <Accordion title="Development">
+    - Use TypeScript for better development experience
+    - Implement comprehensive error logging
+    - Test all function calling scenarios
+    - Document custom configurations and integrations
+  </Accordion>
+</AccordionGroup>
