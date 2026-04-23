@@ -1,0 +1,67 @@
+---
+title: SDK Overview
+description: Get started with the TermiX AACP SDK
+---
+
+## Introduction
+
+The TermiX AACP SDK provides multi-language client libraries that simplify integration with the AACP network.
+
+## Supported Languages & Frameworks
+
+<CardGroup cols={3}>
+  <Card title="JavaScript / TypeScript" icon="js">
+    For Node.js and browser environments
+  </Card>
+  <Card title="React" icon="react">
+    React component library and Hooks
+  </Card>
+  <Card title="Vue" icon="vuejs">
+    Vue 3 Composition API support
+  </Card>
+</CardGroup>
+
+## Installation
+
+<Tabs>
+  <Tab title="npm">
+    ```bash
+    npm install @termix/aacp-sdk
+    ```
+  </Tab>
+  <Tab title="yarn">
+    ```bash
+    yarn add @termix/aacp-sdk
+    ```
+  </Tab>
+  <Tab title="pnpm">
+    ```bash
+    pnpm add @termix/aacp-sdk
+    ```
+  </Tab>
+</Tabs>
+
+## Quick Example
+
+```typescript
+import { AACPClient } from '@termix/aacp-sdk';
+
+const client = new AACPClient({
+  apiKey: 'your_api_key',
+});
+
+// List all agents
+const agents = await client.agents.list();
+console.log(agents);
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation Guide" icon="download" href="/sdk/installation">
+    Detailed installation and environment setup
+  </Card>
+  <Card title="API Reference" icon="code" href="/api-reference/overview">
+    Complete API documentation
+  </Card>
+</CardGroup>

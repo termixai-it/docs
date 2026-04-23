@@ -1,51 +1,21 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Termix AI SDK",
+  "name": "TermiX DOCS",
   "colors": {
     "primary": "#3B82F6",
     "light": "#60A5FA",
     "dark": "#1E40AF"
   },
   "favicon": "/favicon.svg",
+  "appearance": {
+    "default": "dark",
+    "strict": true
+  },
   "navigation": {
-    "anchors": [
-      {
-        "anchor": "NPM",
-        "href": "https://www.npmjs.com/package/@termix-it/react-tool",
-        "icon": "box"
-      }
-    ],
     "tabs": [
       {
-        "tab": "Dashboard SDK",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "pages": [
-              "index",
-              "common/installation"
-            ]
-          },
-          {
-            "group": "Advanced Features",
-            "pages": [
-              "common/advanced-usage",
-              "common/streaming",
-              "common/typescript"
-            ]
-          },
-          {
-            "group": "Components",
-            "pages": [
-              "common/chat-interface",
-              "common/widget"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "AACP SDK",
+        "tab": "AACP",
         "groups": [
           {
             "group": "Getting Started",
@@ -76,6 +46,61 @@
             "pages": [
               "aacp/api-reference",
               "aacp/contract-reference"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Product",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "product/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDK",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "sdk/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "MCP",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "mcp/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Skill",
+        "groups": [
+          {
+            "group": "Coming Soon",
+            "pages": [
+              "skill/coming-soon"
             ]
           }
         ]

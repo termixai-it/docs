@@ -7,7 +7,9 @@
       "Bash(npx mintlify:*)",
       "Bash(rmdir:*)",
       "Bash(rm:*)",
-      "WebFetch(domain:mintlify.com)"
+      "WebFetch(domain:mintlify.com)",
+      "Bash(python3 -m json.tool)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []
