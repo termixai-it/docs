@@ -128,45 +128,82 @@ You have **48 hours** after `COMPLETED` or `REJECTED` to file a dispute. See [Di
 
 ## As Provider
 
-The Provider executes the job's work. For `CEX_CAPITAL` jobs this means placing signed trading orders via the TEE gateway.
+How to execute CEX Capital jobs as a Provider — from receiving a funded job to submitting trading orders through the TEE and calling on-chain `submit()`.
 
+<CardGroup cols={3}>
+  <Card title="Prerequisites" icon="list-check" href="#prerequisites">
+    NFT, stake, and environment setup
+  </Card>
+  <Card title="Phase B" icon="bolt" href="#phase-b">
+    Submit signed trading orders to the TEE gateway
+  </Card>
+  <Card title="Phase C" icon="check" href="#phase-c">
+    Call ACPCore.submit() after TEE closes
+  </Card>
+</CardGroup>
+
+<div className="grid grid-cols-3 gap-3 mb-8 mt-2">
+  <div className="text-center text-xs text-gray-400">Phase A (Client) — initialise TEE job. No action needed from you.</div>
+  <div className="text-center text-xs font-semibold">Phase B (Provider) — submit buy/sell orders while job is FUNDED.</div>
+  <div className="text-center text-xs font-semibold">Phase C (Provider) — call submit() once TEE closes.</div>
+</div>
+
+<a id="prerequisites"></a>
 ### Prerequisites
 
-- Agent NFT + minimum **100 USDC staked** via `TermiXStaking.deposit()`
-- Client must have called `ACPCore.setProvider(jobId, agentId)` for the job
-- `PROVIDER_KEY` env var set to the private key of the Agent NFT owner
-
-### Step 1 — Wait for Assignment
+| Requirement | Details |
+|---|---|
+| Agent NFT | Must hold a valid ERC-721 Agent NFT (`agentId`) |
+| Stake | `TermiXStaking.deposit(agentId, amount)` — minimum **100 USDC** as performance bond |
+| Set as Provider | Client must call `ACPCore.setProvider(jobId, agentId)` for the job |
+| `PROVIDER_KEY` | Private key of the Agent NFT owner — used for EIP-191 order signatures |
 
 ```bash
-GET /api/v1/jobs/{jobId}
-# Wait until status = "FUNDED" and providerId matches your agentId
+PROVIDER_KEY=0x<provider agent NFT owner private key>   # required
+TEE_URL=http://13.250.60.187:8000                        # optional override
+BSC_RPC=https://bsc-testnet-rpc.publicnode.com           # optional override
 ```
 
-### Step 2 — Execute Work
+---
+
+<a id="phase-b"></a>
+### Phase B — Submit Trading Orders to TEE
+
+Once the job reaches `FUNDED` state and you are set as Provider, you can start placing orders.
+
+#### B.1 Query TEE Job Status
+
+Check the current state before placing orders. Proceed only when `state = "ready"` or `"active"`.
+
+```bash
+GET https://termix-backend.dev.termix.click/api/v1/tee/jobs/{jobId}/status
+```
+
+```json
+{
+  "data": {
+    "state": "ready",
+    "deadline": 1776418834,
+    "current_total_usdt": 1000.0,
+    "trade_count": 3,
+    "stop_loss_triggered": false
+  }
+}
+```
+
+#### B.2 Construct Order and Sign (EIP-191)
+
+Fields **must** be serialised in canonical order before signing — any deviation will cause a `401` error.
 
 <Tabs>
-  <Tab title="PROGRAM / RUBRIC / HYBRID">
-    Execute your off-chain computation or deliverable. Prepare a `deliverableHash` as the `keccak256` of your result (or an IPFS CID).
-
-    When ready, go directly to **Step 4 — Submit**.
-  </Tab>
-  <Tab title="CEX_CAPITAL">
-    #### 2a. Check TEE Status
-
-    ```bash
-    GET /api/v1/tee/jobs/{jobId}/status
-    # Proceed only when state = "ready" or "active"
-    ```
-
-    #### 2b. Sign and POST Trading Orders
-
-    Fields must be serialised in **canonical order** before signing:
-
+  <Tab title="TypeScript">
     ```typescript
+    import { privateKeyToAccount } from "viem/accounts";
+
+    // Signature field order is strict — do NOT change
     const CANONICAL_FIELDS = ["action", "job_id", "nonce", "order_type", "price", "quantity", "symbol"];
 
-    function canonicalize(intent: object): string {
+    function canonicalizeIntent(intent: object): string {
       const obj: Record<string, unknown> = {};
       for (const key of CANONICAL_FIELDS) {
         const v = (intent as Record<string, unknown>)[key];
@@ -175,62 +212,154 @@ GET /api/v1/jobs/{jobId}
       return JSON.stringify(obj);
     }
 
-    const provider  = privateKeyToAccount(process.env.PROVIDER_KEY as `0x${string}`);
-    const intent    = {
-      job_id: jobId, action: "BUY", symbol: "BTCUSDT",
-      quantity: 0.001, order_type: "MARKET", price: null,
-      nonce: Date.now(),
+    const provider = privateKeyToAccount(process.env.PROVIDER_KEY as `0x${string}`);
+
+    const intent = {
+      job_id:     jobId,
+      action:     "BUY",      // "BUY" | "SELL"
+      symbol:     "BTCUSDT",
+      quantity:   0.001,
+      order_type: "MARKET",
+      price:      null,
+      nonce:      Date.now(), // ms timestamp — replay protection
     };
-    const signature = await provider.signMessage({ message: canonicalize(intent) });
+
+    const message   = canonicalizeIntent(intent);
+    const signature = await provider.signMessage({ message });
     (intent as any).provider_signature = signature;
     ```
+  </Tab>
+  <Tab title="Python">
+    ```python
+    import json, time, os
+    from eth_account import Account
+    from eth_account.messages import encode_defunct
 
-    ```bash
-    POST /api/v1/tee/jobs/{jobId}/orders
-    { ...intent, "provider_signature": "0x..." }
-    ```
+    CANONICAL_FIELDS = ["action", "job_id", "nonce", "order_type", "price", "quantity", "symbol"]
 
-    If `stop_loss_triggered: true` is returned, **stop placing orders immediately** and proceed to Step 3.
+    def canonicalize(intent: dict) -> str:
+        obj = {k: intent.get(k, None) for k in CANONICAL_FIELDS}
+        return json.dumps(obj, separators=(",", ":"))
 
-    #### 2c. Wait for TEE to Close
+    def sign_message(private_key: str, message: str) -> str:
+        msg = encode_defunct(text=message)
+        return "0x" + Account.sign_message(msg, private_key=private_key).signature.hex()
 
-    ```bash
-    GET /api/v1/tee/jobs/{jobId}/status
-    # Wait until state = "closed"
-    ```
-
-    #### 2d. Compute Deliverable Hash
-
-    ```typescript
-    const status = await fetchTeeStatus(jobId);
-    const deliverableHash = keccak256(
-      toHex(`${status.enclave_signature}|${status.current_total_usdt}`)
-    );
+    intent = {
+        "job_id":     job_id,
+        "action":     "BUY",
+        "symbol":     "BTCUSDT",
+        "quantity":   0.001,
+        "order_type": "MARKET",
+        "price":      None,
+        "nonce":      int(time.time() * 1000),
+    }
+    intent["provider_signature"] = sign_message(os.environ["PROVIDER_KEY"], canonicalize(intent))
     ```
   </Tab>
 </Tabs>
 
-### Step 3 — Submit On-chain
+#### B.3 POST Order to TEE
 
-```typescript
-await client.writeContract({
-  address: ACP_CORE,
-  abi: ACP_CORE_ABI,
-  functionName: "submit",
-  args: [jobId, deliverableHash],
-});
-// status → SUBMITTED
+Include the `provider_signature` from B.2 in the request body. If `stop_loss_triggered` returns `true`, stop placing orders and proceed to Phase C.
+
+```bash
+POST https://termix-backend.dev.termix.click/api/v1/tee/jobs/{jobId}/orders
+Content-Type: application/json
+
+{
+  "job_id":             "0xb20d5e...",
+  "action":             "BUY",
+  "symbol":             "BTCUSDT",
+  "quantity":           0.001,
+  "order_type":         "MARKET",
+  "price":              null,
+  "nonce":              1713340800000,
+  "provider_signature": "0x<EIP-191 signature>"
+}
 ```
 
-<Note>
-For `CEX_CAPITAL`, the on-chain job deadline must have elapsed before `submit()` will succeed.
-</Note>
+```json
+{
+  "state":                 "active",
+  "post_trade_total_usdt": 998.5,
+  "stop_loss_triggered":   false
+}
+```
 
-### Step 4 — Await Evaluation
+#### B.4 Reference Scripts
 
-Poll `GET /api/v1/jobs/{jobId}` until status reaches `COMPLETED` or `REJECTED`.
+```bash
+# Python — interactive trader
+export PROVIDER_KEY=0x<private_key>
+python3 packages/backend/scripts/tee_trader.py <jobId>
 
-### Full Sequence (CEX_CAPITAL)
+# Python — batch orders
+python3 packages/backend/scripts/place_orders.py <jobId>
+
+# TypeScript — single order
+export PROVIDER_KEY=0x<private_key>
+npx tsx packages/backend/scripts/tee-provider.ts <jobId> BUY BTCUSDT 0.001
+```
+
+---
+
+<a id="phase-c"></a>
+### Phase C — On-chain submit() After TEE Closes
+
+#### C.1 Wait for TEE to Close
+
+The TEE automatically liquidates all positions when the deadline is reached and sets `state = "closed"`. Poll until you see this.
+
+```bash
+GET https://termix-backend.dev.termix.click/api/v1/tee/jobs/{jobId}/status
+# → { "state": "closed", "enclave_signature": "0x..." }
+```
+
+#### C.2 Call ACPCore.submit()
+
+Compute `deliverableHash` as `keccak256(enclave_signature + "|" + final_balance)`, then call `submit()`. The on-chain deadline must also have elapsed.
+
+<Tabs>
+  <Tab title="TypeScript">
+    ```typescript
+    import { keccak256, toHex } from "viem";
+
+    const ACP_CORE  = "0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9";
+    const SUBMIT_ABI = [{
+      name: "submit", type: "function",
+      inputs: [
+        { name: "jobId",           type: "bytes32" },
+        { name: "deliverableHash", type: "bytes32" },
+      ],
+      outputs: [], stateMutability: "nonpayable",
+    }];
+
+    const status = await fetchTeeStatus(jobId);
+
+    // deliverableHash = keccak256(enclave_signature + "|" + final_balance)
+    const deliverableHash = keccak256(
+      toHex(`${status.enclave_signature}|${status.current_total_usdt}`)
+    );
+
+    const txHash = await client.writeContract({
+      address: ACP_CORE,
+      abi: SUBMIT_ABI,
+      functionName: "submit",
+      args: [jobId as `0x${string}`, deliverableHash],
+    });
+    ```
+  </Tab>
+  <Tab title="Python (auto-submit)">
+    ```bash
+    # Auto-polls TEE status and calls submit() once state = "closed"
+    export PROVIDER_KEY=0x<private_key>
+    python3 packages/backend/scripts/settle_job.py <jobId>
+    ```
+  </Tab>
+</Tabs>
+
+### Full Sequence
 
 ```
 Client                   TEE Gateway            Provider           On-chain
@@ -246,6 +375,15 @@ Client                   TEE Gateway            Provider           On-chain
   │                           │                    │                  │
   │                           │                    │       COMPLETED ✓│
 ```
+
+### Error Handling
+
+| Error | Cause | Fix |
+|---|---|---|
+| `401 invalid signature` | Wrong canonical field order or wrong private key | Verify `CANONICAL_FIELDS` order; confirm key is the NFT owner's |
+| `404 job not found` | TEE Job not initialised by Client | Client must call `POST /tee/jobs` first |
+| `400 stop_loss_triggered` | Stop-loss threshold reached | Stop placing orders; wait for TEE to close, then submit |
+| `DeadlineNotReached` (on-chain) | Chain deadline not yet elapsed | Wait for `block.timestamp ≥ job.deadline` before calling `submit()` |
 
 ---
 
