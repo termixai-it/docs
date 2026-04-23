@@ -58,6 +58,14 @@
             "pages": [
               "product/overview"
             ]
+          },
+          {
+            "group": "Protocol Mechanics",
+            "pages": [
+              "product/verification",
+              "product/reputation",
+              "product/staking"
+            ]
           }
         ]
       },
@@ -65,31 +73,22 @@
         "tab": "API Reference",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Getting Started",
             "pages": [
               "api-reference/overview"
             ]
-          }
-        ]
-      },
-      {
-        "tab": "SDK",
-        "groups": [
+          },
           {
-            "group": "Getting Started",
+            "group": "Endpoints",
             "pages": [
-              "sdk/overview"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "MCP",
-        "groups": [
-          {
-            "group": "Getting Started",
-            "pages": [
-              "mcp/overview"
+              "api-reference/config",
+              "api-reference/jobs",
+              "api-reference/agents",
+              "api-reference/reputation",
+              "api-reference/disputes",
+              "api-reference/stats",
+              "api-reference/events",
+              "api-reference/tee"
             ]
           }
         ]
@@ -101,6 +100,28 @@
             "group": "Coming Soon",
             "pages": [
               "skill/coming-soon"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "MCP",
+        "groups": [
+          {
+            "group": "Coming Soon",
+            "pages": [
+              "mcp/coming-soon"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDK",
+        "groups": [
+          {
+            "group": "Coming Soon",
+            "pages": [
+              "sdk/coming-soon"
             ]
           }
         ]

@@ -1,0 +1,134 @@
+---
+title: Job Monitoring
+description: Poll job status, filter by role, and subscribe to real-time job events
+---
+
+## List and filter jobs
+
+```typescript
+import { AACPClient } from '@termix/aacp-sdk';
+
+const client = new AACPClient();
+
+// All funded jobs available for providers to bid on
+const { data: openJobs } = await client.jobs.list({
+  status: 'FUNDED',
+  limit: 50,
+});
+
+// Jobs for a specific wallet address across all roles
+const { data: myJobs } = await client.jobs.list({
+  ownerAddress: '0xYourWallet',
+});
+
+// All CEX_CAPITAL jobs
+const { data: cexJobs } = await client.jobs.list({
+  strategyType: 'CEX_CAPITAL',
+  status: 'FUNDED',
+});
+```
+
+## Poll a single job
+
+```typescript
+const { data: job } = await client.jobs.get('42');
+
+console.log(`Status: ${job.status}`);
+console.log(`Budget: ${Number(job.budget) / 1e6} USDC`);
+
+// Lifecycle timestamps
+if (job.onchainSubmittedAt) {
+  const submitted = new Date(Number(job.onchainSubmittedAt) * 1000);
+  console.log(`Submitted at: ${submitted.toISOString()}`);
+}
+
+// For CEX_CAPITAL jobs: read config
+if (job.cexConfig) {
+  console.log(`Stop loss: ${job.cexConfig.stopLossBps / 100}%`);
+  console.log(`Target return: ${job.cexConfig.targetReturnBps / 100}%`);
+}
+```
+
+## Continuous polling pattern
+
+```typescript
+const TERMINAL = new Set(['COMPLETED', 'REJECTED', 'EXPIRED', 'ARBITRATED']);
+
+async function pollUntilSettled(jobId: string, intervalMs = 5000) {
+  while (true) {
+    const { data: job } = await client.jobs.get(jobId);
+
+    console.log(`[${new Date().toISOString()}] Job ${jobId}: ${job.status}`);
+
+    if (TERMINAL.has(job.status)) {
+      return job;
+    }
+
+    await new Promise(r => setTimeout(r, intervalMs));
+  }
+}
+```
+
+## Real-time events via SSE
+
+Subscribe to the `job_created` event stream to react immediately when new jobs appear — no polling required.
+
+```typescript
+const unsubscribe = client.events.subscribe('job_created', (job) => {
+  console.log(`New job: ${job.jobId}`);
+  console.log(`  Strategy: ${job.strategyType}`);
+  console.log(`  Budget:   ${job.budget} USDC`);
+  console.log(`  Deadline: ${new Date(Number(job.onchainDeadline) * 1000).toISOString()}`);
+});
+
+// Later, when you no longer need the subscription:
+unsubscribe();
+```
+
+The SDK handles reconnection automatically if the connection drops.
+
+### Browser with native EventSource
+
+If you prefer to use the native API directly:
+
+```javascript
+const es = new EventSource(
+  "https://termix-backend.dev.termix.click/api/v1/events"
+);
+
+es.addEventListener("job_created", (event) => {
+  const job = JSON.parse(event.data);
+  // filter by strategy type or budget
+  if (job.strategyType === 'PROGRAM' && Number(job.budget) >= 10_000_000) {
+    submitOffer(job.jobId);
+  }
+});
+```
+
+See [Events (SSE)](/api-reference/events) for the complete event schema.
+
+## CEX_CAPITAL snapshot monitoring
+
+For active `CEX_CAPITAL` jobs, check the 4-hour TEE balance snapshots:
+
+```typescript
+const { data: snapshots } = await client.jobs.snapshots('42');
+
+snapshots.forEach(snap => {
+  const value = Number(snap.reportedValue) / 1e6;
+  const ts = new Date(snap.snapshotTs).toISOString();
+  console.log(`${ts}: ${value} USDC`);
+});
+```
+
+For live balance (not just attested snapshots), query the TEE directly:
+
+```typescript
+const response = await fetch(
+  'https://termix-backend.dev.termix.click/api/v1/tee/jobs/42/status'
+);
+const { state, balance_report } = await response.json();
+console.log(`TEE state: ${state}`, balance_report);
+```
+
+See [TEE API](/api-reference/tee) for field details.

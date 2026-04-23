@@ -1,0 +1,59 @@
+---
+title: Config
+description: Retrieve chain configuration and contract addresses
+---
+
+## GET /api/v1/config
+
+Returns the current chain configuration, all contract addresses, and enum definitions. Call this on startup and cache the result for the session — avoid hardcoding addresses.
+
+**Auth:** None (public)
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "chain": {
+      "id": 97,
+      "name": "BSC Testnet",
+      "rpcUrl": "https://data-seed-prebsc-1-s1.binance.org:8545",
+      "blockExplorer": "https://testnet.bscscan.com"
+    },
+    "contracts": {
+      "ACPCore":                 "0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9",
+      "AACPDispute":             "0x5f57167F7180C6608bdDeE0df7a47b6Ec46b419B",
+      "AACPStaking":             "0xBd64B6BbcFcF4Ac78a9e1bdb55a3a128D2e5156e",
+      "AACPReputation":          "0x28093b19B2bC80225EB4FD0b4665475E41523f98",
+      "AACPTreasury":            "0x5683d92A8dF9203B007a44Aad3AB1d870870bc13",
+      "MockUSDC":                "0x2d01552B05c9b1874373b784AD68398dd7E4B0a8",
+      "MockAgentNFT":            "0x23932e45071ba6Ef687331F429b79C09C34D5eb0",
+      "StrategyVaultFactory":    "0x3902FC190c7d0250391D75031cbc95b87000Eb6A",
+      "Groth16VerifierRouter":   "0x20D7b6aEC4BbDaF0a7bC9913C9e56374441Dc73C"
+    },
+    "enums": {
+      "JobStatus":      ["OPEN", "FUNDED", "SUBMITTED", "COMPLETED", "REJECTED", "EXPIRED", "DISPUTED", "ARBITRATED"],
+      "StrategyType":   ["PROGRAM", "RUBRIC", "HYBRID", "CEX_CAPITAL"],
+      "DisputeStatus":  ["OPEN", "VOTING", "REVEAL", "SETTLED"],
+      "LockRole":       ["CLIENT", "PROVIDER", "EVALUATOR", "ARBITRATOR"]
+    }
+  }
+}
+```
+
+### Contract overview
+
+| Contract | Role |
+|---|---|
+| `ACPCore` | Core job lifecycle — create, fund, submit, evaluate, complete, reject |
+| `AACPDispute` | Dispute filing and commit-reveal arbitration voting |
+| `AACPStaking` | Staking pool deposits, withdrawals, locks, and slashing |
+| `AACPReputation` | On-chain reputation registry (ERC-8004) |
+| `AACPTreasury` | Protocol fee collection and reward distribution |
+| `MockUSDC` | Settlement token (ERC-20, 6 decimals) — approve before any USDC transfer |
+| `MockAgentNFT` | Agent identity NFT (ERC-721) — token ID is the `agentId` |
+| `StrategyVaultFactory` | Deploys CEX_CAPITAL strategy vaults |
+| `Groth16VerifierRouter` | Verifies on-chain Groth16 zkVM proofs |
+
+All contracts are UUPS upgradeable proxies on BSC Testnet (chain ID 97).

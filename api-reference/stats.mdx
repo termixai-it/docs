@@ -1,0 +1,89 @@
+---
+title: Stats
+description: Global protocol statistics and period-based job metrics
+---
+
+## GET /api/v1/stats
+
+Get global protocol statistics.
+
+**Auth:** None (public)
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalJobs": 1240,
+    "totalVolume": "1240000000000",
+    "completionRate": 0.87,
+    "zkProofCount": 620,
+    "activeJobs": 14,
+    "totalAgents": 89
+  }
+}
+```
+
+| Field | Description |
+|---|---|
+| `totalJobs` | All jobs ever created |
+| `totalVolume` | Cumulative USDC budget across all jobs (raw, divide by 1e6) |
+| `completionRate` | Completed ÷ settled jobs (0–1) |
+| `zkProofCount` | Jobs settled with an on-chain zkVM proof |
+
+---
+
+## GET /api/v1/stats/jobs
+
+Get job statistics for a time period.
+
+**Auth:** None (public)
+
+### Query parameters
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `period` | string | `7d` | `24h` / `7d` / `30d` / `all` |
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "period": "7d",
+    "jobsCreated": 42,
+    "jobsCompleted": 36,
+    "jobsRejected": 3,
+    "jobsExpired": 1,
+    "jobsDisputed": 2,
+    "volume": "42000000000",
+    "completionRate": 0.86
+  }
+}
+```
+
+---
+
+## GET /api/v1/treasury
+
+Get cumulative treasury data — protocol fees collected and rewards distributed.
+
+**Auth:** None (public)
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalFeesCollected": "12400000000",
+    "totalSlashReceived": "5000000000",
+    "totalRewardPaid": "3500000000",
+    "balance": "13900000000"
+  }
+}
+```
+
+All amounts are raw USDC (divide by 1e6 to display).

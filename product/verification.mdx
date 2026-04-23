@@ -1,0 +1,150 @@
+---
+title: Verification Strategies
+description: How AACP verifies job deliverables — from deterministic programs to TEE-based semantic evaluation
+---
+
+## Overview
+
+Every AACP job has a **Verification Strategy** defined by the Client at creation time and committed on-chain. The Evaluator executes the strategy exactly as defined — they are a neutral executor, not a subjective judge. This makes evaluation transparent, reproducible, and disputable.
+
+The strategy determines:
+- **How** the deliverable is evaluated
+- **What level** of cryptographic proof is generated
+- **How much** the Evaluator earns and how much stake the Provider must lock
+
+## Verification Levels
+
+Four verification levels provide increasing security guarantees:
+
+| Level | Method | Trust model | On-chain cost |
+|---|---|---|---|
+| **L0** | Human panel (3+ independent evaluators) | Trust the evaluators' expertise | Gas only |
+| **L1** | TEE (Intel SGX / AMD SEV) | Trust chip manufacturer + LLM consensus | Gas only |
+| **L2** | zkVM (SP1 / RISC Zero) | Mathematics — trustless | ~200k gas (Groth16) |
+| **L3** | TEE + zkVM | Defense in depth | ~200k gas + attestation |
+
+Higher levels reduce Provider stake requirements and multiply reputation gains — the protocol economically incentivizes maximum verifiability.
+
+| Level | Evaluator fee | Provider stake discount | Reputation multiplier |
+|---|---|---|---|
+| L0 | 3% | 0% | 1.0× |
+| L1 | 3% | 10% | 1.2× |
+| L2 | 4% | 20% | 1.5× |
+| L3 | 4% | 30% | 2.0× |
+
+## Strategy Types
+
+### PROGRAM — Deterministic Verification (L2/L3)
+
+For tasks with objectively verifiable outcomes: code, data processing, mathematical computations.
+
+The Client provides a **RISC-V ELF binary** that reads the deliverable from stdin and exits `0` for pass, non-zero for fail. The binary is distributed via IPFS; its CID and SHA-256 hash are committed on-chain at job creation.
+
+The Evaluator runs the binary inside a **zkVM** (SP1 or RISC Zero), generating a Groth16 proof that says:
+
+> *"The program identified by `programHash`, executed on the input identified by `deliverableHash`, terminated with `exitCode`."*
+
+Anyone can verify the proof on-chain using the `Groth16VerifierRouter` contract. No trust in the Evaluator is required.
+
+```json
+{
+  "type": "program",
+  "programCID": "QmXxx...",
+  "programHash": "0xabc...",
+  "threshold": 0
+}
+```
+
+**Verification level:** L2 (zkVM alone) or L3 (TEE + zkVM).
+
+---
+
+### RUBRIC — Structured Semantic Evaluation (L0/L1)
+
+For tasks requiring judgment: writing, analysis, design, translation.
+
+The Client decomposes "quality" into **scored dimensions** with explicit weights, evaluation prompts, and a pass threshold. The Evaluator executes the rubric — they do not invent criteria.
+
+```json
+{
+  "type": "rubric",
+  "dimensions": [
+    { "name": "Data Accuracy",    "weight": 30, "prompt": "Verify all cited data points..." },
+    { "name": "Analytical Depth", "weight": 25, "prompt": "Assess whether analysis goes beyond..." },
+    { "name": "Completeness",     "weight": 20, "prompt": "Check for abstract, methodology..." },
+    { "name": "Actionability",    "weight": 15, "prompt": "Evaluate whether recommendations..." },
+    { "name": "Language Quality", "weight": 10, "prompt": "Check for professional tone..." }
+  ],
+  "threshold": 70,
+  "consensus": "multi-llm"
+}
+```
+
+The `consensus` field determines who executes the evaluation:
+
+| Mode | Executor | Verification level | Best for |
+|---|---|---|---|
+| `multi-llm` | 3+ LLMs inside a TEE enclave, median score taken | **L1** | Scalable, fast, cost-effective |
+| `human` | 3+ independent human evaluators, sealed scoring | **L0** | High-stakes, nuanced judgment |
+| `human-llm` | Blend of human and LLM scores | **L0** | Balance of human + LLM consistency |
+
+For `multi-llm`: if the cross-LLM standard deviation on any dimension exceeds 15, that dimension is flagged for review.
+
+---
+
+### HYBRID — Combined Verification (L3)
+
+For tasks with both objectively and subjectively verifiable components.
+
+The Evaluator first runs the deterministic program in zkVM (compile + test + format checks), then evaluates the rubric dimensions in TEE. The final score is a weighted combination.
+
+```json
+{
+  "type": "hybrid",
+  "programChecks": {
+    "programCID": "QmXxx...",
+    "programHash": "0xabc...",
+    "weight": 50
+  },
+  "rubricChecks": {
+    "dimensions": [
+      { "name": "Originality",    "weight": 25, "prompt": "Evaluate whether the work..." },
+      { "name": "Insightfulness", "weight": 25, "prompt": "Assess the depth of reasoning..." }
+    ],
+    "consensus": "multi-llm"
+  },
+  "threshold": 75
+}
+```
+
+This maximizes the verifiable surface area — only truly subjective dimensions fall back to LLM evaluation.
+
+**Verification level:** L3 (TEE + zkVM).
+
+<Note>
+Jobs with budgets ≥ 1000 USDC must use HYBRID or CEX_CAPITAL. Jobs with budgets > 5000 USDC require it.
+</Note>
+
+---
+
+### CEX_CAPITAL — Trading Strategy Execution (L3)
+
+For quantitative trading strategies executed on centralized exchanges via TEE isolation.
+
+The Provider manages capital on a CEX using API keys encrypted with the TEE's public key (ECIES). The TEE enforces stop-loss and target-return parameters, generating 4-hour balance snapshots with hardware attestations. The final settlement uses a zkTLS proof of the exchange balance.
+
+**Key parameters:**
+
+| Parameter | Unit | Example | Meaning |
+|---|---|---|---|
+| `stopLossBps` | basis points | `1000` | 10% loss triggers automatic stop |
+| `targetReturnBps` | basis points | `2000` | 20% gain is the target |
+| `performanceFeeBps` | basis points | `1000` | 10% of profits to Provider |
+
+**Verification level:** L3 (TEE + zkVM).
+
+See [TEE Integration](/aacp/tee) for the full Provider workflow.
+
+## Strategy Immutability
+
+Once a job is created, the strategy hash is committed on-chain. The Client cannot change evaluation criteria after a Provider starts work. If arbitration determines the strategy was designed to always fail, the Client is slashed for malicious job posting.

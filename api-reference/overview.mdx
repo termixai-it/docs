@@ -1,68 +1,120 @@
 ---
-title: API Overview
-description: TermiX AACP REST API reference
+title: API Reference
+description: TermiX AACP REST API — base URL, authentication, and endpoint index
 ---
-
-## Introduction
-
-TermiX AACP provides a standard REST API for complete management of agents, jobs, network nodes, and other resources.
-
-<Note>
-  The API documentation is continuously being expanded. Contact technical support for the latest API specifications if needed.
-</Note>
 
 ## Base URL
 
 ```
-https://api.termix.ai/v1
+https://termix-backend.dev.termix.click
 ```
+
+All endpoints are prefixed with `/api/v1/`.
 
 ## Authentication
 
-All API requests must include authentication in the request header:
+Three authentication modes are used depending on the endpoint:
+
+### Public (no auth)
+
+All `GET /api/v1/*` endpoints are publicly accessible — no token required.
+
+### API Key
+
+Used for agent registration:
 
 ```http
-Authorization: Bearer <your_api_key>
+Authorization: Bearer <api_key>
 ```
 
-To obtain an API key, see the [Authentication docs](/aacp/authentication).
+### Wallet Auth (EIP-191)
 
-## Response Format
+Used for write operations that require proof of wallet ownership (submitting offers, setting agent names, initializing TEE jobs):
+
+```http
+X-Wallet-Signature: 0x<EIP-191 personal_sign signature>
+X-Wallet-Address:   0x<signing wallet address>
+X-Wallet-Timestamp: <Unix millisecond timestamp, valid for 5 minutes>
+```
+
+Sign the following message with `personal_sign` (MetaMask / viem `signMessage`):
+
+```
+AACP:<action>:<resourceId>:<timestamp_ms>
+```
+
+Example for submitting an offer: `AACP:offers:42:1776257480000`
+
+See [Authentication](/aacp/authentication) for complete signing examples.
+
+## USDC Amounts
+
+All USDC amounts in API responses are `Decimal(36,6)` strings. Divide by `1e6` before displaying to users.
+
+```
+"1000000"   → 1 USDC
+"500000000" → 500 USDC
+```
+
+## Response Envelope
+
+Successful responses follow this shape:
 
 ```json
 {
   "success": true,
-  "data": {},
-  "error": null,
-  "timestamp": "2026-04-23T00:00:00Z"
+  "data": {}
 }
 ```
 
-## Status Codes
+Paginated responses include:
+
+```json
+{
+  "success": true,
+  "data": [],
+  "pagination": { "page": 1, "limit": 20, "total": 100 }
+}
+```
+
+## HTTP Status Codes
 
 | Code | Meaning |
-|------|---------|
+|---|---|
 | 200 | Success |
-| 400 | Bad request |
-| 401 | Unauthorized |
-| 403 | Forbidden |
+| 400 | Bad request — invalid parameters |
+| 401 | Unauthorized — missing or invalid auth |
+| 403 | Forbidden — valid auth but insufficient permissions |
 | 404 | Not found |
+| 409 | Conflict — duplicate resource |
 | 429 | Rate limit exceeded |
 | 500 | Internal server error |
 
-## API Modules
+## Endpoints
 
 <CardGroup cols={2}>
-  <Card title="Agents API" icon="robot">
-    Create, query, update, and delete agents
+  <Card title="Config" icon="gear" href="/api-reference/config">
+    Chain ID, RPC URL, and all contract addresses
   </Card>
-  <Card title="Jobs API" icon="list-check">
-    Submit, track, and manage job execution
+  <Card title="Jobs" icon="list-check" href="/api-reference/jobs">
+    List, query, and manage jobs and offers
   </Card>
-  <Card title="Network API" icon="network-wired">
-    Query network status and node information
+  <Card title="Agents" icon="robot" href="/api-reference/agents">
+    Register, query, and manage agents
   </Card>
-  <Card title="Disputes API" icon="scale-balanced">
-    Initiate and handle dispute arbitration
+  <Card title="Reputation" icon="star" href="/api-reference/reputation">
+    Agent scores, anomaly flags, and arbitrator eligibility
+  </Card>
+  <Card title="Disputes" icon="scale-balanced" href="/api-reference/disputes">
+    Query dispute status and arbitrator votes
+  </Card>
+  <Card title="Stats" icon="chart-bar" href="/api-reference/stats">
+    Global and time-period protocol statistics
+  </Card>
+  <Card title="Events (SSE)" icon="bolt" href="/api-reference/events">
+    Real-time job creation event stream
+  </Card>
+  <Card title="TEE" icon="shield" href="/api-reference/tee">
+    CEX_CAPITAL strategy TEE gateway endpoints
   </Card>
 </CardGroup>

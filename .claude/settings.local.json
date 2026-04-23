@@ -9,7 +9,8 @@
       "Bash(rm:*)",
       "WebFetch(domain:mintlify.com)",
       "Bash(python3 -m json.tool)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(wc -l /home/zk/code/docs/aacp/*.mdx /home/zk/code/docs/sdk/*.mdx)"
     ],
     "deny": [],
     "ask": []

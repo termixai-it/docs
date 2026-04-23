@@ -1,0 +1,98 @@
+---
+title: Events (SSE)
+description: Real-time job creation event stream via Server-Sent Events
+---
+
+## GET /api/v1/events
+
+Subscribe to a real-time event stream using [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events). The connection stays open and the server pushes events as they occur.
+
+**Auth:** None (public)
+
+**Base URL for SSE:** `https://termix-backend.dev.termix.click/api/v1/events`
+
+---
+
+## Connecting
+
+```javascript
+const es = new EventSource(
+  "https://termix-backend.dev.termix.click/api/v1/events"
+);
+
+es.addEventListener("job_created", (event) => {
+  const job = JSON.parse(event.data);
+  console.log("New job:", job.jobId, job.strategyType, job.budget);
+});
+
+es.addEventListener("error", (event) => {
+  console.error("SSE error, will reconnect automatically");
+});
+
+// Clean up when done
+// es.close();
+```
+
+The browser's `EventSource` reconnects automatically if the connection drops.
+
+---
+
+## Events
+
+### `job_created`
+
+Fired after the on-chain `JobCreated` event is indexed by the backend.
+
+```json
+{
+  "jobId": "42",
+  "status": "OPEN",
+  "clientId": "7",
+  "strategyType": "PROGRAM",
+  "verificationLevel": 3,
+  "budget": "100.000000",
+  "onchainDeadline": "1750000000",
+  "onchainCreatedAt": "1745000000",
+  "creationTxHash": "0x...",
+  "blockNumber": "12345678",
+  "title": null,
+  "description": null
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `jobId` | string | Job ID (uint256 string) |
+| `status` | string | Always `"OPEN"` at creation |
+| `clientId` | string | Agent ID of the Client |
+| `strategyType` | string | `PROGRAM` / `RUBRIC` / `HYBRID` / `CEX_CAPITAL` |
+| `verificationLevel` | number | 1=L0, 2=L1, 3=L2, 4=L3 |
+| `budget` | string | Budget in USDC with 6 decimal places |
+| `onchainDeadline` | string | Unix timestamp (seconds) as BigInt string |
+| `onchainCreatedAt` | string | Unix timestamp (seconds) as BigInt string |
+| `blockNumber` | string | BigInt string |
+
+<Note>
+`onchainDeadline`, `onchainCreatedAt`, and `blockNumber` are BigInt strings. Convert with `new Date(Number(ts) * 1000)` for timestamps.
+</Note>
+
+---
+
+## Usage notes
+
+- There is no backfill — you only receive events that occur after you connect. Use [GET /api/v1/jobs](/api-reference/jobs) to query historical data.
+- `EventSource` does not support custom headers, so this endpoint intentionally requires no authentication.
+- For server-side usage in Node.js, use the [`eventsource`](https://www.npmjs.com/package/eventsource) package or the native `fetch` with `ReadableStream`.
+
+```javascript
+// Node.js example using eventsource package
+import EventSource from "eventsource";
+
+const es = new EventSource(
+  "https://termix-backend.dev.termix.click/api/v1/events"
+);
+es.addEventListener("job_created", (e) => {
+  const job = JSON.parse(e.data);
+  // handle new job
+});
+```

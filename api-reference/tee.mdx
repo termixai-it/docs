@@ -1,0 +1,127 @@
+---
+title: TEE
+description: TEE gateway endpoints for CEX_CAPITAL strategy jobs
+---
+
+These endpoints are only relevant for `CEX_CAPITAL` strategy jobs. The backend proxies all `/api/v1/tee/*` requests to the TEE gateway, avoiding browser mixed-content restrictions.
+
+See [TEE Integration](/aacp/tee) for the full Provider workflow including ECIES encryption and order signing.
+
+---
+
+## GET /api/v1/tee/attestation
+
+Get the TEE enclave's public key for encrypting the CEX API key.
+
+**Auth:** None (public)
+
+### Response
+
+```json
+{
+  "tee_pubkey": "0x04..."
+}
+```
+
+Use this key to encrypt the exchange API key with ECIES before sending it to the TEE. Libraries: [`eciesjs`](https://www.npmjs.com/package/eciesjs) (browser/Node).
+
+---
+
+## POST /api/v1/tee/jobs
+
+Initialize a CEX_CAPITAL task in the TEE. Call this after deploying the strategy vault on-chain.
+
+**Auth:** Wallet auth (`X-Wallet-*` headers) — the backend verifies you are the on-chain Client for this job.
+
+Sign message: `AACP:tee-jobs:<jobId>:<timestamp_ms>`
+
+### Request body
+
+```json
+{
+  "job_id": "0xabc123",
+  "encrypted_api_key": "0x04...",
+  "params": {
+    "stop_loss_bps": 1000,
+    "target_return_bps": 2000,
+    "max_daily_trades": 50
+  },
+  "deadline": 1776257480
+}
+```
+
+| Field | Description |
+|---|---|
+| `job_id` | On-chain job ID (bytes32 string) |
+| `encrypted_api_key` | CEX API key encrypted with `tee_pubkey` using ECIES |
+| `params.stop_loss_bps` | Stop-loss threshold in basis points (1000 = 10%) |
+| `params.target_return_bps` | Target return in basis points (2000 = 20%) |
+| `params.max_daily_trades` | Maximum trades per day |
+| `deadline` | Unix timestamp matching the on-chain job deadline |
+
+### Response
+
+Proxied directly from the TEE — `200`, `400`, `409`, or `500`.
+
+---
+
+## POST /api/v1/tee/jobs/:jobId/orders
+
+Submit a signed trading order to the TEE. The TEE verifies the Provider's EIP-191 signature internally.
+
+**Auth:** None required at the HTTP level (TEE validates `provider_signature`)
+
+### Request body
+
+```json
+{
+  "order": {
+    "symbol": "BTC/USDT",
+    "side": "buy",
+    "quantity": "0.01",
+    "price": "65000"
+  },
+  "provider_signature": "0x<EIP-191 signature>"
+}
+```
+
+### Response
+
+Proxied directly from the TEE — `200`, `400`, `401`, `404`, or `500`.
+
+---
+
+## GET /api/v1/tee/jobs/:jobId/status
+
+Get the current TEE execution status for a job.
+
+**Auth:** None (public)
+
+### Query parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `verify` | boolean | Whether to verify the enclave signature (optional) |
+
+### Response
+
+```json
+{
+  "state": "running",
+  "closed_reason": null,
+  "balance_report": {
+    "usdt_balance": "10500.00",
+    "positions": []
+  },
+  "enclave_signature": "0x..."
+}
+```
+
+| Field | Values | Description |
+|---|---|---|
+| `state` | `"running"` / `"closed"` | Whether the TEE task is active |
+| `closed_reason` | `"deadline"` / `"stop_loss"` / `null` | Why the task was closed, if applicable |
+| `balance_report` | object | Current balance and position details from the TEE |
+| `enclave_signature` | string | TEE attestation signature over the balance report |
+
+Poll this endpoint to monitor job progress. For 4-hour attested snapshots persisted on-chain, use [GET /api/v1/jobs/:jobId/snapshots](/api-reference/jobs#get-apiv1jobsjobidsnapshots).
