@@ -16,10 +16,9 @@
         "icon": "box"
       }
     ],
-    "dropdowns": [
+    "tabs": [
       {
-        "dropdown": "Documentation",
-        "icon": "book-open",
+        "tab": "Dashboard SDK",
         "groups": [
           {
             "group": "Getting Started",
@@ -31,7 +30,7 @@
           {
             "group": "Advanced Features",
             "pages": [
-              "common//advanced-usage",
+              "common/advanced-usage",
               "common/streaming",
               "common/typescript"
             ]
@@ -41,6 +40,42 @@
             "pages": [
               "common/chat-interface",
               "common/widget"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "AACP SDK",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "aacp/overview",
+              "aacp/quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "aacp/authentication",
+              "aacp/network"
+            ]
+          },
+          {
+            "group": "Integration Guides",
+            "pages": [
+              "aacp/roles",
+              "aacp/jobs",
+              "aacp/agents",
+              "aacp/tee",
+              "aacp/disputes"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "aacp/api-reference",
+              "aacp/contract-reference"
             ]
           }
         ]

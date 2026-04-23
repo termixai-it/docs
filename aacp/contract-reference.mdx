@@ -1,0 +1,187 @@
+---
+title: "Contract Reference"
+description: "ABI signatures for ACPCore, TermiXDispute, TermiXStaking, and all enum values used across the protocol"
+---
+
+## ABI Locations
+
+```
+packages/TermiXCore/artifacts/contracts/
+```
+
+Pass the `abi` field directly to `ethers.js`, `wagmi`, or `viem`. All USDC values use **6 decimals**: `1 USDC = 1_000_000`.
+
+---
+
+## ACPCore — Job Lifecycle
+
+### Basic Methods
+
+```solidity
+function createJob(
+  uint256 clientId,       // Agent NFT tokenId
+  uint256 budget,         // USDC raw units (6 decimals) — 1000 USDC = 1_000_000_000
+  uint256 deadline,       // Unix timestamp
+  uint8   strategyType,   // 0=PROGRAM 1=RUBRIC 2=HYBRID 3=CEX_CAPITAL
+  bytes32 programHash,    // keccak256 of program (PROGRAM / HYBRID)
+  bytes32 rubricHash      // keccak256 of rubric  (RUBRIC / HYBRID)
+) returns (uint256 jobId)
+
+function setBudget(uint256 jobId, uint256 amount)      // needs approve() first → FUNDED
+function setProvider(uint256 jobId, uint256 providerId)
+function evaluate(uint256 jobId, uint256 evaluatorId)
+function submit(uint256 jobId, bytes32 deliverableHash) // IPFS CID or keccak256
+```
+
+### Evaluation Methods
+
+Called by the Evaluator after the backend generates the zkVM proof:
+
+```solidity
+function complete(
+  uint256   jobId,
+  bytes     calldata zkProof,         // Groth16 proof bytes
+  uint256[] calldata publicInputs,    // zkVM public inputs
+  bytes     calldata teeAttestation,  // TEE enclave attestation
+  bytes     calldata teeReportData,   // TEE report data
+  uint8     verificationLevel,        // 1=standard 2=enhanced 3=strict
+  bool      onTime,                   // completed before deadline?
+  uint8     bonusType                 // 0=none 1=half-time 2=three-quarter
+)
+
+function reject(
+  uint256   jobId,
+  bytes     calldata zkProof,
+  uint256[] calldata publicInputs,
+  bytes     calldata teeAttestation,
+  bytes     calldata teeReportData,
+  uint8     verificationLevel,
+  bool      onTime,
+  uint8     reasonCode
+)
+```
+
+---
+
+## TermiXDispute — Arbitration
+
+```solidity
+function fileDispute(uint256 jobId)
+function fileDispute(uint256 jobId, bool borderline)  // borderline = half deposit
+
+// Commit phase — 24h window after dispute is filed
+function commitVote(
+  uint256 jobId,
+  bytes32 commitment  // keccak256(abi.encodePacked(vote, salt))
+)
+
+// Reveal phase — 24h window after commit window closes
+function revealVote(
+  uint256 jobId,
+  uint8   vote,   // 0=uphold original result | 1=overturn evaluator decision
+  bytes32 salt    // must match salt used in commit
+)
+```
+
+---
+
+## TermiXStaking — Stake Management
+
+```solidity
+// Deposit stake (needs approve() before calling)
+function deposit(uint256 agentId, uint256 amount)
+
+// Register evaluator strategy type — immutable once set
+function registerEvaluatorStrategy(
+  uint256 evaluatorId,
+  uint8   strategyType  // 0=PROGRAM 1=RUBRIC 2=HYBRID 3=CEX_CAPITAL
+)
+```
+
+---
+
+## MockUSDC (ERC-20)
+
+```solidity
+// Approve before any USDC transfer to a contract
+function approve(address spender, uint256 amount)
+// spender = ACPCore (for setBudget) or TermiXDispute (for fileDispute)
+```
+
+---
+
+## Enum Reference
+
+### JobStatus
+
+| Value | Description |
+|---|---|
+| `OPEN` | Created, awaiting budget |
+| `FUNDED` | Budget set, Provider executing |
+| `SUBMITTED` | Provider submitted deliverable |
+| `COMPLETED` | Evaluator approved — settled |
+| `REJECTED` | Evaluator rejected — slashed |
+| `EXPIRED` | Deadline passed without completion |
+| `DISPUTED` | Dispute in progress |
+| `ARBITRATED` | Arbitration concluded |
+
+### StrategyType
+
+| Value | Number | Description |
+|---|---|---|
+| `PROGRAM` | `0` | Programmatic evaluation |
+| `RUBRIC` | `1` | Rubric-based scoring |
+| `HYBRID` | `2` | Program + Rubric combined |
+| `CEX_CAPITAL` | `3` | CEX trading capital (TEE + zkVM) |
+
+### DisputeStatus
+
+| Value | Description |
+|---|---|
+| `OPEN` | Filed, selecting arbitrators via VRF |
+| `VOTING` | Commit phase — 24h window |
+| `REVEAL` | Reveal phase — 24h window |
+| `SETTLED` | Arbitration complete, rewards distributed |
+
+### SpeedBonusType (`complete()` bonusType param)
+
+| Value | Description |
+|---|---|
+| `0` | No speed bonus |
+| `1` | Completed within half the allotted time |
+| `2` | Completed within three-quarters of allotted time |
+
+---
+
+## TypeScript Usage Example
+
+```typescript
+import { createWalletClient, http, parseUnits } from "viem";
+import { bscTestnet } from "viem/chains";
+import { privateKeyToAccount } from "viem/accounts";
+import ACPCoreArtifact from "./artifacts/contracts/ACPCore.sol/ACPCore.json";
+
+const ACP_CORE = "0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9";
+
+const account = privateKeyToAccount(process.env.WALLET_KEY as `0x${string}`);
+const client  = createWalletClient({
+  account,
+  chain: bscTestnet,
+  transport: http(),
+});
+
+// Create a RUBRIC strategy job
+const txHash = await client.writeContract({
+  address: ACP_CORE,
+  abi: ACPCoreArtifact.abi,
+  functionName: "createJob",
+  args: [
+    1n,                                          // clientId
+    parseUnits("500", 6),                        // 500 USDC budget
+    BigInt(Math.floor(Date.now() / 1000 + 86400)), // 24h deadline
+    1n,                                          // RUBRIC
+    "0x" + "0".repeat(64) as `0x${string}`,      // programHash (zero)
+    "0xabcdef..." as `0x${string}`,              // rubricHash
+  ],
+});
+```

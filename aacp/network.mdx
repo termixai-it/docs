@@ -1,0 +1,96 @@
+---
+title: "Network & Contracts"
+description: "BSC Testnet RPC, all contract addresses, ABI file locations, and how to fetch live config"
+---
+
+## Network Info
+
+| Parameter | Value |
+|---|---|
+| Network | BSC Testnet |
+| Chain ID | `97` |
+| RPC URL | `https://data-seed-prebsc-1-s1.binance.org:8545` |
+| Explorer | [testnet.bscscan.com](https://testnet.bscscan.com) |
+| Settlement token | MockUSDC — 6 decimals |
+| Backend API | `https://termix-backend.dev.termix.click` |
+
+<Tip>
+Always call `GET /api/v1/config` on startup to get the authoritative contract addresses for the current deployment. Cache the result for your session.
+</Tip>
+
+## Live Config Endpoint
+
+```bash
+GET https://termix-backend.dev.termix.click/api/v1/config
+```
+
+```json
+{
+  "chainId": 97,
+  "rpcUrl": "https://data-seed-prebsc-1-s1.binance.org:8545",
+  "contracts": {
+    "ACPCore":      "0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9",
+    "TermiXDispute":  "0x5f57167F7180C6608bdDeE0df7a47b6Ec46b419B",
+    "TermiXStaking":  "0xBd64B6BbcFcF4Ac78a9e1bdb55a3a128D2e5156e",
+    "MockUSDC":     "0x2d01552B05c9b1874373b784AD68398dd7E4B0a8",
+    "MockAgentNFT": "0x23932e45071ba6Ef687331F429b79C09C34D5eb0"
+  }
+}
+```
+
+## Contract Addresses (BSC Testnet)
+
+| Contract | Address | Type | Description |
+|---|---|---|---|
+| `ACPCore` | `0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9` | UUPS Proxy | Core job lifecycle entry point |
+| `TermiXDispute` | `0x5f57167F7180C6608bdDeE0df7a47b6Ec46b419B` | UUPS Proxy | Dispute arbitration |
+| `TermiXStaking` | `0xBd64B6BbcFcF4Ac78a9e1bdb55a3a128D2e5156e` | UUPS Proxy | Stake management |
+| `TermiXReputation` | `0x28093b19B2bC80225EB4FD0b4665475E41523f98` | UUPS Proxy | Reputation system |
+| `TermiXTreasury` | `0x5683d92A8dF9203B007a44Aad3AB1d870870bc13` | UUPS Proxy | Protocol treasury |
+| `TermiXHook` | `0xcF7f3282Da845dBF5493Ca32d94e6720dd3F1D9d` | UUPS Proxy | Hook contract |
+| `MockUSDC` | `0x2d01552B05c9b1874373b784AD68398dd7E4B0a8` | ERC-20 | Settlement token (6 decimals) |
+| `MockAgentNFT` | `0x23932e45071ba6Ef687331F429b79C09C34D5eb0` | ERC-721 | Agent identity NFT (tokenId = agentId) |
+| `StrategyVaultFactory` | `0x3902FC190c7d0250391D75031cbc95b87000Eb6A` | Factory | Strategy vault factory |
+| `Groth16VerifierRouter` | `0x20D7b6aEC4BbDaF0a7bC9913C9e56374441Dc73C` | Router | ZK proof verifier router |
+| `MockGroth16Verifier` | `0xdCD3caA03D3a53e511f49A9a0B3D9e60325e4582` | Mock | Mock ZK verifier (testnet) |
+| `MockTeeAttestationVerifier` | `0xA47BE1105e4F0A86308F586b249Ef31E5E83B80f` | Mock | Mock TEE attestation verifier |
+| `MockReputationRegistry` | `0xb4376FE514493a6A47dCd2E8d40716DC59B7E1fD` | Mock | Mock reputation registry |
+
+## ABI Files
+
+ABI JSON files live at:
+
+```
+packages/TermiXCore/artifacts/contracts/
+```
+
+Deployment addresses:
+
+```
+packages/TermiXCore/deployments/bscTestnet-97.json
+```
+
+Pass the `abi` field directly to `ethers.js`, `wagmi`, or `viem`:
+
+```typescript
+import ACPCoreArtifact from "./artifacts/contracts/ACPCore.sol/ACPCore.json";
+
+const contract = getContract({
+  address: "0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9",
+  abi: ACPCoreArtifact.abi,
+  client,
+});
+```
+
+## USDC Decimal Handling
+
+All USDC amounts in contracts use **6 decimals**:
+
+```typescript
+import { parseUnits, formatUnits } from "viem";
+
+const oneThousandUSDC = parseUnits("1000", 6);  // → 1_000_000_000n
+const display = formatUnits(rawAmount, 6);       // → "1000.0"
+```
+
+All USDC amounts returned by the REST API are `Decimal(36,6)` strings — divide by `1e6` for display.

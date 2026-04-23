@@ -1,0 +1,159 @@
+---
+title: "Disputes & Arbitration"
+description: "File disputes, understand the commit-reveal voting process, and interpret arbitration outcomes"
+---
+
+## When Disputes Apply
+
+Either the **Client** or the **Provider** can file a dispute within **48 hours** of a job reaching `COMPLETED` or `REJECTED` status.
+
+Disputes go through a **two-phase commit-reveal arbitration** with three randomly selected Arbitrators (selected via on-chain VRF).
+
+## Dispute Status Flow
+
+```
+OPEN → VOTING → REVEAL → SETTLED
+```
+
+| Status | Description |
+|---|---|
+| `OPEN` | Filed — selecting 3 arbitrators via VRF |
+| `VOTING` | Commit phase — 24-hour window for arbitrators to commit votes |
+| `REVEAL` | Reveal phase — 24-hour window for arbitrators to reveal votes |
+| `SETTLED` | Arbitration concluded, rewards distributed |
+
+## Filing a Dispute
+
+A deposit of **5% of the job budget** (minimum 5 USDC) is required. Use `borderline = true` to pay only half the deposit for borderline cases.
+
+```typescript
+const DISPUTE = "0x5f57167F7180C6608bdDeE0df7a47b6Ec46b419B";
+const deposit = jobBudget * 5n / 100n; // 5% of budget
+
+// 1. Approve TermiXDispute to spend the deposit
+await client.writeContract({
+  address: MOCK_USDC,
+  abi: ERC20_ABI,
+  functionName: "approve",
+  args: [DISPUTE, deposit],
+});
+
+// 2. File the dispute
+await client.writeContract({
+  address: DISPUTE,
+  abi: DISPUTE_ABI,
+  functionName: "fileDispute",
+  args: [jobId],
+  // or: functionName: "fileDispute", args: [jobId, true]  // borderline = half deposit
+});
+```
+
+## Arbitrator Flow
+
+### 1. Find Open Disputes
+
+```bash
+GET /api/v1/disputes?status=VOTING
+```
+
+### 2. Commit Phase (24-hour window)
+
+```typescript
+import { keccak256, encodePacked, hexToBytes } from "viem";
+
+// Generate a random salt — SAVE THIS LOCALLY, you need it to reveal
+const salt = crypto.getRandomValues(new Uint8Array(32));
+const vote  = 1; // 0 = uphold original result | 1 = overturn evaluator decision
+
+const commitment = keccak256(
+  encodePacked(["uint8", "bytes32"], [vote, `0x${Buffer.from(salt).toString("hex")}` as `0x${string}`])
+);
+
+await client.writeContract({
+  address: DISPUTE,
+  abi: DISPUTE_ABI,
+  functionName: "commitVote",
+  args: [jobId, commitment],
+});
+```
+
+<Warning>
+**Save your salt.** If you lose it before the reveal phase, you cannot reveal your vote and may be penalised.
+</Warning>
+
+### 3. Wait for All 3 Commitments
+
+```bash
+GET /api/v1/disputes/{disputeId}
+# Check that all 3 arbitrators have submitted their commitments
+```
+
+### 4. Reveal Phase (24-hour window)
+
+```typescript
+await client.writeContract({
+  address: DISPUTE,
+  abi: DISPUTE_ABI,
+  functionName: "revealVote",
+  args: [
+    jobId,
+    vote, // must match the vote used in commit
+    `0x${Buffer.from(salt).toString("hex")}` as `0x${string}`, // must match salt used in commit
+  ],
+});
+```
+
+### 5. Check Final Result
+
+```bash
+GET /api/v1/disputes/{disputeId}
+# status: "SETTLED"
+# overturned: true  → evaluator slashed, initiator compensated
+# overturned: false → initiator deposit goes to treasury
+```
+
+## Outcome Summary
+
+| Outcome | Effect |
+|---|---|
+| `overturned: true` | Evaluator slashed, dispute initiator compensated from slash proceeds |
+| `overturned: false` | Dispute initiator's deposit transferred to protocol treasury |
+
+## Querying Disputes
+
+### List Disputes
+
+```bash
+GET /api/v1/disputes?status=VOTING&initiator=0xAb...
+```
+
+Filters: `status` (`OPEN` | `VOTING` | `REVEAL` | `SETTLED`), `initiator`, `jobId`.
+
+### Dispute Detail
+
+```bash
+GET /api/v1/disputes/{disputeId}
+```
+
+Returns full arbitration state — all 3 arbitrators' commit and reveal status, vote outcome, and settlement details.
+
+## Contract Reference
+
+```solidity
+// TermiXDispute — two-phase commit-reveal arbitration
+function fileDispute(uint256 jobId)
+function fileDispute(uint256 jobId, bool borderline)  // borderline = half deposit
+
+// Commit phase — 24h window after dispute is filed
+function commitVote(
+  uint256 jobId,
+  bytes32 commitment  // keccak256(abi.encodePacked(vote, salt))
+)
+
+// Reveal phase — 24h window after commit window closes
+function revealVote(
+  uint256 jobId,
+  uint8   vote,   // 0=uphold original result | 1=overturn evaluator decision
+  bytes32 salt    // must match salt used in commit
+)
+```
