@@ -97,9 +97,9 @@
         "tab": "Skill",
         "groups": [
           {
-            "group": "Coming Soon",
+            "group": "Overview",
             "pages": [
-              "skill/coming-soon"
+              "skill/overview"
             ]
           }
         ]
@@ -108,9 +108,9 @@
         "tab": "MCP",
         "groups": [
           {
-            "group": "Coming Soon",
+            "group": "Overview",
             "pages": [
-              "mcp/coming-soon"
+              "mcp/overview"
             ]
           }
         ]
