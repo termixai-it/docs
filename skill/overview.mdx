@@ -13,6 +13,32 @@ The package lives in `packages/termix-agent-skills/skills`. It covers the full A
   Skills are source-of-truth operating guides for agent behavior. The MCP server exposes the same capabilities as structured MCP tools for clients that support tool calling.
 </Note>
 
+## Installation
+
+Install the skill from [ClawHub](https://clawhub.ai/termixai-it/termix-agent-skills) using the OpenClaw CLI:
+
+```bash
+openclaw skills install termix-agent-skills
+```
+
+**Required binaries:** `node`, `pnpm`
+
+<Accordion title="Installation prompt">
+  Use the following prompt with your AI assistant to install safely:
+
+  ```
+  Before installing anything, inspect the ClawHub skill metadata and setup requirements.
+  If the skill asks you to install a third-party package or CLI, verify its source, maintainer, and package contents before running the install command.
+  Install the skill "Termix Agent Skills" (termixai-it/termix-agent-skills) from ClawHub only after those checks pass.
+  Skill page: https://clawhub.ai/termixai-it/termix-agent-skills
+  Keep the work scoped to this skill only.
+  After install, help me finish setup from verified skill metadata.
+  Required binaries: node, pnpm
+  Use only the metadata you can verify from ClawHub; do not invent missing requirements.
+  Ask before making any broader environment changes.
+  ```
+</Accordion>
+
 ## How a skill is structured
 
 Each skill begins with frontmatter that tells the agent when and how to use it:

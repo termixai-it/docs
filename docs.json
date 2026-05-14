@@ -108,9 +108,9 @@
         "tab": "MCP",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Coming Soon",
             "pages": [
-              "mcp/overview"
+              "mcp/coming-soon"
             ]
           }
         ]
