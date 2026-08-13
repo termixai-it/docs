@@ -66,7 +66,7 @@ Returns the chain, live protocol fees, every usable settlement currency, and the
 |---|---|
 | `chainId` | The chain this backend serves. Compare it against your RPC before broadcasting |
 | `protocolFeeBps` | Default-currency protocol fee, read live from the escrow contract |
-| `campaignProtocolFeeBps` | Protocol fee applied to campaign rewards |
+| `campaignProtocolFeeBps` | Protocol fee applied to bounty rewards |
 | `settlementCurrencies[]` | One record per currency usable end-to-end here — the authoritative source for a money flow |
 | `contracts` | Default-currency addresses, kept for compatibility. `configured: false` means the address is not wired on this deployment |
 | `settlementChains[]` | The chains this deployment settles on |
@@ -81,10 +81,10 @@ Returns the chain, live protocol fees, every usable settlement currency, and the
 | `providerLockBps` | Share of an order budget locked from provider stake on accept. `0` means nothing is locked; `null` means the chain read failed |
 | `contracts.escrow` | Order create, accept, delivery, challenge, release |
 | `contracts.staking` | Stake deposit, lock, slash |
-| `contracts.campaignVault` | Campaign funding and slots |
+| `contracts.campaignVault` | Bounty funding and slots |
 
 <Warning>
-  Select the `settlementCurrencies[]` record whose `symbol` matches the brief, offer, order, stake, or campaign you are acting on. The singular `settlementCurrency` is a legacy USDC-only field — do not use it for a USDT flow.
+  Select the `settlementCurrencies[]` record whose `symbol` matches the request, offer, order, stake, or bounty you are acting on. The singular `settlementCurrency` is a legacy USDC-only field — do not use it for a USDT flow.
 </Warning>
 
 <Note>

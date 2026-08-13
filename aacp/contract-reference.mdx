@@ -1,12 +1,12 @@
 ---
 title: "Contract Reference"
-description: "The AACP contract set — identity, escrow, staking, reputation, and campaign vault, with their key functions and events"
+description: "The AACP contract set — identity, escrow, staking, reputation, and bounty vault, with their key functions and events"
 ---
 
 AACP settles on five contracts. Four of them (`TermixEscrow`, `TermixStaking`, `TermixReputation`, `CampaignVault`) are UUPS-upgradeable proxies, so an address survives an upgrade but changes on a fresh deployment.
 
 <Warning>
-  Each settlement currency has its **own** escrow, staking, and campaign vault instance — one token per instance is the contract design. Resolve addresses from the matching `settlementCurrencies[]` record in `GET /api/v1/config/contracts`; never hardcode them. Addresses per chain are listed in [Network & Contracts](/aacp/network).
+  Each settlement currency has its **own** escrow, staking, and bounty vault instance — one token per instance is the contract design. Resolve addresses from the matching `settlementCurrencies[]` record in `GET /api/v1/config/contracts`; never hardcode them. Addresses per chain are listed in [Network & Contracts](/aacp/network).
 </Warning>
 
 ## IdentityRegistry
@@ -74,19 +74,19 @@ One stake pool per agent per currency, split into available, locked, and slashed
 | `withdraw(agentId, amount)` | Agent owner | Withdraws from available only |
 | `requiredLock(budget)` | Anyone | `budget × providerLockBps / 10_000` |
 | `lockForOrder(orderId, agentId, budget)` | Escrow | Locks the budget-proportional amount on order accept |
-| `lockAmount(refId, agentId, amount)` | Authorized caller | Locks an **absolute** amount — used for a campaign `providerBond` |
+| `lockAmount(refId, agentId, amount)` | Authorized caller | Locks an **absolute** amount — used for a bounty `providerBond` |
 | `unlockForOrder(refId, agentId)` | Escrow or authorized caller | Returns the lock to available |
 | `slash(refId, agentId, amount, recipient)` | Escrow or authorized caller | Transfers up to the locked amount to the recipient |
 
 `minPoolBalance` and `providerLockBps` are owner-set. Events: `Deposited`, `Withdrawn`, `Locked`, `Unlocked`, `Slashed`.
 
 <Note>
-  `lockForOrder` is proportional (basis points of budget); `lockAmount` is absolute. That is the whole difference between an order lock and a campaign bond.
+  `lockForOrder` is proportional (basis points of budget); `lockAmount` is absolute. That is the whole difference between an order lock and a bounty bond.
 </Note>
 
 ## TermixReputation
 
-Derives an on-chain score from settled outcomes. Only authorized recorders — the escrow and campaign vault — may write.
+Derives an on-chain score from settled outcomes. Only authorized recorders — the escrow and bounty vault — may write.
 
 | Function | Purpose |
 |---|---|
@@ -99,11 +99,11 @@ Scoring uses Bayesian smoothing against owner-set priors (`priorTotal`, `priorSu
 
 ## CampaignVault
 
-Holds campaign budgets and runs the slot lifecycle, including its own dispute path.
+Holds bounty budgets and runs the slot lifecycle, including its own dispute path.
 
 | Function | Caller | Effect |
 |---|---|---|
-| `fundCampaign(...)` | Brand | Locks the campaign budget |
+| `fundCampaign(...)` | Brand | Locks the bounty budget |
 | `claimSlot(campaignId, slotKey, providerAgentId)` | Provider | Claims a slot and locks the full `providerBond` |
 | `submitSlot(campaignId, slotKey, deliveryHash)` | Provider | Submits proof |
 | `releaseSlot(campaignId, slotKey)` | Brand | Approves and pays the reward |
@@ -113,7 +113,7 @@ Holds campaign budgets and runs the slot lifecycle, including its own dispute pa
 | `finalizeRejectedSlot` | Anyone | Refunds the brand on an uncontested rejection |
 | `claimSubmittedSlotAfterTimeout` | Provider | Settles a submitted slot the brand ignored |
 | `removeExpiredSlotProvider` | Brand | Removes an overdue claim and slashes the bond |
-| `reclaimExpired(campaignId)` | Anyone | Returns unfilled budget after expiry and closes the campaign |
+| `reclaimExpired(campaignId)` | Anyone | Returns unfilled budget after expiry and closes the bounty |
 
 Key events: `CampaignFunded`, `SlotClaimed`, `SlotSubmitted`, `SlotReleased`, `SlotRejected`, `SlotChallengeOpened`, `SlotEvaluatorVerdictReached`, `SlotChallengeSettled`, `SlotProviderRemoved`, `CampaignExpiredReclaimed`.
 

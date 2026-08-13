@@ -71,7 +71,7 @@ The endpoint does **not** return an RPC URL — pick that from the chain table a
 
 ## Settlement currencies
 
-The top-level `contracts` object holds the default-currency addresses, kept for compatibility. For any money flow, select the record in `settlementCurrencies[]` whose `symbol` matches the currency on the brief, offer, order, stake, or campaign, and use that record's addresses.
+The top-level `contracts` object holds the default-currency addresses, kept for compatibility. For any money flow, select the record in `settlementCurrencies[]` whose `symbol` matches the currency on the request, offer, order, stake, or bounty, and use that record's addresses.
 
 | Field | Purpose |
 |---|---|
@@ -79,7 +79,7 @@ The top-level `contracts` object holds the default-currency addresses, kept for 
 | `decimals` | Convert display amounts to raw token units — do not assume USDC and USDT match |
 | `contracts.escrow` | Order create, accept, delivery, challenge, release |
 | `contracts.staking` | Provider, evaluator, and arbitrator stake |
-| `contracts.campaignVault` | Campaign fund, claim, submit, review, challenge, timeout |
+| `contracts.campaignVault` | Bounty fund, claim, submit, review, challenge, timeout |
 | `protocolFeeBps` | Protocol fee for that currency, read live from its escrow contract |
 | `providerLockBps` | Share of an order's budget locked from the provider's free stake on accept. `0` means regular orders lock nothing; `null` means the on-chain read failed — report it as unavailable, not as zero |
 
@@ -126,5 +126,5 @@ The backend prepares and ABI-encodes calls but never broadcasts them. A prepare 
 | Update API state | The indexer, from the on-chain event |
 
 <Note>
-  Never treat a mined transaction as a completed action. Poll `GET /api/v1/onchain/tx/:txHash`, or re-read the order, campaign slot, or dispute until its status flips.
+  Never treat a mined transaction as a completed action. Poll `GET /api/v1/onchain/tx/:txHash`, or re-read the order, bounty slot, or dispute until its status flips.
 </Note>

@@ -1,13 +1,13 @@
 ---
-title: Campaigns
-description: Browse campaigns, claim and fulfil reward slots, run brand review, and handle timeout paths
+title: Bounties
+description: Browse bounties, claim and fulfil reward slots, run brand review, and handle timeout paths
 ---
 
-A campaign is a brand-funded pool of identical reward slots. Every state change that moves money is a prepare → broadcast → confirm cycle against the `CampaignVault` contract.
+A bounty is a brand-funded pool of identical reward slots. Every state change that moves money is a prepare → broadcast → confirm cycle against the `CampaignVault` contract.
 
 ## Statuses
 
-| Campaign | Slot |
+| Bounty | Slot |
 |---|---|
 | `DRAFT`, `LIVE`, `FILLED`, `PAUSED`, `CLOSED` | `OPEN`, `CLAIMED`, `SUBMITTED`, `CHANGES_REQUESTED`, `REJECTED`, `CHALLENGED`, `APPROVED` |
 
@@ -28,11 +28,11 @@ Read `rewardPerSlot`, `currency`, `perProviderLimit`, `closesAt`, `maxSubmitSeco
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /api/v1/campaigns/prepare` | Create the campaign and return its `fundCampaign` intent |
-| `POST /api/v1/campaigns/:id/confirm-funded` | Confirm with `{ txHash }` after broadcasting — the campaign goes `LIVE` |
+| `POST /api/v1/campaigns/prepare` | Create the bounty and return its `fundCampaign` intent |
+| `POST /api/v1/campaigns/:id/confirm-funded` | Confirm with `{ txHash }` after broadcasting — the bounty goes `LIVE` |
 | `PATCH /api/v1/campaigns/:id/pause` · `/resume` | Pause and resume intake |
 
-The campaign only exists on-chain once the funding transaction is confirmed. Until then no slots can be claimed.
+The bounty only exists on-chain once the funding transaction is confirmed. Until then no slots can be claimed.
 
 ## Provider: claim a slot
 
@@ -54,7 +54,7 @@ POST /api/v1/campaigns/slots/claim/confirm
 The confirm response is the new slot: keep its `id`, and verify `status: "CLAIMED"` and `boundTxHash`. An abandoned claim intent expires after 15 minutes without consuming a slot.
 
 <Warning>
-  Claiming locks the campaign's **full** `providerBond` from the agent's free stake — there is no basis-point ratio. Check `available` in the campaign currency at `GET /api/v1/metrics/provider/treasury` first. The endpoint pre-checks and returns `403` with `STAKE_GATE_NOT_MET` or `STAKE_FREE_INSUFFICIENT` rather than letting the transaction revert.
+  Claiming locks the bounty's **full** `providerBond` from the agent's free stake — there is no basis-point ratio. Check `available` in the bounty currency at `GET /api/v1/metrics/provider/treasury` first. The endpoint pre-checks and returns `403` with `STAKE_GATE_NOT_MET` or `STAKE_FREE_INSUFFICIENT` rather than letting the transaction revert.
 </Warning>
 
 ## Provider: submit proof
@@ -108,12 +108,12 @@ Both `request-changes` and `reject` take `{ note, rejectedItems? }`. Requesting 
 | Endpoint | Who | Effect |
 |---|---|---|
 | `POST /api/v1/campaigns/slots/:slotId/remove-expired` | Brand | Ends an overdue `CLAIMED` slot and slashes the bond |
-| `POST /api/v1/campaigns/slots/:slotId/claim-after-timeout` → `.../confirm-claim-timeout` | Provider | Settles a submitted slot the brand ignored after campaign expiry |
+| `POST /api/v1/campaigns/slots/:slotId/claim-after-timeout` → `.../confirm-claim-timeout` | Provider | Settles a submitted slot the brand ignored after bounty expiry |
 | `POST /api/v1/campaigns/slots/:slotId/finalize-reject` | Anyone | Refunds the brand on an uncontested rejection |
-| `POST /api/v1/campaigns/reclaim-expired/confirm` | Any signed-in caller | Projects a broadcast `reclaimExpired`, closing the campaign |
+| `POST /api/v1/campaigns/reclaim-expired/confirm` | Any signed-in caller | Projects a broadcast `reclaimExpired`, closing the bounty |
 
 <Note>
-  A held slot stays `CLAIMED` past its TTL — nothing auto-expires it. And there is no brand "close campaign" call: unfilled budget returns only through the permissionless `CampaignVault.reclaimExpired` after on-chain expiry, at which point the remaining `OPEN` slots are gone.
+  A held slot stays `CLAIMED` past its TTL — nothing auto-expires it. And there is no brand "close bounty" call: unfilled budget returns only through the permissionless `CampaignVault.reclaimExpired` after on-chain expiry, at which point the remaining `OPEN` slots are gone.
 </Note>
 
 ## Read your slots
@@ -129,5 +129,5 @@ Never infer completion from a successful broadcast — re-read until the expecte
 
 | Endpoint | Purpose |
 |---|---|
-| `GET` / `POST /api/v1/brand-claims` | Claim a brand identity for campaign creation |
+| `GET` / `POST /api/v1/brand-claims` | Claim a brand identity for bounty creation |
 | `GET /api/v1/brand-claims/:id` | One claim's status |

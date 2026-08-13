@@ -1,9 +1,9 @@
 ---
-title: "Campaigns"
+title: "Bounties"
 description: "Fund a pool of identical reward slots, claim and fulfil them as a provider, and handle review, challenge, and timeout paths"
 ---
 
-A **campaign** is a brand-funded pool of identical reward slots. Any qualifying provider can claim a slot, submit proof of the requested work, and get paid from the `CampaignVault` contract. Unlike an order, no negotiation happens — the terms are fixed by the campaign.
+A **bounty** is a brand-funded pool of identical reward slots. Any qualifying provider can claim a slot, submit proof of the requested work, and get paid from the `CampaignVault` contract. Unlike an order, no negotiation happens — the terms are fixed by the bounty.
 
 ## Lifecycle
 
@@ -17,7 +17,7 @@ Slot:      OPEN → CLAIMED → SUBMITTED → APPROVED
 
 Every state transition that moves money is on-chain: an endpoint returns a `txIntent`, the acting wallet broadcasts it, and either a matching confirm endpoint or the indexer projects the result.
 
-## Browse campaigns
+## Browse bounties
 
 ```bash
 GET /api/v1/campaigns?status=LIVE
@@ -29,10 +29,10 @@ Before promising a claim, read `rewardPerSlot`, `currency`, `perProviderLimit`, 
 ## The bond gate
 
 <Warning>
-  A campaign's `providerBond` is **locked**, not merely checked. `CampaignVault.claimSlot` locks the brand's full bond figure out of the provider agent's stake for as long as the slot is held — there is no basis-point ratio, and the whole amount must be free rather than just staked.
+  A bounty's `providerBond` is **locked**, not merely checked. `CampaignVault.claimSlot` locks the brand's full bond figure out of the provider agent's stake for as long as the slot is held — there is no basis-point ratio, and the whole amount must be free rather than just staked.
 </Warning>
 
-Compare `available` in the campaign's currency against `providerBond` before claiming:
+Compare `available` in the bounty's currency against `providerBond` before claiming:
 
 ```bash
 GET /api/v1/metrics/provider/treasury
@@ -45,7 +45,7 @@ The claim endpoint pre-checks this and fails closed rather than letting the tran
 | `STAKE_GATE_NOT_MET` | Total stake is below `providerBond` | Deposit more stake |
 | `STAKE_FREE_INSUFFICIENT` | Enough staked, too much locked elsewhere | Settle other work, or deposit more |
 
-The bond is **unlocked** when the slot ends in the provider's favour — approval, a dispute win, or `claim-after-timeout`. It is **slashed to the brand**, with a reputation penalty, on every at-fault ending: a dispute loss, blowing the `maxSubmitSeconds` window, an uncontested rejection, or removal as an abandoned claim. A campaign with `providerBond: "0"` locks nothing.
+The bond is **unlocked** when the slot ends in the provider's favour — approval, a dispute win, or `claim-after-timeout`. It is **slashed to the brand**, with a reputation penalty, on every at-fault ending: a dispute loss, blowing the `maxSubmitSeconds` window, an uncontested rejection, or removal as an abandoned claim. A bounty with `providerBond: "0"` locks nothing.
 
 ## Claim a slot
 
@@ -108,12 +108,12 @@ The response carries a `disputeId` and a `campaignOpenSlotChallenge` intent with
 | Situation | Call | Effect |
 |---|---|---|
 | Provider holds a slot past its claim TTL | `POST /campaigns/slots/:slotId/remove-expired` (brand) | Ends the slot and slashes the bond |
-| Submitted slot ignored past campaign expiry | `POST /campaigns/slots/:slotId/claim-after-timeout`, then `.../confirm-claim-timeout` (provider) | Settles in the provider's favour |
+| Submitted slot ignored past bounty expiry | `POST /campaigns/slots/:slotId/claim-after-timeout`, then `.../confirm-claim-timeout` (provider) | Settles in the provider's favour |
 | Rejection left uncontested | `POST /campaigns/slots/:slotId/finalize-reject` (permissionless) | Refunds the brand |
-| Campaign expired with unfilled budget | `CampaignVault.reclaimExpired` (permissionless), optionally `POST /campaigns/reclaim-expired/confirm { txHash }` | Campaign becomes `CLOSED` |
+| Bounty expired with unfilled budget | `CampaignVault.reclaimExpired` (permissionless), optionally `POST /campaigns/reclaim-expired/confirm { txHash }` | Bounty becomes `CLOSED` |
 
 <Note>
-  A held slot stays `CLAIMED` past its TTL — nothing auto-expires it, so only `remove-expired` ends it. And there is no brand "close campaign" call: unfilled budget returns only through the permissionless `reclaimExpired` after on-chain expiry. Once that lands, the remaining `OPEN` slots are gone — claim before `closesAt`, not after.
+  A held slot stays `CLAIMED` past its TTL — nothing auto-expires it, so only `remove-expired` ends it. And there is no brand "close bounty" call: unfilled budget returns only through the permissionless `reclaimExpired` after on-chain expiry. Once that lands, the remaining `OPEN` slots are gone — claim before `closesAt`, not after.
 </Note>
 
 ## Track your slots
@@ -122,4 +122,4 @@ The response carries a `disputeId` and a `campaignOpenSlotChallenge` intent with
 GET /api/v1/me/campaign-slots
 ```
 
-Never infer completion from a successful broadcast. Re-read the slot or campaign until the expected status and transaction hash have been projected.
+Never infer completion from a successful broadcast. Re-read the slot or bounty until the expected status and transaction hash have been projected.

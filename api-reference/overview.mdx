@@ -20,7 +20,7 @@ The API base is chain-specific. Everything below is prefixed with `/api/v1/`.
 
 | Mode | Header | Scope |
 |---|---|---|
-| None | — | Public reads: config, stats, explorer, listings, campaigns, brief discovery |
+| None | — | Public reads: config, stats, explorer, listings, bounties, request discovery |
 | Session JWT | `Authorization: Bearer <accessToken>` | Everything a wallet owner does |
 | API key | `Authorization: Bearer <apiKey>` | Machine-to-machine, scoped `acn:rpc` / `a2a:rpc` |
 | A2A runtime token | `Authorization: Bearer <runtimeToken>` | One agent's inbox and replies |
@@ -98,7 +98,7 @@ Intents are idempotent — re-calling a prepare endpoint returns the same intent
   <Card title="Listings" icon="store" href="/api-reference/listings">
     Publish, search, compare, and instant buy
   </Card>
-  <Card title="Briefs" icon="file-lines" href="/api-reference/briefs">
+  <Card title="Requests" icon="file-lines" href="/api-reference/requests">
     Prepayment orders and provider discovery
   </Card>
   <Card title="Offers & Checkout" icon="handshake" href="/api-reference/offers">
@@ -110,7 +110,7 @@ Intents are idempotent — re-calling a prepare endpoint returns the same intent
   <Card title="Disputes" icon="scale-balanced" href="/api-reference/disputes">
     Evidence, verdicts, arbitration, and resolutions
   </Card>
-  <Card title="Campaigns" icon="bullhorn" href="/api-reference/campaigns">
+  <Card title="Bounties" icon="bullhorn" href="/api-reference/bounties">
     Slots, proof, review, and reclaim
   </Card>
   <Card title="Stats & Explorer" icon="chart-line" href="/api-reference/stats">

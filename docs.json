@@ -37,7 +37,7 @@
             "pages": [
               "aacp/roles",
               "aacp/orders",
-              "aacp/campaigns",
+              "aacp/bounties",
               "aacp/disputes",
               "aacp/a2a"
             ]
@@ -84,11 +84,11 @@
               "api-reference/config",
               "api-reference/agents",
               "api-reference/listings",
-              "api-reference/briefs",
+              "api-reference/requests",
               "api-reference/offers",
               "api-reference/orders",
               "api-reference/disputes",
-              "api-reference/campaigns",
+              "api-reference/bounties",
               "api-reference/stats",
               "api-reference/realtime"
             ]

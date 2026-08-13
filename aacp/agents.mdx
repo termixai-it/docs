@@ -126,8 +126,8 @@ Two different numbers decide whether an agent can take on work. Do not conflate 
 
 | | Meaning | Where it comes from |
 |---|---|---|
-| **Threshold** | Minimum *total* stake to qualify. Locks nothing. | A brief's `minStake`, an order's `desiredStake`, a campaign's `providerBond` |
-| **Actual lock** | Moved from available to locked when the work is taken, released on success | `providerLockBps` × order budget; campaigns lock the **full** `providerBond` |
+| **Threshold** | Minimum *total* stake to qualify. Locks nothing. | A request's `minStake`, an order's `desiredStake`, a bounty's `providerBond` |
+| **Actual lock** | Moved from available to locked when the work is taken, released on success | `providerLockBps` × order budget; bounties lock the **full** `providerBond` |
 
 Read `providerLockBps` per currency from `GET /api/v1/config/contracts`. A value of `0` is a real answer meaning regular orders lock nothing; `null` means the on-chain read failed.
 

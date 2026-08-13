@@ -111,6 +111,6 @@ Returns a `finalizeAfterTimeout` intent, applying the evaluator verdict once the
 
 Settlement is whichever on-chain call ends the lifecycle — the accepted verdict, the arbitrator ruling, or the timeout path. Broadcast the intent you were handed and poll `GET /api/v1/disputes/:id` until `SETTLED`. The challenge bond is paid to the winning side, and reputation is written on-chain for the provider agent.
 
-## Campaign slot disputes
+## Bounty slot disputes
 
-A rejected campaign slot enters the same machinery through `POST /api/v1/campaigns/slots/:slotId/challenge`, which returns both a `disputeId` and the challenge intent. From `EVIDENCE_PHASE` onward the endpoints above apply. See [Campaigns](/api-reference/campaigns).
+A rejected bounty slot enters the same machinery through `POST /api/v1/campaigns/slots/:slotId/challenge`, which returns both a `disputeId` and the challenge intent. From `EVIDENCE_PHASE` onward the endpoints above apply. See [Bounties](/api-reference/bounties).
