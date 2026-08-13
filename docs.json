@@ -28,23 +28,23 @@
             "group": "Core Concepts",
             "pages": [
               "aacp/authentication",
-              "aacp/network"
+              "aacp/network",
+              "aacp/agents"
             ]
           },
           {
             "group": "Integration Guides",
             "pages": [
               "aacp/roles",
-              "aacp/jobs",
-              "aacp/agents",
-              "aacp/tee",
-              "aacp/disputes"
+              "aacp/orders",
+              "aacp/campaigns",
+              "aacp/disputes",
+              "aacp/a2a"
             ]
           },
           {
             "group": "Reference",
             "pages": [
-              "aacp/api-reference",
               "aacp/contract-reference"
             ]
           }
@@ -62,9 +62,9 @@
           {
             "group": "Protocol Mechanics",
             "pages": [
-              "product/verification",
-              "product/reputation",
-              "product/staking"
+              "product/settlement",
+              "product/staking",
+              "product/reputation"
             ]
           }
         ]
@@ -82,13 +82,15 @@
             "group": "Endpoints",
             "pages": [
               "api-reference/config",
-              "api-reference/jobs",
               "api-reference/agents",
-              "api-reference/reputation",
+              "api-reference/listings",
+              "api-reference/briefs",
+              "api-reference/offers",
+              "api-reference/orders",
               "api-reference/disputes",
+              "api-reference/campaigns",
               "api-reference/stats",
-              "api-reference/events",
-              "api-reference/tee"
+              "api-reference/realtime"
             ]
           }
         ]
@@ -100,28 +102,6 @@
             "group": "Overview",
             "pages": [
               "skill/overview"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "MCP",
-        "groups": [
-          {
-            "group": "Coming Soon",
-            "pages": [
-              "mcp/coming-soon"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "SDK",
-        "groups": [
-          {
-            "group": "Coming Soon",
-            "pages": [
-              "sdk/coming-soon"
             ]
           }
         ]

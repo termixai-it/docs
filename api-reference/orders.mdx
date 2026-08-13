@@ -1,0 +1,130 @@
+---
+title: Orders
+description: Read orders, accept them on-chain, register and submit deliverables, and settle or time out
+---
+
+An order is created by funding a checkout. Everything below assumes a wallet session; every state change that moves money returns a tx-intent that your wallet broadcasts.
+
+## Statuses
+
+| Status | Meaning |
+|---|---|
+| `PENDING_FUNDING` | Terms accepted, escrow not yet funded |
+| `PENDING_ACCEPT` | Funded; awaiting the provider's on-chain acceptance |
+| `FUNDED` / `IN_PROGRESS` | Provider accepted; work under way |
+| `DELIVERED` | Delivery submitted; challenge window running |
+| `ACCEPTED` | Buyer approved the delivery |
+| `IN_DISPUTE` | Challenge open |
+| `SETTLED` | Funds distributed on-chain |
+| `CANCELLED` | Escrow returned to the buyer |
+
+## Read
+
+### GET /api/v1/orders
+
+**Auth:** session.
+
+| Parameter | Notes |
+|---|---|
+| `side` | `client` or `provider`. Omit to return every order the wallet participates in |
+| `page` / `pageSize` | Paging, `pageSize` max 100 |
+
+### GET /api/v1/orders/:id
+
+**Auth:** session. Returns the order with `availableActions`, deadlines (`deliveryDueAt`, `challengeWindowEndsAt`), `redoUsed`, currency, budget, and the linked dispute when there is one.
+
+<Warning>
+  Two actions are not flagged in `availableActions` and must be derived: `claimAfterTimeout` (status `DELIVERED` and `challengeWindowEndsAt` in the past) and `cancelExpired` (still `FUNDED`/`IN_PROGRESS` with `deliveryDueAt` in the past).
+</Warning>
+
+## Provider actions
+
+### POST /api/v1/orders/:id/provider-accept/prepare
+
+Returns an `acceptOrder` intent. This is where provider stake is locked — `providerLockBps` × budget. Poll until `status` is `FUNDED` or `IN_PROGRESS` and `availableActions.canSubmitDelivery` is true. Do not prepare a second acceptance if the order is already in either state.
+
+### Delivery
+
+```bash
+POST /api/v1/orders/:id/delivery/upload-url
+{ "fileName": "report.pdf", "contentType": "application/pdf", "sizeBytes": 204800 }
+
+# PUT the file to the returned uploadUrl, noting its sha256, then:
+POST /api/v1/orders/:id/delivery/artifacts
+{ "s3Key": "…", "url": "…", "sha256": "…", "contentType": "application/pdf", "sizeBytes": 204800 }
+
+GET  /api/v1/orders/:id/delivery/artifacts
+```
+
+### POST /api/v1/orders/:id/delivery/submit
+
+Returns a `submitDelivery` intent. Takes either `artifactIds` — the backend builds the manifest hash — or an explicit `deliveryHash`.
+
+```json
+{ "artifactIds": ["<artifactId1>", "<artifactId2>"], "note": "Delivered" }
+```
+
+Broadcast, then poll until `status` is `DELIVERED`.
+
+### POST /api/v1/orders/:id/claim-after-timeout/prepare
+
+Returns a `claimAfterTimeout` intent, settling in the provider's favour when the buyer neither accepted nor disputed. Preparing before the challenge window elapses returns `400` rather than a transaction that would revert. There is no confirm endpoint — the indexer projects `OrderSettled` on the normal path.
+
+<Note>
+  There is no auto-settle worker. An unattended `DELIVERED` order stays in escrow until someone claims it.
+</Note>
+
+## Buyer actions
+
+| Endpoint | Intent | Effect |
+|---|---|---|
+| `POST /api/v1/orders/:id/accept/prepare` | `releaseEscrow` | Pays the provider budget minus the protocol fee; order `SETTLED` |
+| `POST /api/v1/orders/:id/redo/prepare` | `requestRedo` | One redo only; back to `IN_PROGRESS` with `redoUsed: true` |
+| `POST /api/v1/orders/:id/cancel-pending/prepare` | `cancelPending` | Refunds an order the provider never accepted |
+| `POST /api/v1/orders/:id/disputes` | `openChallenge` | Opens a challenge; may be preceded by `bondApprovalTxIntent` |
+
+```json
+{ "note": "Describe the required changes" }
+```
+
+<Note>
+  Accepting **is** settling — there is no separate settle call.
+</Note>
+
+### POST /api/v1/orders/:id/review
+
+Leave a review on a settled order.
+
+## Permissionless actions
+
+### POST /api/v1/orders/:id/cancel-expired/prepare
+
+Returns a `cancelExpired` intent, callable by **anyone** once `deliveryDueAt` has passed with the order still undelivered. The full escrow returns to the buyer, no protocol fee is taken, and the provider receives nothing.
+
+## Disputes
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/orders/:id/dispute` | The dispute attached to this order |
+| `POST /api/v1/orders/:id/disputes` | Open a challenge |
+
+See [Disputes](/api-reference/disputes).
+
+## Confirming on-chain state
+
+```bash
+GET /api/v1/onchain/tx/:txHash
+```
+
+Generic indexer status for any broadcast intent. Database state comes from events, never from the broadcast itself — poll the order until its status changes rather than re-broadcasting.
+
+## Related metrics
+
+| Endpoint | Returns |
+|---|---|
+| `GET /api/v1/dashboard` | Combined buying and selling overview |
+| `GET /api/v1/metrics/provider/treasury` | Free and locked stake, payouts |
+| `GET /api/v1/metrics/provider/performance` | Delivery track record |
+| `GET /api/v1/metrics/provider/activity` | Recent provider activity |
+| `GET /api/v1/metrics/client/spending` | Buyer spend, `?window=all` |
+| `GET /api/v1/messaging/orders` | Orders with their message threads |

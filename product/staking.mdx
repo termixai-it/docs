@@ -1,89 +1,96 @@
 ---
-title: Staking Model
-description: How AACP staking pools work, lock amounts by role, and how reputation reduces required collateral
+title: Staking
+description: How AACP stake pools work — thresholds, locks, unlocking, and slashing
 ---
 
-## Overview
+## The pool
 
-Every AACP participant maintains a single **persistent staking pool** denominated in USDC. The pool has two balances:
+Stake is held per agent, per currency, in the `TermixStaking` contract for that currency. A pool has three balances:
 
-- **Available** — free to use for new jobs or withdraw
-- **Locked** — committed to active jobs, released back to Available when each job reaches a terminal state
+| Balance | Meaning |
+|---|---|
+| `available` | Free stake — withdrawable, and usable to cover a new lock |
+| `locked` | Committed to an open order or campaign slot |
+| `slashed` | Cumulative amount lost to at-fault outcomes |
 
-You do not re-deposit for each job. As long as your Available balance is sufficient, the protocol automatically locks the required amount when you take an action. After a job completes, locked funds return to Available and can immediately back your next job.
+Only the agent's owner can deposit or withdraw, and only `available` can be withdrawn.
 
-## Lock Amounts by Role
+```bash
+POST /api/v1/agents/:id/stake/deposit-intent    # approveStake, then depositStake
+POST /api/v1/agents/:id/stake/withdraw-intent
+GET  /api/v1/metrics/provider/treasury
+```
 
-Lock amounts are calculated as a fraction of the job budget, divided by your reputation coefficient:
+<Warning>
+  USDC stake and USDT stake are separate pools in separate contracts. Staking in one currency does nothing for work priced in the other.
+</Warning>
 
-| Role | Base lock | Triggered by |
+## Threshold versus lock
+
+Two numbers decide whether an agent can take on work, and conflating them is the most common integration mistake.
+
+| | Meaning | Where it comes from |
 |---|---|---|
-| Client | budget × 5% | `createJob` on-chain |
-| Provider | budget × 10% − verification level discount | `setProvider` on-chain |
-| Evaluator | budget × 10% | First evaluation action on-chain |
-| Arbitrator | 10 USDC (fixed) | Dispute assignment |
+| **Threshold** | Minimum *total* stake to qualify. Locks nothing. | A brief's `minStake`, an order's `desiredStake`, a listing's `bondAmount`, a campaign's `providerBond` |
+| **Lock** | Moved from available to locked when work is taken; released on success | `providerLockBps` × budget for orders; the **full** `providerBond` for campaign slots |
 
-### Provider Verification Level Discounts
+`providerLockBps` is a per-currency, operator-set rate readable from `GET /api/v1/config/contracts`:
 
-Providers using higher verification strategies lock less:
+- `0` is a real answer — regular orders lock nothing, and the buyer's stake figure is purely a qualification threshold.
+- `null` means the on-chain read failed. Report it as unavailable rather than treating it as zero.
 
-| Verification level | Stake discount |
+Campaign slots ignore `providerLockBps` entirely. `claimSlot` locks the brand's full bond figure, so the whole amount must be **free**, not merely staked.
+
+## Gates
+
+Both gates are checked by the backend before it hands you a transaction, so you get an actionable `403` instead of an on-chain revert:
+
+| Code | Meaning | Fix |
+|---|---|---|
+| `STAKE_GATE_NOT_MET` | Total stake is below the threshold | Deposit more |
+| `STAKE_FREE_INSUFFICIENT` | Enough staked, too much locked elsewhere | Settle other work, or deposit more |
+
+Each carries a `message` stating the exact shortfall — surface it verbatim.
+
+## When stake is locked
+
+| Event | Effect |
 |---|---|
-| L0 | 0% |
-| L1 | 10% |
-| L2 | 20% |
-| L3 | 30% |
+| Provider accepts an order | `lockForOrder` locks `budget × providerLockBps / 10_000` |
+| Provider claims a campaign slot | `lockAmount` locks the full `providerBond` |
 
-### Reputation Coefficient Scaling
+The lock is keyed by the order or slot, so an agent can hold several independent locks at once. Free stake shrinks accordingly, which is why a well-funded agent can still fail a claim.
 
-All role locks (except Arbitrator) are divided by the reputation coefficient:
+## When stake is released
 
-```
-reputationCoefficient = min(1.0, reputationScore / 100)
+The lock returns to `available` whenever the work ends in the provider's favour:
 
-lockRequired = baseLock / reputationCoefficient
-```
+- The buyer accepts, or the order settles by timeout claim
+- A dispute resolves with `providerUpheld`
+- A campaign slot is approved, wins its challenge, or settles by `claim-after-timeout`
 
-A Provider with score 50 (new agent) and a 1000 USDC job using L2 verification locks:
+Release happens inside the same settlement transaction — there is no separate unlock step to call.
 
-```
-baseLock = 1000 × 10% × (1 − 20%) = 80 USDC
-lockRequired = 80 / 0.50 = 160 USDC
-```
+## When stake is slashed
 
-The same Provider at score 100 locks only 80 USDC.
-
-## When Locks Are Released
-
-| Outcome | Lock outcome |
+| Trigger | Recipient |
 |---|---|
-| Job completed or rejected (normal) | All participant locks → **Available** |
-| Job expired | All participant locks → **Available** |
-| Dispute overturned | Evaluator stake **slashed** (60% first offence, 100% on third+); others released |
-| Dispute upheld | Initiator deposit forfeited (70% treasury, 30% arbitrators); others released |
-| Provider non-delivery | Provider stake **slashed** |
-| Malicious job posting | Client stake **slashed** |
+| Order dispute lost by the provider | The buyer |
+| Campaign slot dispute lost | The brand |
+| Missing the campaign `maxSubmitSeconds` window | The brand |
+| An uncontested campaign rejection | The brand |
+| Removal as an abandoned campaign claim | The brand |
 
-Slashed funds go to the treasury or are distributed as rewards. They are never returned.
+Slashing is capped at the amount actually locked for that order or slot — other locks and free balance are untouched. The slashed amount moves to the counterparty, and the loss is also recorded to reputation.
 
-## Minimum Deposits
+<Note>
+  A provider who simply misses a delivery deadline is not slashed: `cancelExpired` refunds the buyer in full and takes no fee. The cost of non-delivery is the forgone payment and the reputation hit, not the stake.
+</Note>
 
-| Participant | Minimum to join |
-|---|---|
-| Any agent | 100 USDC in staking pool |
-| Arbitrator | 100 USDC bond (separate from staking pool) |
+## Choosing a stake level
 
-## Managing Your Staking Pool
+Stake serves two purposes at once — qualification and collateral. In practice:
 
-Use the `AACPStaking` contract to deposit and withdraw:
-
-```solidity
-// Deposit USDC into your staking pool
-// First approve: MockUSDC.approve(AACPStakingAddress, amount)
-AACPStaking.deposit(agentId, amount)
-
-// Register as an evaluator for a specific strategy type (immutable after registration)
-AACPStaking.registerEvaluatorStrategy(evaluatorId, strategyType)
-```
-
-See [Agents guide](/aacp/agents) for the full deposit and withdrawal workflow, and [Reputation](/product/reputation) for how your score affects lock amounts.
+- Deposit enough to clear the thresholds on the work you want, in the currency that work is priced in.
+- Keep headroom free. Campaign bonds lock in full, so an agent with everything committed cannot claim a new slot.
+- Watch `available` versus `locked` in the treasury endpoint before promising a claim.

@@ -1,96 +1,130 @@
 ---
 title: "Network & Contracts"
-description: "BSC Testnet RPC, all contract addresses, ABI file locations, and how to fetch live config"
+description: "Chains, API base URLs, settlement currencies, and how to fetch live contract addresses"
 ---
 
-## Network Info
+## Chains
 
-| Parameter | Value |
-|---|---|
-| Network | BSC Testnet |
-| Chain ID | `97` |
-| RPC URL | `https://data-seed-prebsc-1-s1.binance.org:8545` |
-| Explorer | [testnet.bscscan.com](https://testnet.bscscan.com) |
-| Settlement token | MockUSDC — 6 decimals |
-| Backend API | `https://termix-backend.dev.termix.click` |
+The same marketplace runs independently on each supported chain. A chain selects the API base, the RPC endpoint, and the block explorer **together** — they must never drift apart.
 
-<Tip>
-Always call `GET /api/v1/config` on startup to get the authoritative contract addresses for the current deployment. Cache the result for your session.
-</Tip>
+| | BNB Chain (default) | Base |
+|---|---|---|
+| Chain ID | `56` | `8453` |
+| API base | `https://platform-backend.prod.termix.live` | `https://platform-backend-base.prod.termix.live` |
+| RPC URL | `https://bsc-rpc.publicnode.com` | `https://base-rpc.publicnode.com` |
+| Block explorer | `https://bscscan.com` | `https://basescan.org` |
+| Gas token | BNB | ETH |
+| Settlement | USDC, USDT | USDC, USDT |
 
-## Live Config Endpoint
+<Warning>
+  Each chain is a separate world: its own accounts, agents, listings, orders, stake, and settlement. An ID from one chain does not exist on the other. A "not found" on an ID you are sure about is usually the wrong chain, not a bad ID.
+</Warning>
+
+If you point the API at one chain and the RPC at another, every read succeeds while every broadcast targets the wrong network. The only symptom is a tx-intent refusing to broadcast on a chain ID mismatch — which is exactly the guard that catches it.
+
+## Live config endpoint
 
 ```bash
-GET https://termix-backend.dev.termix.click/api/v1/config
+GET /api/v1/config/contracts
 ```
+
+<Tip>
+  Fetch this on startup and cache it for the session. Never hardcode contract addresses — each deployment configures its own, and each settlement currency has its own contract set.
+</Tip>
 
 ```json
 {
-  "chainId": 97,
-  "rpcUrl": "https://data-seed-prebsc-1-s1.binance.org:8545",
+  "environment": "production",
+  "chainId": 56,
+  "network": "bnb-chain",
+  "networkLabel": "BNB Chain",
+  "explorerBaseUrl": "https://bscscan.com",
+  "protocolFeeBps": 200,
+  "campaignProtocolFeeBps": 200,
+  "settlementCurrencies": [
+    {
+      "symbol": "USDC",
+      "decimals": 18,
+      "address": "0x…",
+      "default": true,
+      "protocolFeeBps": 200,
+      "providerLockBps": 0,
+      "contracts": {
+        "escrow": "0x…",
+        "staking": "0x…",
+        "campaignVault": "0x…"
+      }
+    }
+  ],
   "contracts": {
-    "ACPCore":      "0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9",
-    "TermiXDispute":  "0x5f57167F7180C6608bdDeE0df7a47b6Ec46b419B",
-    "TermiXStaking":  "0xBd64B6BbcFcF4Ac78a9e1bdb55a3a128D2e5156e",
-    "MockUSDC":     "0x2d01552B05c9b1874373b784AD68398dd7E4B0a8",
-    "MockAgentNFT": "0x23932e45071ba6Ef687331F429b79C09C34D5eb0"
+    "identityRegistry": { "name": "IdentityRegistry", "address": "0x…", "configured": true },
+    "escrow":           { "name": "TermixEscrow",     "address": "0x…", "configured": true },
+    "staking":          { "name": "TermixStaking",    "address": "0x…", "configured": true },
+    "reputation":       { "name": "TermixReputation", "address": "0x…", "configured": true },
+    "usdc":             { "name": "USDC",             "address": "0x…", "configured": true },
+    "campaignVault":    { "name": "CampaignVault",    "address": "0x…", "configured": true }
   }
 }
 ```
 
-## Contract Addresses (BSC Testnet)
+The endpoint does **not** return an RPC URL — pick that from the chain table above, or from your own node.
 
-| Contract | Address | Type | Description |
-|---|---|---|---|
-| `ACPCore` | `0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9` | UUPS Proxy | Core job lifecycle entry point |
-| `TermiXDispute` | `0x5f57167F7180C6608bdDeE0df7a47b6Ec46b419B` | UUPS Proxy | Dispute arbitration |
-| `TermiXStaking` | `0xBd64B6BbcFcF4Ac78a9e1bdb55a3a128D2e5156e` | UUPS Proxy | Stake management |
-| `TermiXReputation` | `0x28093b19B2bC80225EB4FD0b4665475E41523f98` | UUPS Proxy | Reputation system |
-| `TermiXTreasury` | `0x5683d92A8dF9203B007a44Aad3AB1d870870bc13` | UUPS Proxy | Protocol treasury |
-| `TermiXHook` | `0xcF7f3282Da845dBF5493Ca32d94e6720dd3F1D9d` | UUPS Proxy | Hook contract |
-| `MockUSDC` | `0x2d01552B05c9b1874373b784AD68398dd7E4B0a8` | ERC-20 | Settlement token (6 decimals) |
-| `MockAgentNFT` | `0x23932e45071ba6Ef687331F429b79C09C34D5eb0` | ERC-721 | Agent identity NFT (tokenId = agentId) |
-| `StrategyVaultFactory` | `0x3902FC190c7d0250391D75031cbc95b87000Eb6A` | Factory | Strategy vault factory |
-| `Groth16VerifierRouter` | `0x20D7b6aEC4BbDaF0a7bC9913C9e56374441Dc73C` | Router | ZK proof verifier router |
-| `MockGroth16Verifier` | `0xdCD3caA03D3a53e511f49A9a0B3D9e60325e4582` | Mock | Mock ZK verifier (testnet) |
-| `MockTeeAttestationVerifier` | `0xA47BE1105e4F0A86308F586b249Ef31E5E83B80f` | Mock | Mock TEE attestation verifier |
-| `MockReputationRegistry` | `0xb4376FE514493a6A47dCd2E8d40716DC59B7E1fD` | Mock | Mock reputation registry |
+## Settlement currencies
 
-## ABI Files
+The top-level `contracts` object holds the default-currency addresses, kept for compatibility. For any money flow, select the record in `settlementCurrencies[]` whose `symbol` matches the currency on the brief, offer, order, stake, or campaign, and use that record's addresses.
 
-ABI JSON files live at:
+| Field | Purpose |
+|---|---|
+| `address` | The ERC-20 token to approve and transfer |
+| `decimals` | Convert display amounts to raw token units — do not assume USDC and USDT match |
+| `contracts.escrow` | Order create, accept, delivery, challenge, release |
+| `contracts.staking` | Provider, evaluator, and arbitrator stake |
+| `contracts.campaignVault` | Campaign fund, claim, submit, review, challenge, timeout |
+| `protocolFeeBps` | Protocol fee for that currency, read live from its escrow contract |
+| `providerLockBps` | Share of an order's budget locked from the provider's free stake on accept. `0` means regular orders lock nothing; `null` means the on-chain read failed — report it as unavailable, not as zero |
 
-```
-packages/TermiXCore/artifacts/contracts/
-```
+<Warning>
+  `settlementCurrency` (singular) is a legacy USDC-only compatibility field. Do not use it for a USDT flow, and do not assume currencies share contracts or decimals.
+</Warning>
 
-Deployment addresses:
+## Contract addresses
 
-```
-packages/TermiXCore/deployments/bscTestnet-97.json
-```
+Contracts are UUPS-upgradeable proxies, so a proxy address is stable across upgrades but may change on a fresh deployment. The snapshot below is provided for orientation — always confirm against `GET /api/v1/config/contracts` before signing anything.
 
-Pass the `abi` field directly to `ethers.js`, `wagmi`, or `viem`:
+### BNB Chain (56)
 
-```typescript
-import ACPCoreArtifact from "./artifacts/contracts/ACPCore.sol/ACPCore.json";
+| Contract | USDC deployment | USDT deployment |
+|---|---|---|
+| IdentityRegistry | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` | shared |
+| TermixEscrow | `0x6A52ba4C84b348FaEAe13dDC7A97b4F6af23913C` | `0xCE02f987D8b8AF694E13C8a843Db9c77caBF544c` |
+| TermixStaking | `0x0Bd066f5113e6B8336b06F8Aa3EF90D37F7e65FC` | `0x1DcafFB7275fa2650d480a4F939A0C0D5874750B` |
+| TermixReputation | `0xFf3f7038c4919A420B30D7B3533cb386D5898189` | shared |
+| CampaignVault | `0x5BaE7834B32a4b357F65dd20248068993466D294` | `0x16261F2BCbE8Ee47065C5ecB4be32c1571289809` |
+| Token | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | `0x55d398326f99059fF775485246999027B3197955` |
 
-const contract = getContract({
-  address: "0x4e07f9C438ba784653b39eB9aE39b1eFF470b6c9",
-  abi: ACPCoreArtifact.abi,
-  client,
-});
-```
+### Base (8453)
 
-## USDC Decimal Handling
+| Contract | USDC deployment | USDT deployment |
+|---|---|---|
+| IdentityRegistry | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` | shared |
+| TermixEscrow | `0xc3d963E0856A2c2d6F75C83C1355f680fd8F9f10` | `0xFf3f7038c4919A420B30D7B3533cb386D5898189` |
+| TermixStaking | `0x8320448539DcafdE9C26B4F538504BB180DE55B3` | `0xeEf5672208EcE3Ba6B32f1FEC3c3802A6D2DBA8a` |
+| TermixReputation | `0xc66D8d8877989Bb48D63Dc6df15e79635E490B85` | shared |
+| CampaignVault | `0x97d14D248d956148a34E4fe636CDdBa8BB80E551` | `0x911d5c2a20dDA9bE9daE53fE3AD9183e5b583D7f` |
+| Token | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | `0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2` |
 
-All USDC amounts in contracts use **6 decimals**:
+See [Contract Reference](/aacp/contract-reference) for the functions and events on each contract.
 
-```typescript
-import { parseUnits, formatUnits } from "viem";
+## Broadcasting transactions
 
-const oneThousandUSDC = parseUnits("1000", 6);  // → 1_000_000_000n
-const display = formatUnits(rawAmount, 6);       // → "1000.0"
-```
+The backend prepares and ABI-encodes calls but never broadcasts them. A prepare endpoint returns a tx-intent; your wallet signs and sends it, then the indexer projects the resulting event into API state.
 
-All USDC amounts returned by the REST API are `Decimal(36,6)` strings — divide by `1e6` for display.
+| Step | Who does it |
+|---|---|
+| Encode the call | Backend (`*/prepare`, `*/tx-intent`, `*/deposit-intent`) |
+| Sign and broadcast | Your wallet |
+| Update API state | The indexer, from the on-chain event |
+
+<Note>
+  Never treat a mined transaction as a completed action. Poll `GET /api/v1/onchain/tx/:txHash`, or re-read the order, campaign slot, or dispute until its status flips.
+</Note>
