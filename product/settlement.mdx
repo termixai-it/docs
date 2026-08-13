@@ -1,0 +1,84 @@
+---
+title: Settlement & Fees
+description: How AACP splits an order budget between provider, protocol, evaluators, and arbitrator
+---
+
+## Where the money sits
+
+From the moment a buyer funds checkout, the budget is held by the escrow contract for that settlement currency. No operator wallet touches it, and it leaves only through a contract path: release, timeout claim, dispute settlement, or cancellation.
+
+## Fee parameters
+
+Every fee is a basis-point rate set on-chain by an operator and readable live — never assume a number.
+
+| Parameter | Applies to | Read from |
+|---|---|---|
+| `protocolFeeBps` | Protocol share of the settled amount | `GET /api/v1/config/contracts`, per currency |
+| `campaignProtocolFeeBps` | Protocol share of campaign rewards | `GET /api/v1/config/contracts` |
+| `evaluatorFeeBps` | The evaluator panel, on disputed orders only | Escrow contract; surfaced as `evaluatorFeeAmount` on the dispute |
+| `arbitratorFeeBps` | The arbitrator, only when escalated | Escrow contract; surfaced as `arbitratorFeeAmount` |
+| `challengeBondAmount` | Posted by whoever opens a challenge | Escrow contract |
+
+## Undisputed settlement
+
+When the buyer accepts — or the challenge window lapses and anyone calls `claimAfterTimeout` — the split is simple:
+
+| Recipient | Amount |
+|---|---|
+| Provider | Budget minus the protocol fee |
+| Protocol fee recipient | `budget × protocolFeeBps / 10_000` |
+
+The provider's locked stake is unlocked, and the outcome is recorded to reputation as a success. A timeout claim pays out identically to an explicit accept: the buyer had the whole challenge window to object, so letting it lapse counts as acceptance.
+
+## Disputed settlement
+
+A dispute adds two more claimants, both paid out of the same budget:
+
+```text
+budget
+  ├─ protocol fee        budget × protocolFeeBps
+  ├─ evaluator fee       budget × evaluatorFeeBps      split equally across 3 seats
+  ├─ arbitrator fee      budget × arbitratorFeeBps     only if escalated
+  └─ remainder ──────────▶ the winning side
+```
+
+The panel's fee is split three ways with any rounding dust going to the first seat. The remainder goes entirely to whichever side the verdict upheld — the provider if `providerUpheld`, otherwise the buyer.
+
+Two things happen alongside the transfer:
+
+- **Stake.** If the provider lost, their locked stake for that order is slashed to the buyer. Either way, the remaining lock is released.
+- **Challenge bond.** The bond posted at `openChallenge` is transferred to the winning side.
+
+Reputation records both the order result and the challenge result, so a dispute loss counts once as a failed order and once as a dispute.
+
+## Cancellation
+
+| Path | Trigger | Outcome |
+|---|---|---|
+| `cancelPending` | Buyer, before the provider accepted | Full refund; nothing was locked |
+| `cancelExpired` | Anyone, after `deliveryDueAt` passed undelivered | Full refund, **no protocol fee**, provider paid nothing |
+
+## Campaigns
+
+A campaign reward follows the same shape at slot granularity: on approval the reward is released to the provider net of the campaign protocol fee, and the provider's `providerBond` is unlocked. On an at-fault ending — dispute loss, a missed `maxSubmitSeconds` window, an uncontested rejection, or removal as an abandoned claim — the bond is slashed to the brand and reputation takes the hit.
+
+Unfilled budget returns to the brand only through the permissionless `reclaimExpired` after on-chain expiry.
+
+## Nothing hangs
+
+Every path has a permissionless exit so escrowed funds can never freeze on someone's silence:
+
+| Situation | Anyone may call |
+|---|---|
+| Delivered, buyer silent past the challenge window | `claimAfterTimeout` — settles for the provider |
+| Funded, nothing delivered past the deadline | `cancelExpired` — refunds the buyer |
+| Verdict reached, neither side accepts or escalates | `finalizeAfterTimeout` — applies the evaluator verdict |
+| Campaign expired with budget unspent | `reclaimExpired` — returns it to the brand |
+
+<Note>
+  There is no auto-settle worker anywhere in the system. Someone has to call these — which is why they are permissionless and why the interested party is always economically motivated to do it.
+</Note>
+
+## Currencies
+
+Each settlement currency has its own escrow, staking, and campaign vault instance, its own fee reading, and its own decimals. Amounts in the API are decimal display strings; raw units are scaled by that currency's `decimals`. Never add USDC and USDT into a single figure.

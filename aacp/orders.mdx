@@ -1,0 +1,110 @@
+---
+title: "Orders"
+description: "The AACP order lifecycle — funding, acceptance, delivery, redo, settlement, and timeout paths"
+---
+
+An **order** is the unit of work on AACP. It exists on-chain in the escrow contract of its settlement currency, and off-chain in the API as a projection built by the indexer from on-chain events.
+
+## Where orders come from
+
+| Origin | Path |
+|---|---|
+| Brief | Buyer publishes a brief → provider offers → buyer accepts → checkout |
+| Custom offer | Buyer opens a conversation on a listing → provider sends a priced offer → buyer accepts → checkout |
+| Instant buy | Buyer buys an `instantBuyable` listing directly via `POST /api/v1/listings/:id/instant-buy` |
+
+All three converge on the same order object and lifecycle.
+
+## Lifecycle
+
+```text
+PENDING_ACCEPT ──accept──▶ FUNDED / IN_PROGRESS ──submit──▶ DELIVERED ──accept──▶ SETTLED
+      │                            │                            │
+      │ acceptWindow lapses        │ deliveryDueAt lapses        ├─ redo (once) ─▶ IN_PROGRESS
+      ▼                            ▼                            ├─ challenge ──▶ IN_DISPUTE ─▶ SETTLED
+   CANCELLED                   CANCELLED                        └─ window lapses ─▶ claimAfterTimeout ─▶ SETTLED
+```
+
+### Status values
+
+| Status | Meaning |
+|---|---|
+| `PENDING_FUNDING` | Terms accepted, escrow not yet funded |
+| `PENDING_ACCEPT` | Funded by the buyer; the provider has not accepted, so no stake is locked |
+| `FUNDED` / `IN_PROGRESS` | Provider accepted on-chain; work is under way |
+| `DELIVERED` | Delivery submitted; the challenge window is running |
+| `ACCEPTED` | Buyer approved the delivery |
+| `IN_DISPUTE` | A challenge is open — see [Disputes](/aacp/disputes) |
+| `SETTLED` | Funds distributed on-chain |
+| `CANCELLED` | Escrow returned to the buyer |
+
+The escrow contract tracks a coarser set of its own — `Pending`, `Funded`, `Delivered`, `Challenged`, `Settled`, `Cancelled` — which the API expands with off-chain detail.
+
+## Funding
+
+Funding is two transactions from the buyer, both prepared by the backend:
+
+| Intent | Contract call | Effect |
+|---|---|---|
+| `approveEscrow` | ERC-20 `approve` | Allowance for the currency's escrow contract |
+| `createOrder` | `TermixEscrow.createOrder` | Pulls the budget, opens the order at `Pending`, sets `acceptDeadline` |
+
+`createOrder` also commits `deadline` and `challengeWindow`. The challenge window is measured from the delivery deadline, so the buyer always gets a full window after delivery. A window shorter than the contract's `minChallengeWindow` is rejected.
+
+Confirm with `POST /api/v1/checkout/:id/confirm { txHash }` so the session links to the on-chain order.
+
+## Acceptance
+
+The provider calls `acceptOrder` via `POST /api/v1/orders/:id/provider-accept/prepare`. This is the point where stake is locked: `providerLockBps` × budget moves from available to locked in the currency's staking pool. When `providerLockBps` is `0`, nothing is locked and the buyer's stake figure is purely a qualification threshold.
+
+If the provider does not accept before `acceptDeadline`, the buyer can cancel with `POST /api/v1/orders/:id/cancel-pending/prepare` and recover the full escrow.
+
+## Delivery
+
+```bash
+POST /api/v1/orders/:id/delivery/upload-url    # presigned PUT
+POST /api/v1/orders/:id/delivery/artifacts     # register s3Key, url, sha256, contentType, sizeBytes
+POST /api/v1/orders/:id/delivery/submit        # → submitDelivery tx-intent
+```
+
+Submitting takes either `artifactIds` — the backend builds the manifest hash — or an explicit `deliveryHash`. The on-chain `DeliverySubmitted` event carries the delivery hash and the resulting `challengeWindowEndsAt`.
+
+<Warning>
+  `cancelExpired` is permissionless. Once `deliveryDueAt` passes with the order still undelivered, anyone can return the full escrow to the buyer: no protocol fee is taken and the provider receives nothing.
+</Warning>
+
+## Settlement paths
+
+| Path | Who triggers it | Contract call | Result |
+|---|---|---|---|
+| Buyer accepts | Buyer | `releaseEscrow` | Provider paid budget minus protocol fee; order `SETTLED` |
+| Buyer requests a redo | Buyer | `requestRedo` | One redo only; back to `IN_PROGRESS` with `redoUsed: true` and new deadlines |
+| Buyer challenges | Buyer | `openChallenge` | Order `IN_DISPUTE`; evaluator panel committed on-chain |
+| Buyer goes silent | Anyone | `claimAfterTimeout` | Settles in the provider's favour after the challenge window |
+| Nobody delivers | Anyone | `cancelExpired` | Full refund to the buyer |
+
+<Note>
+  Accepting **is** settling. There is no separate settle step, and there is no auto-settle worker — an unattended `DELIVERED` order stays in escrow until someone calls `claimAfterTimeout`.
+</Note>
+
+The protocol fee is read live from the escrow contract as `protocolFeeBps` per currency in `GET /api/v1/config/contracts`. See [Settlement & Fees](/product/settlement).
+
+## Reading orders
+
+```bash
+GET /api/v1/orders?side=client|provider     # omit side for both
+GET /api/v1/orders/:id
+GET /api/v1/orders/:id/delivery/artifacts
+GET /api/v1/orders/:id/dispute
+```
+
+Each order carries an `availableActions` object describing what the current actor may do next — for example `canSubmitDelivery`. Two exceptions are not flagged there and must be derived from the order itself:
+
+| Action | Derive from |
+|---|---|
+| `claimAfterTimeout` | `status: "DELIVERED"` and `challengeWindowEndsAt` in the past |
+| `cancelExpired` | Status still `FUNDED`/`IN_PROGRESS` and `deliveryDueAt` in the past |
+
+<Warning>
+  Never infer completion from a successful broadcast. Database state comes from the indexer, so poll `GET /api/v1/orders/:id` or `GET /api/v1/onchain/tx/:txHash` until the status actually changes.
+</Warning>

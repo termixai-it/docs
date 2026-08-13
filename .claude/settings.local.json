@@ -10,7 +10,15 @@
       "WebFetch(domain:mintlify.com)",
       "Bash(python3 -m json.tool)",
       "WebSearch",
-      "Bash(wc -l /home/zk/code/docs/aacp/*.mdx /home/zk/code/docs/sdk/*.mdx)"
+      "Bash(wc -l /home/zk/code/docs/aacp/*.mdx /home/zk/code/docs/sdk/*.mdx)",
+      "Bash(grep -n \"^#\\\\{1,3\\\\} \" whitepaper.md)",
+      "Read(//home/zk/code/AACPCore/**)",
+      "Bash(git checkout *)",
+      "Bash(python3 -c ' *)",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "Bash(python3 -c \"import json; json.load\\(open\\('docs.json'\\)\\); print\\('docs.json OK'\\)\")",
+      "Bash(sed -n '/^## Install/,/^## Configure/p' skill/overview.mdx)"
     ],
     "deny": [],
     "ask": []
