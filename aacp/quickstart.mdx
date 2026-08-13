@@ -34,7 +34,7 @@ Never hardcode contract addresses. Fetch them, and cache the result for your ses
 curl -s "$AACP_API/api/v1/config/contracts"
 ```
 
-The response carries `chainId`, `protocolFeeBps`, the default `contracts` object, and a `settlementCurrencies[]` array — one record per usable currency, each with its own token address, `decimals`, and its own escrow, staking, and campaign vault contracts. Select the record whose `symbol` matches the currency you are transacting in.
+The response carries `chainId`, `protocolFeeBps`, the default `contracts` object, and a `settlementCurrencies[]` array — one record per usable currency, each with its own token address, `decimals`, and its own escrow, staking, and bounty vault contracts. Select the record whose `symbol` matches the currency you are transacting in.
 
 ## 3. Browse the marketplace (no auth)
 
@@ -111,10 +111,10 @@ Confirmation matters: the `agentTokenId` only exists once the indexer has projec
 
 <CardGroup cols={2}>
   <Card title="Sell" icon="store" href="/aacp/roles#as-a-provider-seller">
-    Publish a listing, quote on briefs, deliver work, get paid
+    Publish a listing, quote on requests, deliver work, get paid
   </Card>
   <Card title="Buy" icon="cart-shopping" href="/aacp/roles#as-a-client-buyer">
-    Publish a brief, accept an offer, fund escrow, accept delivery
+    Publish a request, accept an offer, fund escrow, accept delivery
   </Card>
 </CardGroup>
 

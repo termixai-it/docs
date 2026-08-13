@@ -14,7 +14,7 @@ Every fee is a basis-point rate set on-chain by an operator and readable live �
 | Parameter | Applies to | Read from |
 |---|---|---|
 | `protocolFeeBps` | Protocol share of the settled amount | `GET /api/v1/config/contracts`, per currency |
-| `campaignProtocolFeeBps` | Protocol share of campaign rewards | `GET /api/v1/config/contracts` |
+| `campaignProtocolFeeBps` | Protocol share of bounty rewards | `GET /api/v1/config/contracts` |
 | `evaluatorFeeBps` | The evaluator panel, on disputed orders only | Escrow contract; surfaced as `evaluatorFeeAmount` on the dispute |
 | `arbitratorFeeBps` | The arbitrator, only when escalated | Escrow contract; surfaced as `arbitratorFeeAmount` |
 | `challengeBondAmount` | Posted by whoever opens a challenge | Escrow contract |
@@ -58,9 +58,9 @@ Reputation records both the order result and the challenge result, so a dispute 
 | `cancelPending` | Buyer, before the provider accepted | Full refund; nothing was locked |
 | `cancelExpired` | Anyone, after `deliveryDueAt` passed undelivered | Full refund, **no protocol fee**, provider paid nothing |
 
-## Campaigns
+## Bounties
 
-A campaign reward follows the same shape at slot granularity: on approval the reward is released to the provider net of the campaign protocol fee, and the provider's `providerBond` is unlocked. On an at-fault ending — dispute loss, a missed `maxSubmitSeconds` window, an uncontested rejection, or removal as an abandoned claim — the bond is slashed to the brand and reputation takes the hit.
+A bounty reward follows the same shape at slot granularity: on approval the reward is released to the provider net of the bounty protocol fee, and the provider's `providerBond` is unlocked. On an at-fault ending — dispute loss, a missed `maxSubmitSeconds` window, an uncontested rejection, or removal as an abandoned claim — the bond is slashed to the brand and reputation takes the hit.
 
 Unfilled budget returns to the brand only through the permissionless `reclaimExpired` after on-chain expiry.
 
@@ -73,7 +73,7 @@ Every path has a permissionless exit so escrowed funds can never freeze on someo
 | Delivered, buyer silent past the challenge window | `claimAfterTimeout` — settles for the provider |
 | Funded, nothing delivered past the deadline | `cancelExpired` — refunds the buyer |
 | Verdict reached, neither side accepts or escalates | `finalizeAfterTimeout` — applies the evaluator verdict |
-| Campaign expired with budget unspent | `reclaimExpired` — returns it to the brand |
+| Bounty expired with budget unspent | `reclaimExpired` — returns it to the brand |
 
 <Note>
   There is no auto-settle worker anywhere in the system. Someone has to call these — which is why they are permissionless and why the interested party is always economically motivated to do it.
@@ -81,4 +81,4 @@ Every path has a permissionless exit so escrowed funds can never freeze on someo
 
 ## Currencies
 
-Each settlement currency has its own escrow, staking, and campaign vault instance, its own fee reading, and its own decimals. Amounts in the API are decimal display strings; raw units are scaled by that currency's `decimals`. Never add USDC and USDT into a single figure.
+Each settlement currency has its own escrow, staking, and bounty vault instance, its own fee reading, and its own decimals. Amounts in the API are decimal display strings; raw units are scaled by that currency's `decimals`. Never add USDC and USDT into a single figure.
