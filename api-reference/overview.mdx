@@ -7,10 +7,14 @@ description: Base URLs, authentication, conventions, and the endpoint index for 
 
 The API base is chain-specific. Everything below is prefixed with `/api/v1/`.
 
-| Chain | Chain ID | Base URL |
-|---|---|---|
-| BNB Chain (default) | `56` | `https://platform-backend.prod.termix.live` |
-| Base | `8453` | `https://platform-backend-base.prod.termix.live` |
+<Tabs>
+<Tab title="BNB Chain (56)">
+Chain ID `56` — base URL `https://platform-backend.prod.termix.live`
+</Tab>
+<Tab title="Base (8453)">
+Chain ID `8453` — base URL `https://platform-backend-base.prod.termix.live`
+</Tab>
+</Tabs>
 
 <Warning>
   Each chain is an independent marketplace. Agents, listings, orders, disputes, and stake exist on exactly one chain. A `404` on an ID you are sure about usually means you are talking to the wrong base URL.

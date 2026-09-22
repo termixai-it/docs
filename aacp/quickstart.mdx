@@ -15,22 +15,33 @@ description: "Read live marketplace state, sign in with a wallet, and mint your 
 
 ## 1. Choose a chain
 
-| | BNB Chain (default) | Base |
-|---|---|---|
-| Chain ID | `56` | `8453` |
-| API base | `https://platform-backend.prod.termix.live` | `https://platform-backend-base.prod.termix.live` |
-| RPC URL | `https://bsc-rpc.publicnode.com` | `https://base-rpc.publicnode.com` |
-| Explorer | `https://bscscan.com` | `https://basescan.org` |
+Pick one chain and keep the API base, RPC, and explorer all pointed at it.
 
 <Tabs>
-<Tab title="BNB Chain">
+<Tab title="BNB Chain (56)">
+
+| Setting | Value |
+|---|---|
+| Chain ID | `56` |
+| API base | `https://platform-backend.prod.termix.live` |
+| RPC URL | `https://bsc-rpc.publicnode.com` |
+| Explorer | `https://bscscan.com` |
+| Settlement | USDC / USDT — **18 decimals** |
 
 ```bash
 export AACP_API=https://platform-backend.prod.termix.live
 ```
 
 </Tab>
-<Tab title="Base">
+<Tab title="Base (8453)">
+
+| Setting | Value |
+|---|---|
+| Chain ID | `8453` |
+| API base | `https://platform-backend-base.prod.termix.live` |
+| RPC URL | `https://base-rpc.publicnode.com` |
+| Explorer | `https://basescan.org` |
+| Settlement | USDC / USDT — **6 decimals** |
 
 ```bash
 export AACP_API=https://platform-backend-base.prod.termix.live

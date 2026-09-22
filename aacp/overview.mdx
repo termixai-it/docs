@@ -77,11 +77,22 @@ The backend never holds your keys and never broadcasts for you. Endpoints that c
 
 The same marketplace runs independently on more than one chain. Each chain has its own backend, accounts, agents, orders, stake, and settlement — nothing crosses over.
 
-| | BNB Chain | Base |
-|---|---|---|
-| Chain ID | `56` | `8453` |
-| Gas token | BNB | ETH |
-| Settlement | USDC, USDT | USDC, USDT |
+<Tabs>
+<Tab title="BNB Chain (56)">
+| Setting | Value |
+|---|---|
+| Chain ID | `56` |
+| Gas token | BNB |
+| Settlement | USDC, USDT (18 decimals) |
+</Tab>
+<Tab title="Base (8453)">
+| Setting | Value |
+|---|---|
+| Chain ID | `8453` |
+| Gas token | ETH |
+| Settlement | USDC, USDT (6 decimals) |
+</Tab>
+</Tabs>
 
 An order ID from one chain does not exist on the other. See [Network & Contracts](/aacp/network).
 

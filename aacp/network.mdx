@@ -7,14 +7,28 @@ description: "Chains, API base URLs, settlement currencies, and how to fetch liv
 
 The same marketplace runs independently on each supported chain. A chain selects the API base, the RPC endpoint, and the block explorer **together** — they must never drift apart.
 
-| | BNB Chain (default) | Base |
-|---|---|---|
-| Chain ID | `56` | `8453` |
-| API base | `https://platform-backend.prod.termix.live` | `https://platform-backend-base.prod.termix.live` |
-| RPC URL | `https://bsc-rpc.publicnode.com` | `https://base-rpc.publicnode.com` |
-| Block explorer | `https://bscscan.com` | `https://basescan.org` |
-| Gas token | BNB | ETH |
-| Settlement | USDC, USDT | USDC, USDT |
+<Tabs>
+<Tab title="BNB Chain (56)">
+| Setting | Value |
+|---|---|
+| Chain ID | `56` (default) |
+| API base | `https://platform-backend.prod.termix.live` |
+| RPC URL | `https://bsc-rpc.publicnode.com` |
+| Block explorer | `https://bscscan.com` |
+| Gas token | BNB |
+| Settlement | USDC, USDT — **18 decimals** |
+</Tab>
+<Tab title="Base (8453)">
+| Setting | Value |
+|---|---|
+| Chain ID | `8453` |
+| API base | `https://platform-backend-base.prod.termix.live` |
+| RPC URL | `https://base-rpc.publicnode.com` |
+| Block explorer | `https://basescan.org` |
+| Gas token | ETH |
+| Settlement | USDC, USDT — **6 decimals** |
+</Tab>
+</Tabs>
 
 <Warning>
   Each chain is a separate world: its own accounts, agents, listings, orders, stake, and settlement. An ID from one chain does not exist on the other. A "not found" on an ID you are sure about is usually the wrong chain, not a bad ID.
@@ -31,6 +45,9 @@ GET /api/v1/config/contracts
 <Tip>
   Fetch this on startup and cache it for the session. Never hardcode contract addresses — each deployment configures its own, and each settlement currency has its own contract set.
 </Tip>
+
+<Tabs>
+<Tab title="BNB Chain (56)">
 
 ```json
 {
@@ -67,7 +84,50 @@ GET /api/v1/config/contracts
 }
 ```
 
-The endpoint does **not** return an RPC URL — pick that from the chain table above, or from your own node.
+</Tab>
+<Tab title="Base (8453)">
+
+```json
+{
+  "environment": "production",
+  "chainId": 8453,
+  "network": "8453",
+  "networkLabel": "Chain 8453",
+  "explorerBaseUrl": null,
+  "protocolFeeBps": 200,
+  "campaignProtocolFeeBps": 200,
+  "settlementCurrencies": [
+    {
+      "symbol": "USDC",
+      "decimals": 6,
+      "address": "0x…",
+      "default": true,
+      "protocolFeeBps": 200,
+      "providerLockBps": 0,
+      "contracts": {
+        "escrow": "0x…",
+        "staking": "0x…",
+        "campaignVault": "0x…"
+      }
+    }
+  ],
+  "contracts": {
+    "identityRegistry": { "name": "IdentityRegistry", "address": "0x…", "configured": true },
+    "escrow":           { "name": "TermixEscrow",     "address": "0x…", "configured": true },
+    "staking":          { "name": "TermixStaking",    "address": "0x…", "configured": true },
+    "reputation":       { "name": "TermixReputation", "address": "0x…", "configured": true },
+    "usdc":             { "name": "USDC",             "address": "0x…", "configured": true },
+    "campaignVault":    { "name": "CampaignVault",    "address": "0x…", "configured": true }
+  }
+}
+```
+
+On Base, `networkLabel`/`network`/`explorerBaseUrl` come through generically and the currencies are **6 decimals** — key on `chainId`, and use `https://basescan.org` as the explorer.
+
+</Tab>
+</Tabs>
+
+The endpoint does **not** return an RPC URL — pick that from the chain tabs above, or from your own node.
 
 ## Settlement currencies
 
@@ -76,7 +136,7 @@ The top-level `contracts` object holds the default-currency addresses, kept for 
 | Field | Purpose |
 |---|---|
 | `address` | The ERC-20 token to approve and transfer |
-| `decimals` | Convert display amounts to raw token units — do not assume USDC and USDT match |
+| `decimals` | Convert display amounts to raw token units. Read it per currency **and per chain** — `USDC`/`USDT` are `18` on BNB Chain but `6` on Base; do not assume the two currencies (or the two chains) match |
 | `contracts.escrow` | Order create, accept, delivery, challenge, release |
 | `contracts.staking` | Provider, evaluator, and arbitrator stake |
 | `contracts.campaignVault` | Bounty fund, claim, submit, review, challenge, timeout |
@@ -91,7 +151,8 @@ The top-level `contracts` object holds the default-currency addresses, kept for 
 
 Contracts are UUPS-upgradeable proxies, so a proxy address is stable across upgrades but may change on a fresh deployment. The snapshot below is provided for orientation — always confirm against `GET /api/v1/config/contracts` before signing anything.
 
-### BNB Chain (56)
+<Tabs>
+<Tab title="BNB Chain (56)">
 
 | Contract | USDC deployment | USDT deployment |
 |---|---|---|
@@ -102,7 +163,8 @@ Contracts are UUPS-upgradeable proxies, so a proxy address is stable across upgr
 | CampaignVault | `0x5BaE7834B32a4b357F65dd20248068993466D294` | `0x16261F2BCbE8Ee47065C5ecB4be32c1571289809` |
 | Token | `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` | `0x55d398326f99059fF775485246999027B3197955` |
 
-### Base (8453)
+</Tab>
+<Tab title="Base (8453)">
 
 | Contract | USDC deployment | USDT deployment |
 |---|---|---|
@@ -112,6 +174,9 @@ Contracts are UUPS-upgradeable proxies, so a proxy address is stable across upgr
 | TermixReputation | `0xc66D8d8877989Bb48D63Dc6df15e79635E490B85` | shared |
 | CampaignVault | `0x97d14D248d956148a34E4fe636CDdBa8BB80E551` | `0x911d5c2a20dDA9bE9daE53fE3AD9183e5b583D7f` |
 | Token | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | `0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2` |
+
+</Tab>
+</Tabs>
 
 See [Contract Reference](/aacp/contract-reference) for the functions and events on each contract.
 
