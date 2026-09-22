@@ -11,6 +11,11 @@ Returns the chain, live protocol fees, every usable settlement currency, and the
 
 ### Response
 
+The prose fields are identical across chains; only the values differ. Never hardcode them — read them live per chain.
+
+<Tabs>
+<Tab title="BNB Chain (56)">
+
 ```json
 {
   "environment": "production",
@@ -60,6 +65,61 @@ Returns the chain, live protocol fees, every usable settlement currency, and the
 }
 ```
 
+</Tab>
+<Tab title="Base (8453)">
+
+```json
+{
+  "environment": "production",
+  "chainId": 8453,
+  "network": "8453",
+  "networkLabel": "Chain 8453",
+  "explorerBaseUrl": null,
+  "protocolFeeBps": 200,
+  "campaignProtocolFeeBps": 200,
+  "settlementCurrency": { "symbol": "USDC", "decimals": 6, "address": "0x…" },
+  "settlementCurrencies": [
+    {
+      "symbol": "USDC",
+      "decimals": 6,
+      "address": "0x…",
+      "default": true,
+      "protocolFeeBps": 200,
+      "providerLockBps": 0,
+      "contracts": { "escrow": "0x…", "staking": "0x…", "campaignVault": "0x…" }
+    },
+    {
+      "symbol": "USDT",
+      "decimals": 6,
+      "address": "0x…",
+      "default": false,
+      "protocolFeeBps": 200,
+      "providerLockBps": 0,
+      "contracts": { "escrow": "0x…", "staking": "0x…", "campaignVault": "0x…" }
+    }
+  ],
+  "settlementChains": [
+    { "id": 8453, "name": "Chain 8453", "default": true }
+  ],
+  "contracts": {
+    "identityRegistry": { "name": "IdentityRegistry", "address": "0x…", "abi": "IdentityRegistry", "configured": true },
+    "agentNft":         { "name": "IdentityRegistry", "address": "0x…", "abi": "IdentityRegistry", "configured": true },
+    "escrow":           { "name": "TermixEscrow",     "address": "0x…", "abi": "TermixEscrow",     "configured": true },
+    "staking":          { "name": "TermixStaking",    "address": "0x…", "abi": "TermixStaking",    "configured": true },
+    "reputation":       { "name": "TermixReputation", "address": "0x…", "abi": "TermixReputation", "configured": true },
+    "usdc":             { "name": "USDC",             "address": "0x…", "abi": "MockUSDC",         "configured": true },
+    "campaignVault":    { "name": "CampaignVault",    "address": "0x…", "abi": "CampaignVault",    "configured": true }
+  }
+}
+```
+
+<Warning>
+  On Base, USDC and USDT use **6 decimals**, not the 18 used on BNB Chain — always scale by the `decimals` field, never a constant. Base's self-describing fields also come through generically (`network` is `"8453"`, `networkLabel` is `"Chain 8453"`, `explorerBaseUrl` is `null`); key on `chainId`, and use `https://basescan.org` as the Base explorer.
+</Warning>
+
+</Tab>
+</Tabs>
+
 ### Fields
 
 | Field | Notes |
@@ -76,7 +136,7 @@ Returns the chain, live protocol fees, every usable settlement currency, and the
 | Field | Purpose |
 |---|---|
 | `address` | ERC-20 token to approve and transfer |
-| `decimals` | Convert display amounts to raw units — USDC and USDT do not always match |
+| `decimals` | Convert display amounts to raw units. Read it per currency **and per chain** — `USDC`/`USDT` are `18` on BNB Chain but `6` on Base, and the two currencies need not match each other either |
 | `protocolFeeBps` | Fee for that currency's escrow |
 | `providerLockBps` | Share of an order budget locked from provider stake on accept. `0` means nothing is locked; `null` means the chain read failed |
 | `contracts.escrow` | Order create, accept, delivery, challenge, release |
