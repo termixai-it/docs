@@ -70,7 +70,7 @@ POST /api/v1/orders/:id/delivery/submit        # → submitDelivery tx-intent
 Submitting takes either `artifactIds` — the backend builds the manifest hash — or an explicit `deliveryHash`. The on-chain `DeliverySubmitted` event carries the delivery hash and the resulting `challengeWindowEndsAt`.
 
 <Warning>
-  `cancelExpired` is permissionless. Once `deliveryDueAt` passes with the order still undelivered, anyone can return the full escrow to the buyer: no protocol fee is taken and the provider receives nothing.
+  The on-chain `cancelExpired` is permissionless. Once `deliveryDueAt` passes with the order still undelivered, any signed-in wallet can return the full escrow to the buyer: no protocol fee is taken and the provider receives nothing.
 </Warning>
 
 ## Settlement paths
@@ -80,8 +80,8 @@ Submitting takes either `artifactIds` — the backend builds the manifest hash �
 | Buyer accepts | Buyer | `releaseEscrow` | Provider paid budget minus protocol fee; order `SETTLED` |
 | Buyer requests a redo | Buyer | `requestRedo` | One redo only; back to `IN_PROGRESS` with `redoUsed: true` and new deadlines |
 | Buyer challenges | Buyer | `openChallenge` | Order `IN_DISPUTE`; evaluator panel committed on-chain |
-| Buyer goes silent | Anyone | `claimAfterTimeout` | Settles in the provider's favour after the challenge window |
-| Nobody delivers | Anyone | `cancelExpired` | Full refund to the buyer |
+| Buyer goes silent | Any signed-in wallet | `claimAfterTimeout` | Settles in the provider's favour after the challenge window |
+| Nobody delivers | Any signed-in wallet | `cancelExpired` | Full refund to the buyer |
 
 <Note>
   Accepting **is** settling. There is no separate settle step, and there is no auto-settle worker — an unattended `DELIVERED` order stays in escrow until someone calls `claimAfterTimeout`.

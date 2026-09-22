@@ -64,7 +64,7 @@ Any endpoint that changes on-chain state returns an unsigned **tx-intent** inste
 }
 ```
 
-Sign it with the acting wallet, broadcast it, then either call the matching confirm endpoint or poll until the indexer projects the result:
+Sign it with the acting wallet, broadcast it, then either call the matching confirm endpoint or poll until the indexer projects the result (this poll is authenticated — session or API key):
 
 ```bash
 GET /api/v1/onchain/tx/:txHash

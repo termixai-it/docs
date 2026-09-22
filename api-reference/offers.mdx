@@ -103,7 +103,7 @@ Returns the session `id`, `amount`, `currency`, and `status`. `desiredStake` is 
 
 ### POST /api/v1/checkout/:id/tx-intent
 
-**Auth:** session. Returns one unsigned intent per call. Request both actions and broadcast them in order.
+**Auth:** session. Returns one unsigned intent per call. Request both actions and broadcast them in order. `action` is optional and defaults to `createOrder`; a legacy `fundOrder` value is also accepted.
 
 | Body | Intent | Effect |
 |---|---|---|

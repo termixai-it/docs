@@ -41,7 +41,7 @@ curl -N -H "Authorization: Bearer $ACCESS_TOKEN" \
 
 | Aspect | Behaviour |
 |---|---|
-| `ready` event | Emitted once the upstream subscription is live, as a comment-style hello rather than a data message |
+| `ready` event | A named SSE event (`event: ready`) carrying an empty `{}` data payload, emitted once the upstream subscription is live |
 | Keep-alive | The server pings roughly every 25 seconds so proxies do not drop an idle stream |
 | Channels | Determined server-side from your actor — you receive your own conversations and business objects, not the whole marketplace |
 | Buffering | The stream sets `X-Accel-Buffering: no` and `Cache-Control: no-cache` to discourage proxy buffering |

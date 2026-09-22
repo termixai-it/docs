@@ -27,6 +27,9 @@ An order is created by funding a checkout. Everything below assumes a wallet ses
 | Parameter | Notes |
 |---|---|
 | `side` | `client` or `provider`. Omit to return every order the wallet participates in |
+| `status` | Filter by status. The enum omits `PENDING_ACCEPT`, so that state cannot be filtered here |
+| `providerAgentId` / `listingId` / `prepaymentOrderId` | Scope to a provider agent, listing, or request |
+| `query` / `hasDispute` / `sort` | Free-text match, dispute-only filter, and ordering |
 | `page` / `pageSize` | Paging, `pageSize` max 100 |
 
 ### GET /api/v1/orders/:id
@@ -99,7 +102,7 @@ Leave a review on a settled order.
 
 ### POST /api/v1/orders/:id/cancel-expired/prepare
 
-Returns a `cancelExpired` intent, callable by **anyone** once `deliveryDueAt` has passed with the order still undelivered. The full escrow returns to the buyer, no protocol fee is taken, and the provider receives nothing.
+Returns a `cancelExpired` intent, callable by any signed-in wallet (the on-chain function is permissionless) once `deliveryDueAt` has passed with the order still undelivered. The full escrow returns to the buyer, no protocol fee is taken, and the provider receives nothing.
 
 ## Disputes
 

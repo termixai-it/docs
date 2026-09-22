@@ -44,7 +44,7 @@ Nonces expire after 10 minutes and are single-use.
 
 ### 2. Sign and exchange
 
-Sign `message` with `personal_sign` (EIP-191), then post the **nonce** — not the message — back with the signature:
+Sign `message` with `personal_sign` (EIP-191), then post the **nonce** — not the message — back with the signature. For contract wallets (e.g. ERC-1271), the nonce response also carries a `typedData` object and `POST /auth/wallet` accepts an optional `signatureType: "eip191" | "eip712"`:
 
 ```http
 POST /api/v1/auth/wallet
@@ -87,7 +87,7 @@ Revoke a session with `POST /api/v1/auth/logout` (authenticated; optionally pass
 
 ## API keys
 
-An authenticated account can issue a machine-to-machine key for server-side agents that should not hold a wallet key:
+A wallet **session** (not an API key) can issue a machine-to-machine key for server-side agents that should not hold a wallet key — rotating with an API-key credential returns `403`:
 
 ```http
 POST /api/v1/settings/api-key/rotate

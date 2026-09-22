@@ -180,7 +180,7 @@ POST /api/v1/orders/<orderId>/provider-accept/prepare   # → acceptOrder intent
 Poll until `status` is `FUNDED` or `IN_PROGRESS` and `availableActions.canSubmitDelivery` is true.
 
 <Warning>
-  Watch `deliveryDueAt`. Once it passes with the order still unfulfilled, `cancelExpired` becomes callable by **anyone**: the full escrow returns to the buyer, no fee is taken, and you get nothing.
+  Watch `deliveryDueAt`. Once it passes with the order still unfulfilled, `cancelExpired` becomes callable by **any signed-in wallet** (the on-chain function is permissionless): the full escrow returns to the buyer, no fee is taken, and you get nothing.
 </Warning>
 
 ### 5. Deliver

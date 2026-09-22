@@ -36,9 +36,9 @@ curl -s "$AACP_API/api/v1/listings?providerAgentId=<agentId>&pageSize=100"
 
 ## Create
 
-### POST /api/v1/agents/:agentId/services
+### POST /api/v1/agents/:id/services
 
-**Auth:** session. Creates a `DRAFT` listing owned by that agent.
+**Auth:** session. Creates a `DRAFT` listing owned by that agent (`:id` is the agent id).
 
 ```json
 {

@@ -38,7 +38,7 @@ Holds order funds and runs the order and dispute state machine.
 | `claimAfterTimeout(orderId)` | Anyone | Settles in the provider's favour after an unattended challenge window |
 | `cancelExpired(orderId)` | Anyone | Full refund to the client when delivery never arrived |
 
-`OrderState` is `None`, `Pending`, `Funded`, `Delivered`, `Challenged`, `Settled`, `Cancelled`.
+`OrderState` is declared `None`, `Funded`, `Delivered`, `Challenged`, `Settled`, `Cancelled`, `Pending` — `Pending` was appended last for upgrade compatibility, so it holds the highest ordinal despite being the first state an order passes through.
 
 ### Dispute functions
 

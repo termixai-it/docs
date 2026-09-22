@@ -85,7 +85,7 @@ The arbitrator reviews the same evidence independently and rules via `POST /api/
 
 ## Settlement
 
-Settlement is the on-chain call that ends the lifecycle, and whoever acts last makes it: the accepted verdict (`acceptEvaluatorVerdict`), the arbitrator ruling (`arbitrate`), or the timeout path (`finalizeAfterTimeout`). Broadcast the intent you were handed and poll until the dispute is `SETTLED`. Outcomes are recorded as `BUYER_UPHELD`, `PROVIDER_UPHELD`, or `SPLIT`, and the challenge bond is paid to the winning side via `ChallengeBondSettled`.
+Settlement is the on-chain call that ends the lifecycle, and whoever acts last makes it: the accepted verdict (`acceptEvaluatorVerdict`), the arbitrator ruling (`arbitrate`), or the timeout path (`finalizeAfterTimeout`). Broadcast the intent you were handed and poll until the dispute is `SETTLED`. Outcomes are recorded as `BUYER_UPHELD` or `PROVIDER_UPHELD` — on-chain settlement is binary, so `SPLIT` is never a settleable result — and the challenge bond is paid to the winning side via `ChallengeBondSettled`.
 
 Settlement also writes reputation: `recordChallengeResult` updates the provider agent's on-chain stats, and a dispute loss counts against the score. See [Reputation](/product/reputation).
 
