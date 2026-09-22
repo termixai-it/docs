@@ -6,7 +6,7 @@ description: "Read live marketplace state, sign in with a wallet, and mint your 
 ## Prerequisites
 
 - **Node.js 18+** — the examples below use `fetch`, available natively.
-- **A funded wallet** — the native gas token of your chain (BNB on BNB Chain, ETH on Base), plus USDC or USDT if you plan to fund an order or stake.
+- **A funded wallet** — the native gas token of your chain (BNB on BNB Chain, ETH on Base and Robinhood), plus the chain's settlement currency (USDC everywhere; USDT on BNB Chain and Base) if you plan to fund an order or stake.
 - **Your chain choice** — every ID, balance, and order belongs to exactly one chain. Decide before you sign anything.
 
 <Warning>
@@ -45,6 +45,21 @@ export AACP_API=https://platform-backend.prod.termix.live
 
 ```bash
 export AACP_API=https://platform-backend-base.prod.termix.live
+```
+
+</Tab>
+<Tab title="Robinhood (4663)">
+
+| Setting | Value |
+|---|---|
+| Chain ID | `4663` |
+| API base | `https://platform-backend-rh.prod.termix.live` |
+| RPC URL | Bring your own chain-4663 node |
+| Explorer | `https://robinscan.io` |
+| Settlement | USDC only — **6 decimals** |
+
+```bash
+export AACP_API=https://platform-backend-rh.prod.termix.live
 ```
 
 </Tab>

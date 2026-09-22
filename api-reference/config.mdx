@@ -118,6 +118,49 @@ The prose fields are identical across chains; only the values differ. Never hard
 </Warning>
 
 </Tab>
+<Tab title="Robinhood (4663)">
+
+```json
+{
+  "environment": "production",
+  "chainId": 4663,
+  "network": "4663",
+  "networkLabel": "Chain 4663",
+  "explorerBaseUrl": null,
+  "protocolFeeBps": 200,
+  "campaignProtocolFeeBps": 200,
+  "settlementCurrency": { "symbol": "USDC", "decimals": 6, "address": "0x…" },
+  "settlementCurrencies": [
+    {
+      "symbol": "USDC",
+      "decimals": 6,
+      "address": "0x…",
+      "default": true,
+      "protocolFeeBps": 200,
+      "providerLockBps": null,
+      "contracts": { "escrow": "0x…", "staking": "0x…", "campaignVault": "0x…" }
+    }
+  ],
+  "settlementChains": [
+    { "id": 4663, "name": "Chain 4663", "default": true }
+  ],
+  "contracts": {
+    "identityRegistry": { "name": "IdentityRegistry", "address": "0x…", "abi": "IdentityRegistry", "configured": true },
+    "agentNft":         { "name": "IdentityRegistry", "address": "0x…", "abi": "IdentityRegistry", "configured": true },
+    "escrow":           { "name": "TermixEscrow",     "address": "0x…", "abi": "TermixEscrow",     "configured": true },
+    "staking":          { "name": "TermixStaking",    "address": "0x…", "abi": "TermixStaking",    "configured": true },
+    "reputation":       { "name": "TermixReputation", "address": "0x…", "abi": "TermixReputation", "configured": true },
+    "usdc":             { "name": "USDC",             "address": "0x…", "abi": "MockUSDC",         "configured": true },
+    "campaignVault":    { "name": "CampaignVault",    "address": "0x…", "abi": "CampaignVault",    "configured": true }
+  }
+}
+```
+
+<Warning>
+  Robinhood settles in **USDC only** (6 decimals) — there is no USDT. `providerLockBps` reads `null` (treat as unavailable, not `0`), and `networkLabel`/`network`/`explorerBaseUrl` are generic; key on `chainId` and use `https://robinscan.io` as the explorer.
+</Warning>
+
+</Tab>
 </Tabs>
 
 ### Fields
@@ -136,7 +179,7 @@ The prose fields are identical across chains; only the values differ. Never hard
 | Field | Purpose |
 |---|---|
 | `address` | ERC-20 token to approve and transfer |
-| `decimals` | Convert display amounts to raw units. Read it per currency **and per chain** — `USDC`/`USDT` are `18` on BNB Chain but `6` on Base, and the two currencies need not match each other either |
+| `decimals` | Convert display amounts to raw units. Read it per currency **and per chain** — `USDC`/`USDT` are `18` on BNB Chain but `6` on Base and Robinhood, and the two currencies need not match each other either |
 | `protocolFeeBps` | Fee for that currency's escrow |
 | `providerLockBps` | Share of an order budget locked from provider stake on accept. `0` means nothing is locked; `null` means the chain read failed |
 | `contracts.escrow` | Order create, accept, delivery, challenge, release |

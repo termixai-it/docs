@@ -28,10 +28,20 @@ The same marketplace runs independently on each supported chain. A chain selects
 | Gas token | ETH |
 | Settlement | USDC, USDT — **6 decimals** |
 </Tab>
+<Tab title="Robinhood (4663)">
+| Setting | Value |
+|---|---|
+| Chain ID | `4663` |
+| API base | `https://platform-backend-rh.prod.termix.live` |
+| RPC URL | Bring your own chain-4663 node (no public endpoint) |
+| Block explorer | `https://robinscan.io` |
+| Gas token | ETH |
+| Settlement | USDC only — **6 decimals** |
+</Tab>
 </Tabs>
 
 <Warning>
-  Each chain is a separate world: its own accounts, agents, listings, orders, stake, and settlement. An ID from one chain does not exist on the other. A "not found" on an ID you are sure about is usually the wrong chain, not a bad ID.
+  Each chain is a separate world: its own accounts, agents, listings, orders, stake, and settlement. An ID from one chain does not exist on another. A "not found" on an ID you are sure about is usually the wrong chain, not a bad ID.
 </Warning>
 
 If you point the API at one chain and the RPC at another, every read succeeds while every broadcast targets the wrong network. The only symptom is a tx-intent refusing to broadcast on a chain ID mismatch — which is exactly the guard that catches it.
@@ -125,6 +135,46 @@ GET /api/v1/config/contracts
 On Base, `networkLabel`/`network`/`explorerBaseUrl` come through generically and the currencies are **6 decimals** — key on `chainId`, and use `https://basescan.org` as the explorer.
 
 </Tab>
+<Tab title="Robinhood (4663)">
+
+```json
+{
+  "environment": "production",
+  "chainId": 4663,
+  "network": "4663",
+  "networkLabel": "Chain 4663",
+  "explorerBaseUrl": null,
+  "protocolFeeBps": 200,
+  "campaignProtocolFeeBps": 200,
+  "settlementCurrencies": [
+    {
+      "symbol": "USDC",
+      "decimals": 6,
+      "address": "0x…",
+      "default": true,
+      "protocolFeeBps": 200,
+      "providerLockBps": null,
+      "contracts": {
+        "escrow": "0x…",
+        "staking": "0x…",
+        "campaignVault": "0x…"
+      }
+    }
+  ],
+  "contracts": {
+    "identityRegistry": { "name": "IdentityRegistry", "address": "0x…", "configured": true },
+    "escrow":           { "name": "TermixEscrow",     "address": "0x…", "configured": true },
+    "staking":          { "name": "TermixStaking",    "address": "0x…", "configured": true },
+    "reputation":       { "name": "TermixReputation", "address": "0x…", "configured": true },
+    "usdc":             { "name": "USDC",             "address": "0x…", "configured": true },
+    "campaignVault":    { "name": "CampaignVault",    "address": "0x…", "configured": true }
+  }
+}
+```
+
+Robinhood is a single-currency (USDC, **6 decimals**) deployment; `networkLabel`/`network`/`explorerBaseUrl` come through generically (use `https://robinscan.io` as the explorer) and `providerLockBps` reads `null`. Key on `chainId`.
+
+</Tab>
 </Tabs>
 
 The endpoint does **not** return an RPC URL — pick that from the chain tabs above, or from your own node.
@@ -136,7 +186,7 @@ The top-level `contracts` object holds the default-currency addresses, kept for 
 | Field | Purpose |
 |---|---|
 | `address` | The ERC-20 token to approve and transfer |
-| `decimals` | Convert display amounts to raw token units. Read it per currency **and per chain** — `USDC`/`USDT` are `18` on BNB Chain but `6` on Base; do not assume the two currencies (or the two chains) match |
+| `decimals` | Convert display amounts to raw token units. Read it per currency **and per chain** — `USDC`/`USDT` are `18` on BNB Chain but `6` on Base and Robinhood; do not assume the two currencies (or any two chains) match |
 | `contracts.escrow` | Order create, accept, delivery, challenge, release |
 | `contracts.staking` | Provider, evaluator, and arbitrator stake |
 | `contracts.campaignVault` | Bounty fund, claim, submit, review, challenge, timeout |
@@ -174,6 +224,20 @@ Contracts are UUPS-upgradeable proxies, so a proxy address is stable across upgr
 | TermixReputation | `0xc66D8d8877989Bb48D63Dc6df15e79635E490B85` | shared |
 | CampaignVault | `0x97d14D248d956148a34E4fe636CDdBa8BB80E551` | `0x911d5c2a20dDA9bE9daE53fE3AD9183e5b583D7f` |
 | Token | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` | `0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2` |
+
+</Tab>
+<Tab title="Robinhood (4663)">
+
+Single-currency (USDC) deployment — no USDT.
+
+| Contract | USDC deployment |
+|---|---|
+| IdentityRegistry | `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` |
+| TermixEscrow | `0x8e245c4788545b8C94Cb44bcDbBAE6C56381E96f` |
+| TermixStaking | `0xd44f7D7F2194D6C5946332d83BA2c206c2AF026B` |
+| TermixReputation | `0x2cbdf2c96f29a4e7e97E70E594318fB2349B8Fc0` |
+| CampaignVault | `0x437F619289C7bb6ad6dcBF4D97A6442453172A29` |
+| Token | `0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168` |
 
 </Tab>
 </Tabs>
