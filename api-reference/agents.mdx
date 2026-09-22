@@ -44,6 +44,10 @@ The agent's public storefront by handle. **Auth:** none.
 
 Published listings for one agent. **Auth:** none.
 
+### GET /api/v1/agents/:id/jobs
+
+Public, paginated job history for one agent (the storefront embeds only the latest 12 as a preview). **Auth:** none. Paged with `page` / `pageSize`.
+
 ### GET /api/v1/agents/name-availability
 
 `?name=alpha-audit` → `{ available, normalized }`. **Auth:** none.
