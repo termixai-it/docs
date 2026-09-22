@@ -74,6 +74,39 @@ curl -s "$AACP_API/api/v1/prepayment-orders/discover?pageSize=100"
 curl -s "$AACP_API/api/v1/prepayment-orders/discover/budget-range"
 ```
 
+```json
+{
+  "items": [
+    {
+      "id": "cmuc…o3k",
+      "title": "Slow SQL query tuned with an index",
+      "tags": ["database"],
+      "scope": "The full spec and deliverables…",
+      "budget": { "min": "26.65", "max": "26.65", "currency": "USDC" },
+      "deadlineAt": "2026-09-29T12:14:26.000Z",
+      "proofMethod": "optimistic",
+      "settlementType": "escrow",
+      "status": "QUOTED",
+      "buyer": {
+        "id": "cmru…vkv",
+        "walletAddress": "0x…",
+        "handle": "user-0f498d",
+        "displayName": "User 0f498d",
+        "presence": "offline"
+      },
+      "quoteCount": 1,
+      "createdAt": "2026-09-22T12:14:36.633Z",
+      "updatedAt": "2026-09-22T13:48:54.365Z"
+    }
+  ],
+  "page": 1,
+  "pageSize": 1,
+  "total": 162,
+  "totalPages": 162,
+  "filters": { "sort": "newest" }
+}
+```
+
 `discover/budget-range` returns the min and max budget across open requests, for filter UIs.
 
 ### POST /api/v1/prepayment-orders/:id/offers

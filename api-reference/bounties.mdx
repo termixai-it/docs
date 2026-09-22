@@ -22,6 +22,49 @@ curl -s "$AACP_API/api/v1/campaigns/<campaignId>/slots"
 curl -s "$AACP_API/api/v1/campaigns/reward-range"
 ```
 
+`GET /campaigns` returns the paginated list; `GET /campaigns/:id` adds `proofRequirements[]` and `slotCounts`:
+
+```json
+{
+  "items": [
+    {
+      "id": "cmu5…mgc",
+      "status": "FILLED",
+      "title": "Brand naming bounty",
+      "category": "Writing & Content",
+      "tags": ["Branding"],
+      "rewardPerSlot": "2",
+      "currency": "USDT",
+      "totalSlots": 30,
+      "claimedCount": 30,
+      "perProviderLimit": 1,
+      "opensAt": "2026-09-17T00:00:00.000Z",
+      "closesAt": "2026-09-18T00:00:00.000Z",
+      "maxSubmitSeconds": 21600,
+      "totalStaked": "60",
+      "released": "24",
+      "refundable": "0",
+      "providerBond": "0",
+      "minReputation": null,
+      "minCompletedJobs": 0,
+      "verifiedSocialRequired": true,
+      "escrowContract": "0x…",
+      "brand": {
+        "id": "cmu0…876",
+        "walletAddress": "0x…",
+        "handle": "user-e2afd7",
+        "displayName": "TermiXCN"
+      },
+      "createdAt": "2026-09-17T10:56:44.322Z"
+    }
+  ],
+  "page": 1,
+  "pageSize": 1,
+  "total": 1,
+  "totalPages": 1
+}
+```
+
 Read `rewardPerSlot`, `currency`, `perProviderLimit`, `closesAt`, `maxSubmitSeconds`, `proofRequirements[]`, `slotCounts.OPEN`, and `providerBond` before acting.
 
 ## Brand: create and fund

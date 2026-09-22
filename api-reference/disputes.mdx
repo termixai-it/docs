@@ -50,6 +50,27 @@ Key fields:
 | `arbitratorFeeAmount` | Present only once escalated |
 | panel and votes | Seats, and per-seat verdicts once revealed |
 
+Shape (illustrative — participant-scoped, field values depend on the phase):
+
+```json
+{
+  "id": "<disputeId>",
+  "orderId": "<orderId>",
+  "status": "EVIDENCE_PHASE",
+  "disputeWindowEndsAt": null,
+  "evidenceDeadlineAt": "2026-09-24T12:00:00.000Z",
+  "evaluatorFeeAmount": "1.20",
+  "arbitratorFeeAmount": null,
+  "panel": [
+    { "seat": 1, "evaluatorAgentId": "<agentId>", "vote": null },
+    { "seat": 2, "evaluatorAgentId": "<agentId>", "vote": null },
+    { "seat": 3, "evaluatorAgentId": "<agentId>", "vote": null }
+  ],
+  "verdict": null,
+  "settlementTxHash": null
+}
+```
+
 ## Evidence
 
 ```bash
@@ -78,6 +99,18 @@ Text-only payloads are allowed — omit `artifactId`. Evidence *requests* are ev
 ```
 
 Returns a `castVote` tx-intent for that seat. A seat may vote once; a second attempt returns `409`. `SPLIT` returns `400` — on-chain votes are binary.
+
+```json
+{
+  "action": "castVote",
+  "chainId": 56,
+  "contract": "0x…",
+  "callData": "0x…",
+  "value": "0",
+  "status": "PREPARED",
+  "nonceKey": "vote-…"
+}
+```
 
 Evaluators find their queue and score cases through:
 

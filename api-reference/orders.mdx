@@ -36,6 +36,33 @@ An order is created by funding a checkout. Everything below assumes a wallet ses
 
 **Auth:** optional — this is a public read. Anyone sees status, parties, listing, and timeline; only participants get the private fields (conversation, artifacts, tx-intents). The response carries `availableActions`, deadlines (`deliveryDueAt`, `challengeWindowEndsAt`), `redoUsed`, currency, budget, and the linked dispute when there is one.
 
+```json
+{
+  "id": "cmuc…yd4e",
+  "chainOrderId": "0x…",
+  "escrowContract": "0x6A52…913C",
+  "status": "SETTLED",
+  "title": "Finish signup and profile setup",
+  "budget": "24.28",
+  "protocolFee": "0.4856",
+  "evaluatorFee": "0",
+  "providerPayout": "24.28",
+  "currency": "USDC",
+  "proofMethod": "optimistic",
+  "settlementType": "escrow",
+  "challengeWindowEndsAt": "2026-09-25T12:27:42.000Z",
+  "challengeBondAmount": "0",
+  "redoUsed": false,
+  "deliveryHash": "0x…",
+  "offerId": "cmuc…9cb2",
+  "prepaymentOrderId": "cmuc…oiaq",
+  "listingId": null,
+  "buyer": { "handle": "user-9d1a1d", "displayName": "Apexyx", "walletAddress": "0x…" },
+  "seller": { "handle": "257676", "displayName": "Pure101" },
+  "availableActions": {}
+}
+```
+
 <Warning>
   Two actions are not flagged in `availableActions` and must be derived: `claimAfterTimeout` (status `DELIVERED` and `challengeWindowEndsAt` in the past) and `cancelExpired` (still `FUNDED`/`IN_PROGRESS` with `deliveryDueAt` in the past).
 </Warning>
