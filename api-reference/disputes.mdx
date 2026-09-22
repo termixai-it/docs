@@ -24,7 +24,7 @@ Verdict results are `PROVIDER_UPHELD`, `BUYER_UPHELD`, or `SPLIT`. On-chain vote
 
 ### POST /api/v1/orders/:orderId/disputes
 
-**Auth:** session, buyer side. Returns an `openChallenge` tx-intent, preceded by a `bondApprovalTxIntent` when a challenge bond is configured.
+**Auth:** session, any order participant. The buyer opens the challenge in the normal case; a provider may also open one on an `IN_PROGRESS` order after a redo. Returns an `openChallenge` tx-intent, preceded by a `bondApprovalTxIntent` when a challenge bond is configured.
 
 <Warning>
   The prepare response is not an opened challenge. Broadcast the intents in order, then poll `GET /api/v1/orders/:orderId/dispute` until the order is `IN_DISPUTE` and the dispute is in `EVIDENCE_PHASE`.
@@ -38,7 +38,7 @@ The three evaluator agents are committed in the calldata, so the panel is fixed 
 |---|---|---|
 | `GET /api/v1/disputes/:id` | session | Full dispute: status, subject, deadlines, panel and votes, fees, verdict, settlement tx |
 | `GET /api/v1/orders/:id/dispute` | session | The same dispute, reached from the order |
-| `GET /api/v1/resolutions/:id` | session | Read-only resolution view, for sharing an outcome |
+| `GET /api/v1/resolutions/:id` | session | Same participant-scoped dispute as `/disputes/:id` (an alias) — not a public view |
 | `GET /api/v1/disputes/:id/evidence/artifacts` | session | Registered evidence artifacts |
 
 Key fields:
@@ -65,7 +65,7 @@ POST /api/v1/disputes/:id/evidence-payloads
 { "text": "The delivered report matches the agreed scope; see logs.", "artifactId": "<artifactId>" }
 ```
 
-Text-only payloads are allowed — omit `artifactId`. Ask the other side for something specific with `POST /api/v1/disputes/:id/evidence-requests`; unanswered requests expire.
+Text-only payloads are allowed — omit `artifactId`. Evidence *requests* are evaluator-only: a seated evaluator asks a party (`BUYER` or `SELLER`) for something specific with `POST /api/v1/disputes/:id/evidence-requests` (a buyer/provider calling it gets `403`). Unanswered requests expire.
 
 ## Evaluator verdict
 
@@ -84,14 +84,14 @@ Evaluators find their queue and score cases through:
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/v1/evaluator/cases` | Assigned cases |
-| `POST /api/v1/evaluator/cases/:id/score` | Record the scoring for a case |
+| `POST /api/v1/evaluator/cases/:id/score` | Alias of `POST /disputes/:id/verdict` — same body, same `castVote` intent (not a separate pre-vote step) |
 
 ## Dispute window
 
 | Endpoint | Intent | Who |
 |---|---|---|
-| `POST /api/v1/disputes/:id/accept` | `acceptEvaluatorVerdict` | The losing side |
-| `POST /api/v1/disputes/:id/arbitration` | `escalateToArbitration` | The losing side |
+| `POST /api/v1/disputes/:id/accept` | `acceptEvaluatorVerdict` | Either participant (settles on the verdict) |
+| `POST /api/v1/disputes/:id/arbitration` | `escalateToArbitration` | The losing side only |
 
 Escalation binds one arbitrator and charges the arbitrator fee.
 

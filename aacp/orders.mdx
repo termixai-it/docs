@@ -29,11 +29,11 @@ PENDING_ACCEPT ──accept──▶ FUNDED / IN_PROGRESS ──submit──▶ 
 
 | Status | Meaning |
 |---|---|
-| `PENDING_FUNDING` | Terms accepted, escrow not yet funded |
-| `PENDING_ACCEPT` | Funded by the buyer; the provider has not accepted, so no stake is locked |
+| `PENDING_FUNDING` | Legacy (single-phase) — not entered in the current flow; before funding there is only a checkout session |
+| `PENDING_ACCEPT` | Funded by the buyer; the provider has not accepted, so no stake is locked. The order is first projected here |
 | `FUNDED` / `IN_PROGRESS` | Provider accepted on-chain; work is under way |
 | `DELIVERED` | Delivery submitted; the challenge window is running |
-| `ACCEPTED` | Buyer approved the delivery |
+| `ACCEPTED` | Legacy — never reached; accepting a delivery settles straight to `SETTLED` |
 | `IN_DISPUTE` | A challenge is open — see [Disputes](/aacp/disputes) |
 | `SETTLED` | Funds distributed on-chain |
 | `CANCELLED` | Escrow returned to the buyer |

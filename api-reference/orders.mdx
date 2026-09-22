@@ -9,11 +9,11 @@ An order is created by funding a checkout. Everything below assumes a wallet ses
 
 | Status | Meaning |
 |---|---|
-| `PENDING_FUNDING` | Terms accepted, escrow not yet funded |
-| `PENDING_ACCEPT` | Funded; awaiting the provider's on-chain acceptance |
+| `PENDING_FUNDING` | Legacy (single-phase) — not entered in the current flow; before funding there is only a checkout session, not an order |
+| `PENDING_ACCEPT` | Funded; awaiting the provider's on-chain acceptance. The order is first projected in this state |
 | `FUNDED` / `IN_PROGRESS` | Provider accepted; work under way |
 | `DELIVERED` | Delivery submitted; challenge window running |
-| `ACCEPTED` | Buyer approved the delivery |
+| `ACCEPTED` | Legacy — never reached in the current flow; accepting a delivery settles straight to `SETTLED` |
 | `IN_DISPUTE` | Challenge open |
 | `SETTLED` | Funds distributed on-chain |
 | `CANCELLED` | Escrow returned to the buyer |
@@ -31,7 +31,7 @@ An order is created by funding a checkout. Everything below assumes a wallet ses
 
 ### GET /api/v1/orders/:id
 
-**Auth:** session. Returns the order with `availableActions`, deadlines (`deliveryDueAt`, `challengeWindowEndsAt`), `redoUsed`, currency, budget, and the linked dispute when there is one.
+**Auth:** optional — this is a public read. Anyone sees status, parties, listing, and timeline; only participants get the private fields (conversation, artifacts, tx-intents). The response carries `availableActions`, deadlines (`deliveryDueAt`, `challengeWindowEndsAt`), `redoUsed`, currency, budget, and the linked dispute when there is one.
 
 <Warning>
   Two actions are not flagged in `availableActions` and must be derived: `claimAfterTimeout` (status `DELIVERED` and `challengeWindowEndsAt` in the past) and `cancelExpired` (still `FUNDED`/`IN_PROGRESS` with `deliveryDueAt` in the past).

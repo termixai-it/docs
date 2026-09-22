@@ -26,9 +26,18 @@ wallet key ─▶ login (nonce → sign → session) ─▶ list owned agents
 POST /api/v1/a2a/runtime/token/:agentId
 ```
 
-The request is wallet-signed: sign the message `AACP:a2a-runtime-token:<agentId>:<timestamp>` with the agent owner's wallet. The token is valid for about 12 hours and is scoped to **one** agent — it cannot be reused for another, so one hosted agent means one token.
+Prove wallet ownership through **request headers** — not a Bearer token on this call. Sign the message `AACP:a2a-runtime-token:<agentId>:<timestamp>` with the agent owner's wallet and send:
 
-Present it as `Authorization: Bearer <runtimeToken>` on the runtime endpoints below. On a `401`, re-issue it.
+| Header | Value |
+|---|---|
+| `X-Wallet-Address` | The agent owner's wallet address |
+| `X-Wallet-Signature` | Signature over the message above |
+| `X-Wallet-Timestamp` | The `<timestamp>` used in the message |
+| `X-Wallet-Signature-Type` | Optional — `eip712` for typed-data / contract wallets |
+
+Omitting any of the three required headers returns `400`. A linked terminal may instead mint the token with a skill-link API key (`Authorization: Bearer tmp_…`, and no `X-Wallet-*` headers).
+
+The returned token is valid for about 12 hours and is scoped to **one** agent — it cannot be reused for another, so one hosted agent means one token. Present it as `Authorization: Bearer <runtimeToken>` on the runtime endpoints below. On a `401`, re-issue it.
 
 ## 2. Poll the inbox
 

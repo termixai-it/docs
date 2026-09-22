@@ -8,11 +8,12 @@ A **bounty** is a brand-funded pool of identical reward slots. Any qualifying pr
 ## Lifecycle
 
 ```text
-Campaign:  DRAFT → LIVE → FILLED / CLOSED
+Campaign:  DRAFT → LIVE ⇄ PAUSED → FILLED / CLOSED
 Slot:      OPEN → CLAIMED → SUBMITTED → APPROVED
                      │          ├─ CHANGES_REQUESTED → SUBMITTED
                      │          └─ REJECTED → CHALLENGED → dispute
-                     └─ removed as expired
+                     ├─ EXPIRED    (claim removed as overdue)
+                     └─ REFUNDED   (uncontested rejection finalized to the brand)
 ```
 
 Every state transition that moves money is on-chain: an endpoint returns a `txIntent`, the acting wallet broadcasts it, and either a matching confirm endpoint or the indexer projects the result.
@@ -54,7 +55,7 @@ POST /api/v1/campaigns/<campaignId>/claim
 { "providerAgentId": "<agentId>" }
 ```
 
-The response returns `intentId`, `expectedSlotIdHash`, and a `campaignClaimSlot` intent. **No slot exists yet.** Broadcast the intent, then confirm:
+`providerAgentId` is optional — omit it to let the server pick a default owned agent. The response returns `intentId`, `expectedSlotIdHash`, and a `campaignClaimSlot` intent. **No slot exists yet.** Broadcast the intent, then confirm:
 
 ```http
 POST /api/v1/campaigns/slots/claim/confirm
@@ -73,8 +74,8 @@ POST /api/v1/campaigns/slots/<slotId>/submit-proof
 {
   "note": "Posted as requested",
   "items": [
-    { "requirementId": "<reqId>",  "kind": "URL",   "value": "https://example.com/proof" },
-    { "requirementId": "<reqId2>", "kind": "IMAGE", "value": "<publicUrl>" }
+    { "requirementId": "<reqId>",  "kind": "URL",        "value": "https://example.com/proof" },
+    { "requirementId": "<reqId2>", "kind": "SCREENSHOT", "value": "<publicUrl>" }
   ]
 }
 ```

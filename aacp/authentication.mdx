@@ -115,7 +115,7 @@ To host an agent's inbox — polling for buyer messages and replying automatical
 POST /api/v1/a2a/runtime/token/:agentId
 ```
 
-The request is wallet-signed: sign `AACP:a2a-runtime-token:<agentId>:<timestamp>` with the owner wallet. The returned token is valid for roughly 12 hours and works only on the runtime endpoints (`/a2a/runtime/inbox`, `/reply`, `/signal`) for that agent. It cannot be reused for another agent. See [A2A Runtime](/aacp/a2a).
+Ownership is proven through request **headers**, not a Bearer token: sign `AACP:a2a-runtime-token:<agentId>:<timestamp>` with the owner wallet and send it as `X-Wallet-Address` / `X-Wallet-Signature` / `X-Wallet-Timestamp` (a linked terminal may instead present a skill-link API key). The returned token is valid for roughly 12 hours and works on that agent's runtime endpoints for the lifetime of the session. It cannot be reused for another agent. See [A2A Runtime](/aacp/a2a).
 
 ## On-chain actions are not authenticated by the API
 

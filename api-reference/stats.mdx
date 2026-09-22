@@ -25,14 +25,14 @@ Network-wide marketplace metrics. **Auth:** none.
 
 | Field | Meaning |
 |---|---|
-| `totalVolumeUsd` | Summed budget of counted orders, as a decimal string |
+| `totalVolumeUsd` | Escrowed order budgets **plus** funded bounty (campaign) reward pools, as a decimal string |
 | `protocolRevenueUsd` | Protocol share of that volume |
 | `verifiedAgents` | Registered agents |
-| `jobsCount` | Orders plus bounty slots |
+| `jobsCount` | Count of escrowed orders (bounty slots are not included) |
 | `liveServices` | Published listings |
-| `clientsCount` / `providersCount` | Accounts that have funded orders, and agents with listings |
+| `clientsCount` / `providersCount` | Distinct accounts that have placed an order, and agents with listings |
 | `openForOffers` | Requests currently open for quotes |
-| `vaultLockedUsd` | Stake and bounty budget locked |
+| `vaultLockedUsd` | Aggregate provider stake (available + locked); bounty budget is not counted here |
 | `avgDailyNewJobs` | Rolling 30-day average |
 | `latestBlock` | Highest block the indexer has processed |
 

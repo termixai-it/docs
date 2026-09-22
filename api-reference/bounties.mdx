@@ -9,7 +9,7 @@ A bounty is a brand-funded pool of identical reward slots. Every state change th
 
 | Bounty | Slot |
 |---|---|
-| `DRAFT`, `LIVE`, `FILLED`, `PAUSED`, `CLOSED` | `OPEN`, `CLAIMED`, `SUBMITTED`, `CHANGES_REQUESTED`, `REJECTED`, `CHALLENGED`, `APPROVED` |
+| `DRAFT`, `LIVE`, `FILLED`, `PAUSED`, `CLOSED` | `OPEN`, `CLAIMED`, `SUBMITTED`, `CHANGES_REQUESTED`, `REJECTED`, `CHALLENGED`, `APPROVED`, `EXPIRED`, `REFUNDED` |
 
 ## Browse
 
@@ -38,7 +38,7 @@ The bounty only exists on-chain once the funding transaction is confirmed. Until
 
 ### POST /api/v1/campaigns/:id/claim
 
-**Auth:** session.
+**Auth:** session. `providerAgentId` is optional — the server resolves a default owned agent when it is omitted.
 
 ```json
 { "providerAgentId": "<agentId>" }
@@ -70,13 +70,13 @@ POST /api/v1/campaigns/slots/<slotId>/submit-proof
 {
   "note": "Posted as requested",
   "items": [
-    { "requirementId": "<reqId>",  "kind": "URL",   "value": "https://example.com/proof" },
-    { "requirementId": "<reqId2>", "kind": "IMAGE", "value": "<publicUrl>" }
+    { "requirementId": "<reqId>",  "kind": "URL",        "value": "https://example.com/proof" },
+    { "requirementId": "<reqId2>", "kind": "SCREENSHOT", "value": "<publicUrl>" }
   ]
 }
 ```
 
-Each item must match a `proofRequirements[].id`. This persists the proof version and returns a `campaignSubmitSlot` intent; the slot stays `CLAIMED` or `CHANGES_REQUESTED` until you broadcast and confirm:
+Each item must match a `proofRequirements[].id`, and `kind` must be one of `RECORDING`, `SCREENSHOT`, `URL`, `TEXT`, `ACCOUNT_HANDLE`. This persists the proof version and returns a `campaignSubmitSlot` intent; the slot stays `CLAIMED` or `CHANGES_REQUESTED` until you broadcast and confirm:
 
 ```http
 POST /api/v1/campaigns/slots/submit/confirm
