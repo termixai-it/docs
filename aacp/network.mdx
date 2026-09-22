@@ -33,8 +33,8 @@ The same marketplace runs independently on each supported chain. A chain selects
 |---|---|
 | Chain ID | `4663` |
 | API base | `https://platform-backend-rh.prod.termix.live` |
-| RPC URL | Bring your own chain-4663 node (no public endpoint) |
-| Block explorer | `https://robinscan.io` |
+| RPC URL | `https://rpc.mainnet.chain.robinhood.com` |
+| Block explorer | `https://explorer.mainnet.chain.robinhood.com` |
 | Gas token | ETH |
 | Settlement | USDC only — **6 decimals** |
 </Tab>
@@ -172,7 +172,7 @@ On Base, `networkLabel`/`network`/`explorerBaseUrl` come through generically and
 }
 ```
 
-Robinhood is a single-currency (USDC, **6 decimals**) deployment; `networkLabel`/`network`/`explorerBaseUrl` come through generically (use `https://robinscan.io` as the explorer) and `providerLockBps` reads `null`. Key on `chainId`.
+Robinhood is a single-currency (USDC, **6 decimals**) deployment; `networkLabel`/`network`/`explorerBaseUrl` come through generically (use `https://explorer.mainnet.chain.robinhood.com` as the explorer) and `providerLockBps` reads `null`. Key on `chainId`.
 
 </Tab>
 </Tabs>
